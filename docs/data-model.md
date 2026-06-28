@@ -30,19 +30,25 @@ The long-term project should preserve evidence and derivation boundaries. Each l
    - Preserves source segment IDs and timestamps.
    - Does not change text and is not topic segmentation.
 
-7. Future topic segments
+7. Traditional Chinese normalized transcript
+   - Derived text layer that retains raw text and adds normalized `zh-TW` text.
+   - Preserves timestamps and source segment IDs.
+   - Uses deterministic normalization and glossary replacement, not free-form LLM rewriting.
+
+8. Topic segments
    - Semantic grouping by subject.
    - Should reference merged utterance IDs or raw segment IDs.
+   - Current EP674 layer is a narrow deterministic POC for review, not a production classifier.
 
-8. Future decision/reasoning cases
+9. Future decision/reasoning cases
    - Extracted investment reasoning examples.
    - Must link back to source timestamps and text.
 
-9. Future behavioral patterns
+10. Future behavioral patterns
    - Cross-case patterns such as risk attitude, changing views, and uncertainty handling.
    - Should remain auditable to source cases.
 
-10. Future speaker model
+11. Future speaker model
    - Higher-level representation used by the mentor system.
    - Should not erase uncertainty or source evidence.
 
@@ -54,7 +60,7 @@ The long-term project should preserve evidence and derivation boundaries. Each l
 - Preserve model, device, compute type, parameters, package versions, and execution metadata.
 - Prefer project-relative paths for artifacts inside the repository.
 - If an absolute path is useful, store it separately from the project-relative path.
-- If text normalization is introduced later, retain original text and store normalized text separately.
+- Text normalization must retain original text and store normalized text separately.
 - If LLM extraction is introduced later, store prompts, model, version, and confidence/uncertainty notes.
 - Do not treat transcript text as verified until manual review is complete.
 
@@ -70,12 +76,13 @@ Verified:
 - Episode manifest exists.
 - EP674 MP3 and audio metadata exist.
 - EP674 raw `large-v3-turbo` transcript exists.
-- EP674 deterministic merged transcript exists.
+- EP674 deterministic merged transcript exists and has passed raw-to-merged integrity validation.
+- EP674 Traditional Chinese normalized raw and merged transcript layers exist.
+- EP674 minimal deterministic topic segmentation, classification, and routing POC exists.
 - EP674 segment audit and manual review package exist.
 
 Pending:
 
 - Manual quality judgments.
-- Semantic topic segmentation.
 - Reasoning-case extraction.
 - Behavioral pattern extraction.

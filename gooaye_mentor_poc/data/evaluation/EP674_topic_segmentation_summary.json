@@ -1,0 +1,51 @@
+{
+  "episode_id": "EP674",
+  "configuration": "large-v3-turbo",
+  "source_normalized_merged_transcript": "data/transcripts/EP674/large-v3-turbo/normalized_merged_transcript_zh_tw.json",
+  "topic_segment_count": 39,
+  "total_topic_duration_seconds": 3176.37,
+  "duration_by_content_type": {
+    "market_analysis": 274.16,
+    "other": 54.98,
+    "personal_chat": 484.98,
+    "portfolio_positioning": 326.66,
+    "qa_investment": 1188.73,
+    "qa_non_investment": 605.48,
+    "show_admin": 241.38
+  },
+  "duration_by_route": {
+    "decision_reasoning": 2114.11,
+    "general_archive": 2982.55,
+    "investment_knowledge": 193.82,
+    "review_needed": 2060.65
+  },
+  "low_confidence_topic_segment_ids": [
+    "EP674-topic-000",
+    "EP674-topic-011",
+    "EP674-topic-019",
+    "EP674-topic-038"
+  ],
+  "near_threshold_topic_segment_ids": [
+    "EP674-topic-005",
+    "EP674-topic-007",
+    "EP674-topic-009",
+    "EP674-topic-010",
+    "EP674-topic-012",
+    "EP674-topic-013",
+    "EP674-topic-014",
+    "EP674-topic-015",
+    "EP674-topic-016",
+    "EP674-topic-017",
+    "EP674-topic-018",
+    "EP674-topic-019",
+    "EP674-topic-024",
+    "EP674-topic-030",
+    "EP674-topic-031",
+    "EP674-topic-036"
+  ],
+  "possible_mapping_errors": [],
+  "segmentation_method": "deterministic_keyword_continuity_v1",
+  "classification_method": "deterministic_keyword_scores",
+  "routing_method": "deterministic_threshold_policy",
+  "config_path": "config/topic_routing.yaml"
+}

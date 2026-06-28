@@ -1,0 +1,179 @@
+{
+  "runs": [
+    {
+      "run": "run-01",
+      "runtime": 88.7928289449992,
+      "rtf": 0.09865619328932132,
+      "segments": 611,
+      "chars": 5889,
+      "peak_vram": 3280.0,
+      "clip_sha256": "46311b2f8199b803e46f9e2cb296cae336c0b28c3ad73f76f7b6102488372ace",
+      "transcript_hash": "a35a3bfa1c341d6a382554ec2a1405cc029e8b624cfc5de880867ba8385c1607",
+      "metadata": {
+        "benchmark_type": "clean_same_clip",
+        "episode_id": "EP674",
+        "clip_path": "data/benchmarks/EP674/benchmark_clip.mp3",
+        "clip_sha256": "46311b2f8199b803e46f9e2cb296cae336c0b28c3ad73f76f7b6102488372ace",
+        "clip_start_seconds": 1200.0,
+        "clip_end_seconds": 2100.0,
+        "audio_duration_seconds": 900.022857,
+        "backend": "faster-whisper",
+        "model": "large-v3-turbo",
+        "device": "cuda",
+        "compute_type": "float16",
+        "beam_size": 5,
+        "vad_enabled": true,
+        "vad_parameters": {
+          "min_silence_duration_ms": 500
+        },
+        "timestamp_settings": "segment-level timestamps",
+        "initial_prompt": "Gooaye\n股癌\n謝孟恭\n台積電\nTSMC\nNVIDIA\nNVDA\nIntel\nINTC\nAMD\nASML\nBroadcom\nSupermicro\nCoWoS\nNVLink\nAI server\n聯準會\n升息\n降息\n毛利率\n本益比\n庫藏股\n多頭\n空頭\n軋空\n停損\n部位\n財報\n供應鏈\n",
+        "package_versions": {
+          "faster_whisper": "1.2.1",
+          "ctranslate2": "4.8.0",
+          "torch": "2.11.0+cu128"
+        },
+        "runtime_seconds": 88.7928289449992,
+        "model_load_seconds": 4.149060642999757,
+        "realtime_factor": 0.09865619328932132,
+        "peak_ram_mb": 1126.49,
+        "baseline_vram_mb": 794.0,
+        "peak_vram_mb": 3280.0,
+        "peak_vram_method": "nvidia-smi memory.used polling",
+        "vram_measurement_reliable": true,
+        "vram_measurement_scope": "total-device memory.used; includes other GPU processes",
+        "vram_sampling_interval_seconds": 0.5,
+        "detected_language": "zh",
+        "language_probability": 1,
+        "segment_count": 611,
+        "transcript_char_count": 5889,
+        "status": "success",
+        "failure_stage": null,
+        "failure_reason": null,
+        "quality_review_status": "pending_manual_review"
+      }
+    },
+    {
+      "run": "run-02",
+      "runtime": 96.80998305299909,
+      "rtf": 0.10756391607174381,
+      "segments": 610,
+      "chars": 5713,
+      "peak_vram": 3300.0,
+      "clip_sha256": "46311b2f8199b803e46f9e2cb296cae336c0b28c3ad73f76f7b6102488372ace",
+      "transcript_hash": "a0334749955c809feb7949bbb1f988298ec6726b53e48e2a161453d2b9592d08",
+      "metadata": {
+        "benchmark_type": "clean_same_clip",
+        "episode_id": "EP674",
+        "clip_path": "data/benchmarks/EP674/benchmark_clip.mp3",
+        "clip_sha256": "46311b2f8199b803e46f9e2cb296cae336c0b28c3ad73f76f7b6102488372ace",
+        "clip_start_seconds": 1200.0,
+        "clip_end_seconds": 2100.0,
+        "audio_duration_seconds": 900.022857,
+        "backend": "faster-whisper",
+        "model": "large-v3-turbo",
+        "device": "cuda",
+        "compute_type": "float16",
+        "beam_size": 5,
+        "vad_enabled": true,
+        "vad_parameters": {
+          "min_silence_duration_ms": 500
+        },
+        "timestamp_settings": "segment-level timestamps",
+        "initial_prompt": "Gooaye\n股癌\n謝孟恭\n台積電\nTSMC\nNVIDIA\nNVDA\nIntel\nINTC\nAMD\nASML\nBroadcom\nSupermicro\nCoWoS\nNVLink\nAI server\n聯準會\n升息\n降息\n毛利率\n本益比\n庫藏股\n多頭\n空頭\n軋空\n停損\n部位\n財報\n供應鏈\n",
+        "package_versions": {
+          "faster_whisper": "1.2.1",
+          "ctranslate2": "4.8.0",
+          "torch": "2.11.0+cu128"
+        },
+        "runtime_seconds": 96.80998305299909,
+        "model_load_seconds": 4.1392506029988,
+        "realtime_factor": 0.10756391607174381,
+        "peak_ram_mb": 1144.89,
+        "baseline_vram_mb": 750.0,
+        "peak_vram_mb": 3300.0,
+        "peak_vram_method": "nvidia-smi memory.used polling",
+        "vram_measurement_reliable": true,
+        "vram_measurement_scope": "total-device memory.used; includes other GPU processes",
+        "vram_sampling_interval_seconds": 0.5,
+        "detected_language": "zh",
+        "language_probability": 1,
+        "segment_count": 610,
+        "transcript_char_count": 5713,
+        "status": "success",
+        "failure_stage": null,
+        "failure_reason": null,
+        "quality_review_status": "pending_manual_review"
+      }
+    },
+    {
+      "run": "run-03",
+      "runtime": 93.70778909499859,
+      "rtf": 0.10411712143328221,
+      "segments": 610,
+      "chars": 5713,
+      "peak_vram": 3334.0,
+      "clip_sha256": "46311b2f8199b803e46f9e2cb296cae336c0b28c3ad73f76f7b6102488372ace",
+      "transcript_hash": "a0334749955c809feb7949bbb1f988298ec6726b53e48e2a161453d2b9592d08",
+      "metadata": {
+        "benchmark_type": "clean_same_clip",
+        "episode_id": "EP674",
+        "clip_path": "data/benchmarks/EP674/benchmark_clip.mp3",
+        "clip_sha256": "46311b2f8199b803e46f9e2cb296cae336c0b28c3ad73f76f7b6102488372ace",
+        "clip_start_seconds": 1200.0,
+        "clip_end_seconds": 2100.0,
+        "audio_duration_seconds": 900.022857,
+        "backend": "faster-whisper",
+        "model": "large-v3-turbo",
+        "device": "cuda",
+        "compute_type": "float16",
+        "beam_size": 5,
+        "vad_enabled": true,
+        "vad_parameters": {
+          "min_silence_duration_ms": 500
+        },
+        "timestamp_settings": "segment-level timestamps",
+        "initial_prompt": "Gooaye\n股癌\n謝孟恭\n台積電\nTSMC\nNVIDIA\nNVDA\nIntel\nINTC\nAMD\nASML\nBroadcom\nSupermicro\nCoWoS\nNVLink\nAI server\n聯準會\n升息\n降息\n毛利率\n本益比\n庫藏股\n多頭\n空頭\n軋空\n停損\n部位\n財報\n供應鏈\n",
+        "package_versions": {
+          "faster_whisper": "1.2.1",
+          "ctranslate2": "4.8.0",
+          "torch": "2.11.0+cu128"
+        },
+        "runtime_seconds": 93.70778909499859,
+        "model_load_seconds": 3.895834585000557,
+        "realtime_factor": 0.10411712143328221,
+        "peak_ram_mb": 1144.88,
+        "baseline_vram_mb": 780.0,
+        "peak_vram_mb": 3334.0,
+        "peak_vram_method": "nvidia-smi memory.used polling",
+        "vram_measurement_reliable": true,
+        "vram_measurement_scope": "total-device memory.used; includes other GPU processes",
+        "vram_sampling_interval_seconds": 0.5,
+        "detected_language": "zh",
+        "language_probability": 1,
+        "segment_count": 610,
+        "transcript_char_count": 5713,
+        "status": "success",
+        "failure_stage": null,
+        "failure_reason": null,
+        "quality_review_status": "pending_manual_review"
+      }
+    }
+  ],
+  "runtime_stats": {
+    "min": 88.7928289449992,
+    "max": 96.80998305299909,
+    "mean": 93.10353369766563,
+    "median": 93.70778909499859,
+    "stddev": 4.042589941703137,
+    "variation_pct": 9.029055840721032
+  },
+  "transcript_hashes": [
+    "a0334749955c809feb7949bbb1f988298ec6726b53e48e2a161453d2b9592d08",
+    "a35a3bfa1c341d6a382554ec2a1405cc029e8b624cfc5de880867ba8385c1607"
+  ],
+  "clip_sha256s": [
+    "46311b2f8199b803e46f9e2cb296cae336c0b28c3ad73f76f7b6102488372ace"
+  ],
+  "stability_classification": "usable with minor desktop interference"
+}

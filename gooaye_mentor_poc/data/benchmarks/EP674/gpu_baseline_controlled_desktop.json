@@ -1,0 +1,114 @@
+{
+  "classification": "controlled desktop baseline",
+  "samples": [
+    {
+      "timestamp": "2026/06/28 00:07:57.565",
+      "memory_used_mb": 817.0,
+      "utilization_gpu_percent": 26.0,
+      "pstate": "P5",
+      "power_draw_w": 7.79,
+      "temperature_gpu_c": 57.0
+    },
+    {
+      "timestamp": "2026/06/28 00:07:59.627",
+      "memory_used_mb": 817.0,
+      "utilization_gpu_percent": 26.0,
+      "pstate": "P5",
+      "power_draw_w": 7.74,
+      "temperature_gpu_c": 57.0
+    },
+    {
+      "timestamp": "2026/06/28 00:08:01.717",
+      "memory_used_mb": 817.0,
+      "utilization_gpu_percent": 29.0,
+      "pstate": "P5",
+      "power_draw_w": 7.75,
+      "temperature_gpu_c": 57.0
+    },
+    {
+      "timestamp": "2026/06/28 00:08:03.788",
+      "memory_used_mb": 817.0,
+      "utilization_gpu_percent": 29.0,
+      "pstate": "P5",
+      "power_draw_w": 7.82,
+      "temperature_gpu_c": 57.0
+    },
+    {
+      "timestamp": "2026/06/28 00:08:05.849",
+      "memory_used_mb": 795.0,
+      "utilization_gpu_percent": 31.0,
+      "pstate": "P5",
+      "power_draw_w": 7.84,
+      "temperature_gpu_c": 57.0
+    },
+    {
+      "timestamp": "2026/06/28 00:08:07.923",
+      "memory_used_mb": 794.0,
+      "utilization_gpu_percent": 30.0,
+      "pstate": "P5",
+      "power_draw_w": 6.72,
+      "temperature_gpu_c": 57.0
+    },
+    {
+      "timestamp": "2026/06/28 00:08:09.992",
+      "memory_used_mb": 794.0,
+      "utilization_gpu_percent": 27.0,
+      "pstate": "P5",
+      "power_draw_w": 7.78,
+      "temperature_gpu_c": 57.0
+    },
+    {
+      "timestamp": "2026/06/28 00:08:12.053",
+      "memory_used_mb": 794.0,
+      "utilization_gpu_percent": 29.0,
+      "pstate": "P5",
+      "power_draw_w": 7.4,
+      "temperature_gpu_c": 56.0
+    },
+    {
+      "timestamp": "2026/06/28 00:08:14.114",
+      "memory_used_mb": 794.0,
+      "utilization_gpu_percent": 29.0,
+      "pstate": "P5",
+      "power_draw_w": 7.77,
+      "temperature_gpu_c": 56.0
+    },
+    {
+      "timestamp": "2026/06/28 00:08:16.178",
+      "memory_used_mb": 794.0,
+      "utilization_gpu_percent": 29.0,
+      "pstate": "P8",
+      "power_draw_w": 6.7,
+      "temperature_gpu_c": 56.0
+    }
+  ],
+  "stats": {
+    "vram_mb": {
+      "min": 794.0,
+      "max": 817.0,
+      "median": 794.5
+    },
+    "utilization_percent": {
+      "min": 26.0,
+      "max": 31.0,
+      "median": 29.0
+    },
+    "power_w": {
+      "min": 6.7,
+      "max": 7.84,
+      "median": 7.76
+    },
+    "temperature_c": {
+      "min": 56.0,
+      "max": 57.0,
+      "median": 57.0
+    }
+  },
+  "pstates": [
+    "P5",
+    "P8"
+  ],
+  "nvidia_smi": "Sun Jun 28 00:08:18 2026       \n+-----------------------------------------------------------------------------------------+\n| NVIDIA-SMI 580.112                Driver Version: 581.95         CUDA Version: 13.0     |\n+-----------------------------------------+------------------------+----------------------+\n| GPU  Name                 Persistence-M | Bus-Id          Disp.A | Volatile Uncorr. ECC |\n| Fan  Temp   Perf          Pwr:Usage/Cap |           Memory-Usage | GPU-Util  Compute M. |\n|                                         |                        |               MIG M. |\n|=========================================+========================+======================|\n|   0  NVIDIA GeForce RTX 3050 ...    On  |   00000000:01:00.0 Off |                  N/A |\n| N/A   56C    P5              5W /   40W |     794MiB /   4096MiB |     29%      Default |\n|                                         |                        |                  N/A |\n+-----------------------------------------+------------------------+----------------------+\n\n+-----------------------------------------------------------------------------------------+\n| Processes:                                                                              |\n|  GPU   GI   CI              PID   Type   Process name                        GPU Memory |\n|        ID   ID                                                               Usage      |\n|=========================================================================================|\n|  No running processes found                                                             |\n+-----------------------------------------------------------------------------------------+\n",
+  "nvidia_smi_pmon": "# gpu         pid   type     sm    mem    enc    dec    jpg    ofa    command \n# Idx           #    C/G      %      %      %      %      %      %    name \n    0          -     -      -      -      -      -      -      -    -              \n",
+  "visible_processes": true
+}

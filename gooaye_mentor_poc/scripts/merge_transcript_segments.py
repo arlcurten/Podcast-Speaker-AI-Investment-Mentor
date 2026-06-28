@@ -29,12 +29,16 @@ def duration_stats(items: list[dict[str, Any]]) -> dict[str, float | int | None]
     }
 
 
+def join_segment_texts(texts: list[Any]) -> str:
+    return " ".join(str(text).strip() for text in texts if str(text).strip())
+
+
 def should_merge(current: dict[str, Any], next_seg: dict[str, Any], max_gap: float, max_duration: float, max_chars: int) -> bool:
     gap = float(next_seg["start"]) - float(current["end"])
     if gap < 0:
         gap = 0
     merged_duration = float(next_seg["end"]) - float(current["start"])
-    merged_chars = len((current["text"] + next_seg.get("text", "")).strip())
+    merged_chars = len(join_segment_texts([current["text"], next_seg.get("text", "")]))
     return gap <= max_gap and merged_duration <= max_duration and merged_chars <= max_chars
 
 
@@ -47,7 +51,7 @@ def merge_segments(segments: list[dict[str, Any]], max_gap: float, max_duration:
             "merged_id": 0,
             "start": float(seg["start"]),
             "end": float(seg["end"]),
-            "text": text,
+            "text": text.strip(),
             "source_segment_ids": [seg.get("segment_id")],
             "source_segment_count": 1,
         }
@@ -56,7 +60,7 @@ def merge_segments(segments: list[dict[str, Any]], max_gap: float, max_duration:
             continue
         if should_merge(current, item, max_gap, max_duration, max_chars):
             current["end"] = item["end"]
-            current["text"] = current["text"] + item["text"]
+            current["text"] = join_segment_texts([current["text"], item["text"]])
             current["source_segment_ids"].extend(item["source_segment_ids"])
             current["source_segment_count"] = len(current["source_segment_ids"])
         else:

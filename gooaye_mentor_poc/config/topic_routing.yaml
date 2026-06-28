@@ -1,0 +1,129 @@
+segmentation:
+  max_topic_duration_seconds: 240
+  min_topic_duration_seconds: 75
+  low_confidence_threshold: 0.55
+classification:
+  keyword_score_cap: 6
+  confidence_base: 0.45
+  confidence_keyword_weight: 0.05
+routing:
+  market_relevance_high: 0.70
+  market_relevance_mid: 0.35
+  investment_reasoning_threshold: 0.60
+  behavioral_style_threshold: 0.55
+  low_confidence_threshold: 0.55
+  near_threshold_margin: 0.05
+content_keywords:
+  market_analysis:
+    - 大盤
+    - 指數
+    - 台股
+    - 美股
+    - 多頭
+    - 空頭
+    - 反彈
+    - 崩
+    - 估值
+    - 利率
+    - 降息
+    - 升息
+    - 景氣
+  industry_company:
+    - 台積電
+    - TSMC
+    - NVIDIA
+    - NVDA
+    - AMD
+    - Intel
+    - ASML
+    - Broadcom
+    - Supermicro
+    - 半導體
+    - AI
+    - 伺服器
+    - 晶片
+    - 供應鏈
+  macro:
+    - 聯準會
+    - Fed
+    - 通膨
+    - 利率
+    - 匯率
+    - 關稅
+    - GDP
+    - 景氣
+  portfolio_positioning:
+    - 部位
+    - 持股
+    - 加碼
+    - 減碼
+    - 停損
+    - 停利
+    - 追高
+    - 踏空
+    - 風險
+  qa_investment:
+    - 來信
+    - Q&A
+    - QA
+    - 請問
+    - 想問
+    - 問一下
+    - 投資
+    - 股票
+  qa_non_investment:
+    - 來信
+    - 請問
+    - 想問
+    - 問一下
+    - 生活
+    - 感情
+    - 工作
+  personal_chat:
+    - 我覺得
+    - 我最近
+    - 生活
+    - 遊戲
+    - 聊天
+    - 開場
+  advertisement:
+    - 業配
+    - 廣告
+    - 贊助
+    - 優惠
+    - 折扣碼
+    - 合作
+  show_admin:
+    - 訂閱
+    - 留言
+    - 節目
+    - 聽眾
+    - 收聽
+    - 平台
+reasoning_keywords:
+  - 因為
+  - 所以
+  - 如果
+  - 但是
+  - 可是
+  - 代表
+  - 意味
+  - 假設
+  - 條件
+  - 風險
+  - 不確定
+  - 反過來
+  - 除非
+behavior_keywords:
+  - 我覺得
+  - 我會
+  - 我不會
+  - 怕
+  - 貪
+  - 踏空
+  - 停損
+  - 追高
+  - 心態
+  - 風格
+  - 保守
+  - 激進

@@ -13,4 +13,5 @@ Start with:
 - `AGENTS.md` for project-wide agent rules.
 - `docs/architecture.md` for the long-term architecture.
 - `docs/project-roadmap.md` for current and future phases.
+- `docs/future-improvements.md` for deferred optimization ideas.
 - `gooaye_mentor_poc/README.md` for Local POC commands.

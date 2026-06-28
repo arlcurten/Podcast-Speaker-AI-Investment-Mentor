@@ -39,15 +39,9 @@ Observed limitations:
 - Existing `peak_vram_mb` values from the original run are marked unreliable because PyTorch CUDA counters do not capture all CTranslate2 allocation behavior.
 - A manual spot check reportedly saw about `3454 MiB / 4096 MiB`, but this is not a formal peak measurement and may include other GPU processes.
 
-## Pending Measurement
+## Controlled Desktop Benchmark
 
-- Clean fixed-clip `large-v3-turbo` benchmark with idle GPU.
-- Same-clip `large-v3` comparison if GPU headroom permits.
-- Manual transcript quality review.
-
-## Clean Benchmark Attempt
-
-Prepared but not executed because the GPU was not stably near idle.
+The clean same-clip benchmark has now completed under a controlled desktop baseline. This is not a perfect zero-background lab run, but the GPU had low power draw, no visible process, and stable VRAM baseline.
 
 Fixed clip:
 
@@ -58,19 +52,50 @@ Fixed clip:
 - ffprobe duration: `900.022857s`
 - SHA-256: `46311b2f8199b803e46f9e2cb296cae336c0b28c3ad73f76f7b6102488372ace`
 
-GPU readiness observation:
+Baseline:
 
 - `nvidia-smi` showed no visible process.
-- `nvidia-smi pmon` showed no visible process.
-- GPU utilization still fluctuated around 25-32%, with one 56% sample.
+- VRAM min/max/median: `794 / 817 / 794.5 MiB`
+- Utilization min/max/median: `26 / 31 / 29%`
+- Power min/max/median: `6.70 / 7.84 / 7.76 W`
+- P-states observed: `P5`, `P8`
 
-Result:
+large-v3-turbo runs:
 
-- `large-v3-turbo` clean benchmark: not run.
-- `large-v3` same-clip comparison: not run.
-- Reason: clean-baseline requirement was not met.
+| Run | Runtime | RTF | Peak total VRAM | Segments | Chars | Transcript hash |
+| --- | ---: | ---: | ---: | ---: | ---: | --- |
+| run-01 | 88.793s | 0.099 | 3280 MiB | 611 | 5889 | `a35a3bfa1c341d6a382554ec2a1405cc029e8b624cfc5de880867ba8385c1607` |
+| run-02 | 96.810s | 0.108 | 3300 MiB | 610 | 5713 | `a0334749955c809feb7949bbb1f988298ec6726b53e48e2a161453d2b9592d08` |
+| run-03 | 93.708s | 0.104 | 3334 MiB | 610 | 5713 | `a0334749955c809feb7949bbb1f988298ec6726b53e48e2a161453d2b9592d08` |
 
-See `gooaye_mentor_poc/reports/clean_gpu_benchmark.md` and `gooaye_mentor_poc/data/evaluation/clean_gpu_benchmark.json`.
+Stability:
+
+- Mean runtime: `93.104s`
+- Median runtime: `93.708s`
+- Standard deviation: `4.043s`
+- Runtime variation: `9.029%`
+- Classification: usable with minor desktop interference
+- Transcript hashes: run-02 and run-03 match; run-01 differs.
+
+large-v3 same-clip result:
+
+- Status: success
+- Device: CUDA
+- Compute type: `int8_float16`
+- Runtime: `242.694s`
+- RTF: `0.270`
+- Peak total-device VRAM: `3571 MiB`
+- Segments: `537`
+- Characters: `5941`
+- Transcript hash: `40256b7f12c568be2aacd2d8e9e3dd82de0b0234c319e4b31ceb25d9ac810572`
+
+Interpretation:
+
+- `large-v3-turbo` has a usable controlled desktop same-clip baseline on this local RTX 3050.
+- `large-v3` can complete this 15-minute clip with `int8_float16`, but it is much slower and uses more VRAM.
+- Previous larger/longer local `large-v3` tests still show full-episode risk on 4 GB VRAM.
+
+Manual transcript quality review remains pending. Do not infer quality superiority from these benchmark numbers.
 
 Future benchmark metadata should record:
 
@@ -113,6 +138,33 @@ Verified from `data/evaluation/EP674_merge_summary.json`:
 - Merged layer is deterministic.
 - Text is not modified.
 - This is not semantic topic segmentation.
+
+The merge implementation now joins source segment text with a single space between non-empty stripped segment texts. Raw-to-merged integrity is verified by `gooaye_mentor_poc/scripts/validate_merged_transcript.py`.
+
+Verified from `gooaye_mentor_poc/data/evaluation/EP674_merge_integrity.json`:
+
+- Merged start timestamp equals the first contributing raw segment start.
+- Merged end timestamp equals the last contributing raw segment end.
+- `source_segment_ids` match the contributing raw segment IDs in order.
+- Merged text equals contributing raw source texts joined with the deterministic separator.
+
+## Normalization And Topic POC
+
+EP674 now has a separate Traditional Chinese normalization layer:
+
+- Raw normalized transcript: `gooaye_mentor_poc/data/transcripts/EP674/large-v3-turbo/normalized_transcript_zh_tw.json`
+- Merged normalized transcript: `gooaye_mentor_poc/data/transcripts/EP674/large-v3-turbo/normalized_merged_transcript_zh_tw.json`
+- Method: OpenCC `s2twp` plus project glossary.
+- Raw ASR transcript remains unchanged.
+
+A minimal deterministic topic segmentation, classification, and routing POC exists for EP674:
+
+- Topic segments: `gooaye_mentor_poc/data/topic_segments/EP674/topic_segments.json`
+- Classification rows: `gooaye_mentor_poc/data/topic_segments/EP674/classification.jsonl`
+- Routing rows: `gooaye_mentor_poc/data/topic_segments/EP674/routing.jsonl`
+- Review report: `gooaye_mentor_poc/reports/EP674_topic_segmentation_review.md`
+
+This POC uses keyword and continuity heuristics with configurable thresholds in `gooaye_mentor_poc/config/topic_routing.yaml`. It is designed for human review and does not create a vector database, RAG index, or Mentor Agent.
 
 ## Transcript Quality
 

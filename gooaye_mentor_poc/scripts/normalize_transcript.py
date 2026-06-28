@@ -1,0 +1,157 @@
+#!/usr/bin/env python3
+from __future__ import annotations
+
+import argparse
+import hashlib
+import json
+from pathlib import Path
+from typing import Any
+
+from common import CONFIG, DATA, path_for_report, sha256_file, utc_now, write_json
+
+
+def load_glossary(path: Path) -> list[dict[str, str]]:
+    rows: list[dict[str, str]] = []
+    for line in path.read_text(encoding="utf-8").splitlines():
+        if not line.strip() or line.startswith("#"):
+            continue
+        parts = line.split("\t")
+        if len(parts) < 2:
+            continue
+        source = parts[0].strip()
+        replacement = parts[1].strip()
+        if source:
+            rows.append({
+                "source": source,
+                "replacement": replacement,
+                "category": parts[2].strip() if len(parts) > 2 else "",
+                "notes": parts[3].strip() if len(parts) > 3 else "",
+            })
+    return sorted(rows, key=lambda item: len(item["source"]), reverse=True)
+
+
+def glossary_hash(rows: list[dict[str, str]]) -> str:
+    payload = json.dumps(rows, ensure_ascii=False, sort_keys=True).encode("utf-8")
+    return hashlib.sha256(payload).hexdigest()
+
+
+def load_opencc(config_name: str) -> tuple[Any, str]:
+    try:
+        import opencc  # type: ignore
+    except ImportError as exc:
+        raise SystemExit(
+            "OpenCC is required for deterministic Traditional Chinese normalization. "
+            "Install requirements.txt or run: python3 -m pip install opencc-python-reimplemented"
+        ) from exc
+    version = getattr(opencc, "__version__", "unknown")
+    return opencc.OpenCC(config_name), str(version)
+
+
+def normalize_text(text: str, converter: Any, glossary: list[dict[str, str]]) -> str:
+    normalized = converter.convert(text)
+    for row in glossary:
+        normalized = normalized.replace(row["source"], row["replacement"])
+    return normalized
+
+
+def normalize_raw_segments(
+    segments: list[dict[str, Any]],
+    converter: Any,
+    glossary: list[dict[str, str]],
+    method: str,
+    version: str,
+) -> list[dict[str, Any]]:
+    rows: list[dict[str, Any]] = []
+    for seg in segments:
+        segment_id = int(seg["segment_id"])
+        raw_text = str(seg.get("text", ""))
+        rows.append({
+            "id": segment_id,
+            "start": float(seg["start"]),
+            "end": float(seg["end"]),
+            "raw_text": raw_text,
+            "normalized_text_zh_tw": normalize_text(raw_text, converter, glossary),
+            "normalization_method": method,
+            "normalization_version": version,
+            "source_segment_ids": [segment_id],
+        })
+    return rows
+
+
+def normalize_merged_segments(
+    segments: list[dict[str, Any]],
+    converter: Any,
+    glossary: list[dict[str, str]],
+    method: str,
+    version: str,
+) -> list[dict[str, Any]]:
+    rows: list[dict[str, Any]] = []
+    for seg in segments:
+        raw_text = str(seg.get("text", ""))
+        rows.append({
+            "id": int(seg["merged_id"]),
+            "merged_id": int(seg["merged_id"]),
+            "start": float(seg["start"]),
+            "end": float(seg["end"]),
+            "raw_text": raw_text,
+            "normalized_text_zh_tw": normalize_text(raw_text, converter, glossary),
+            "normalization_method": method,
+            "normalization_version": version,
+            "source_segment_ids": list(seg.get("source_segment_ids", [])),
+        })
+    return rows
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--episode", default="EP674")
+    parser.add_argument("--configuration", default="large-v3-turbo")
+    parser.add_argument("--opencc-config", default="s2twp")
+    parser.add_argument("--glossary", type=Path, default=CONFIG / "normalization_glossary.tsv")
+    args = parser.parse_args()
+
+    base = DATA / "transcripts" / args.episode / args.configuration
+    raw_path = base / "transcript.json"
+    merged_path = base / "merged_transcript.json"
+    raw_payload = json.loads(raw_path.read_text(encoding="utf-8"))
+    merged_payload = json.loads(merged_path.read_text(encoding="utf-8"))
+
+    converter, opencc_version = load_opencc(args.opencc_config)
+    glossary = load_glossary(args.glossary)
+    method = f"OpenCC {args.opencc_config} + project glossary"
+    version = f"opencc-python-reimplemented {opencc_version}"
+    metadata = {
+        "episode_id": args.episode,
+        "configuration": args.configuration,
+        "created_at": utc_now(),
+        "source_raw_transcript": path_for_report(raw_path),
+        "source_merged_transcript": path_for_report(merged_path),
+        "source_raw_transcript_sha256": sha256_file(raw_path),
+        "source_merged_transcript_sha256": sha256_file(merged_path),
+        "normalization_method": method,
+        "normalization_version": version,
+        "opencc_config": args.opencc_config,
+        "glossary_path": path_for_report(args.glossary),
+        "glossary_sha256": glossary_hash(glossary),
+        "glossary_entry_count": len(glossary),
+        "does_not_modify_raw_transcript": True,
+        "uses_llm": False,
+    }
+
+    raw_rows = normalize_raw_segments(raw_payload.get("segments", []), converter, glossary, method, version)
+    merged_rows = normalize_merged_segments(merged_payload.get("segments", []), converter, glossary, method, version)
+    write_json(base / "normalized_transcript_zh_tw.json", {"metadata": metadata, "segments": raw_rows})
+    write_json(base / "normalized_merged_transcript_zh_tw.json", {"metadata": metadata, "segments": merged_rows})
+    print(json.dumps({
+        "raw_segments": len(raw_rows),
+        "merged_segments": len(merged_rows),
+        "raw_output": path_for_report(base / "normalized_transcript_zh_tw.json"),
+        "merged_output": path_for_report(base / "normalized_merged_transcript_zh_tw.json"),
+        "method": method,
+        "version": version,
+    }, ensure_ascii=False, indent=2))
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

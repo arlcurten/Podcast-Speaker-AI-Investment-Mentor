@@ -102,6 +102,8 @@ reports/EP*_segment_audit.md
 !config/**
 !scripts/
 !scripts/**
+scripts/__pycache__/
+scripts/**/*.pyc
 
 # Empty directory placeholders
 !.gitkeep

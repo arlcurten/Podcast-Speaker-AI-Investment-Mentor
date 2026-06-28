@@ -1,4 +1,4 @@
-# Gooaye Podcast Speaker AI Mentor Local POC
+# Gooaye Mentor Local POC
 
 This folder is the Local POC for the Gooaye 股癌 Podcast Speaker AI Investment Mentor project.
 
@@ -8,163 +8,87 @@ Full project root:
 /home/g9161/projects/Podcast-Speaker-AI-Investment-Mentor
 ```
 
-Local POC directory:
+Local POC root:
 
 ```text
 /home/g9161/projects/Podcast-Speaker-AI-Investment-Mentor/gooaye_mentor_poc
 ```
 
-The current phase covers RSS discovery, RSS ingestion, episode manifest generation, selected MP3 download, audio validation, local transcription benchmarking, segment audit, deterministic merged utterances, and manual transcript review preparation.
+Current scope: one-episode EP674 ingestion, audio validation, raw transcription, normalization, deterministic merge, minimal topic/classification/routing POC, and human review preparation.
 
-It intentionally does not build RAG, embeddings, vector databases, AI agents, speaker personality models, fine-tuning, full cloud batch processing, or production content classification.
+Out of scope unless explicitly requested: RAG, embeddings, vector database, Mentor Agent, fine-tuning, cloud orchestration, new episode download, or new GPU benchmark.
 
-## Current POC Episode
+## What To Review Now
 
-EP674 is the completed Local POC episode. It has downloaded audio, ffprobe validation, SHA-256 metadata, a full `large-v3-turbo` transcript, segment audit, deterministic merged transcript, and manual review package.
+Use this single file:
 
-EP672 is only a manifest/discovery sanity-check example from earlier work. Do not treat EP672 as the completed transcription POC unless new artifacts are explicitly generated for it.
-
-## Quick Start
-
-```bash
-cd /home/g9161/projects/Podcast-Speaker-AI-Investment-Mentor/gooaye_mentor_poc
-python3 -m venv .venv
-source .venv/bin/activate
-python -m pip install --upgrade pip
-python -m pip install -r requirements.txt
+```text
+reports/EP674_human_review.md
 ```
 
-Install ffmpeg if needed:
+It contains 10 selected topic segments and a compact review form. The goal is not to check every ASR word. Judge whether topic boundaries and classification preserve useful investment reasoning.
+
+## File Map
+
+| Role | Current path | Commit? | Can regenerate? | Notes |
+|---|---|---:|---:|---|
+| POC rules | `AGENTS.md` | yes | no | Local agent instructions. |
+| Scripts | `scripts/*.py` | yes | no | Reusable pipeline code only. |
+| Config | `config/*.yaml`, `config/*.txt`, `config/*.tsv` | yes | no | Canonical settings, terminology, thresholds. |
+| RSS source metadata | `data/rss/`, `data/manifests/`, `data/environment_inspection.json` | mixed | yes/partly | Source evidence for ingestion; XML/manifest files may be ignored if bulky. |
+| Audio source evidence | `data/audio/EP674/audio_metadata.json`, `download_metadata.json` | usually yes | partly | MP3 itself is ignored; metadata records size/hash/ffprobe. |
+| Raw transcript | `data/transcripts/EP674/large-v3-turbo/transcript.json` | no by default | expensive | Immutable ASR output. Do not overwrite. |
+| Normalized transcript | `data/transcripts/EP674/large-v3-turbo/normalized_*.json` | no by default | yes | Derived OpenCC + glossary layer. |
+| Merged transcript | `data/transcripts/EP674/large-v3-turbo/merged_transcript.json` | no by default | yes | Derived deterministic readability layer. |
+| Current topic POC | `data/topic_segments/EP674/topic_segments.json` | optional | yes | Canonical machine-readable topic/classification output for this POC. |
+| Routing output | `data/topic_segments/EP674/routing.jsonl` | optional | yes | JSONL is only useful if a downstream streaming/indexing consumer appears. |
+| Human review | `reports/EP674_human_review.md` | yes | yes | Main review artifact for the user. |
+| Historical reports | `reports/local_poc_report.md`, `reports/clean_gpu_benchmark.md` | optional | partly | Useful references, not day-to-day source of truth. |
+| Benchmark/tmp outputs | `data/benchmarks/`, review clips, `__pycache__/` | no | yes | Keep ignored; move future scratch into `tmp/`. |
+
+## Rebuild Current Derived Outputs
+
+Run from this directory:
 
 ```bash
-sudo apt-get update
-sudo apt-get install -y ffmpeg
-```
-
-## Common CPU-Safe Commands
-
-Inspect the local machine:
-
-```bash
-python scripts/inspect_environment.py
-```
-
-Fetch RSS and build manifests:
-
-```bash
-python scripts/fetch_rss.py
-```
-
-The original requested SoundOn UUID returned HTTP 404 during this POC. The current feed was resolved via Apple Podcasts lookup for collection ID `1500839292`:
-
-```bash
-python scripts/fetch_rss.py \
-  --rss-url https://feeds.soundon.fm/podcasts/4f2a74ec-cc7a-4284-be4b-74b882da701c \
-  --apple-fallback
-```
-
-Download one explicitly selected episode from the manifest:
-
-```bash
-python scripts/download_episode.py --episode EP674
-```
-
-Inspect the downloaded audio:
-
-```bash
-python scripts/inspect_audio.py --episode EP674
-```
-
-Build the local report:
-
-```bash
-python scripts/build_poc_report.py
-```
-
-Run the default CPU-safe validation:
-
-```bash
+python scripts/merge_transcript_segments.py --episode EP674 --configuration large-v3-turbo
+python scripts/validate_merged_transcript.py --episode EP674 --configuration large-v3-turbo
+python scripts/normalize_transcript.py --episode EP674 --configuration large-v3-turbo
+python scripts/build_topic_segments.py --episode EP674 --configuration large-v3-turbo
 python3 -m py_compile scripts/*.py
 ```
 
-## GPU Work
+This sequence does not regenerate the raw transcript, download audio, or run GPU work.
 
-Do not start transcription, CUDA benchmarks, or model comparisons unless the user explicitly approves. Before any GPU work, check:
+## Important Source Inputs
 
-```bash
-nvidia-smi
-```
+- Episode manifest: `data/manifests/episodes.jsonl`
+- Audio metadata/hash: `data/audio/EP674/audio_metadata.json`
+- Raw transcript: `data/transcripts/EP674/large-v3-turbo/transcript.json`
+- Known raw transcript facts:
+  - segment count: `2493`
+  - segment hash: `83e80be92c616a63a56bbfa842566029e24e4be62730d4a1ba716cfe5fa6f89f`
 
-The EP674 `large-v3-turbo` full run completed locally, but its runtime is not a clean baseline if other GPU workload was present. Local `large-v3` CUDA tests on the 4 GB RTX 3050 hit out-of-memory in tested partial configurations.
+## Generated Files That Can Be Deleted And Rebuilt
 
-A fixed benchmark clip has been prepared at `data/benchmarks/EP674/benchmark_clip.mp3`, but the clean benchmark was not started because repeated `nvidia-smi` samples showed non-idle GPU utilization. See [reports/clean_gpu_benchmark.md](reports/clean_gpu_benchmark.md).
+Safe to delete only if you are intentionally cleaning derived outputs:
 
-## Segment Audit And Manual Review
+- `data/transcripts/EP674/large-v3-turbo/merged_transcript.*`
+- `data/transcripts/EP674/large-v3-turbo/normalized_*.json`
+- `data/evaluation/EP674_merge_integrity.json`
+- `data/evaluation/EP674_topic_segmentation_summary.json`
+- `data/topic_segments/EP674/`
+- `reports/EP674_merge_integrity.md`
+- `reports/EP674_topic_segmentation_review.md`
 
-Raw ASR output is preserved. Existing EP674 artifacts include raw transcript, deterministic merged transcript, segment audit, manual review CSV, and review clips.
-
-To regenerate the audit and merged layer without changing raw transcript text:
-
-```bash
-python scripts/audit_transcript_segments.py --episode EP674 --configuration large-v3-turbo
-python scripts/merge_transcript_segments.py --episode EP674 --configuration large-v3-turbo
-```
-
-The merged transcript is not topic segmentation. It only joins adjacent raw ASR segments using fixed gap, duration, and length limits, preserves source segment IDs, and does not rewrite text.
-
-Prepare review windows:
-
-```bash
-python scripts/prepare_review_package.py --episode EP674 --configuration large-v3-turbo --create-clips
-```
-
-Then open `data/evaluation/manual_review.csv` and fill one or more rows per observed issue:
-
-- `expected_text`: what you hear in the audio.
-- `transcribed_text`: the ASR text being judged.
-- `error_category`: one of Chinese substitution, English company-name error, Ticker error, Financial terminology error, Number error, Negation error, Missing words, Hallucination, Repetition, Segmentation, Timestamp drift, Other.
-- `severity`: minor, moderate, or critical.
-- `semantic_impact`: none, low, changes_entity, changes_number, changes_sentiment, changes_reasoning, or unknown.
-- `notes`: brief explanation and any uncertainty.
-
-Do not mark transcript quality as accepted until sampled windows have been checked against the source audio.
+Do not delete raw transcripts, MP3 files, or benchmark artifacts without explicit user confirmation.
 
 ## Documentation
 
-Coding agents should read [AGENTS.md](AGENTS.md) before making changes.
-
-Detailed notes:
-
-- [../docs/architecture.md](../docs/architecture.md): project-wide pipeline and completion state.
-- [../docs/data-model.md](../docs/data-model.md): project-wide raw and derived data layers.
-- [../docs/cloud-processing-plan.md](../docs/cloud-processing-plan.md): future RunPod/Vast.ai/cloud pilot plan.
-- [../docs/poc/data-source-notes.md](../docs/poc/data-source-notes.md): RSS, SoundOn, Apple Podcasts, manifest, and enclosure-length behavior.
-- [../docs/poc/local-transcription-poc.md](../docs/poc/local-transcription-poc.md): EP674 transcription results and benchmark limitations.
-- [../docs/poc/troubleshooting.md](../docs/poc/troubleshooting.md): symptoms, causes, checks, and recommended handling.
-- [reports/manual_review_guide.md](reports/manual_review_guide.md): how to perform the EP674 manual listening review.
-
-## Data Not To Commit
-
-Do not commit MP3 files, `.part` files, model caches, transcript outputs, `__pycache__`, secrets, credentials, or large generated benchmark artifacts unless the user explicitly decides to version them. See `.gitignore`.
-
-## Cleanup
-
-Remove local audio and transcripts:
-
-```bash
-rm -rf data/audio data/transcripts
-```
-
-Remove common model caches:
-
-```bash
-rm -rf ~/.cache/huggingface ~/.cache/torch ~/.cache/ctranslate2
-```
-
-## Known Limits
-
-- Manual transcript quality review is required; scripts do not fabricate listening judgments.
-- CPU transcription with large-v3 can be very slow. Use partial-audio benchmarks if full episodes are not practical.
-- Cloud GPU timing in the report is an extrapolation unless a real cloud pilot is executed.
-- `terminology.txt` is only used as an initial prompt. Raw transcripts are not force-rewritten.
-- Troubleshooting details are in [../docs/poc/troubleshooting.md](../docs/poc/troubleshooting.md).
+- Project-wide rules: `../AGENTS.md`
+- Local rules: `AGENTS.md`
+- Architecture: `../docs/architecture.md`
+- Data model: `../docs/data-model.md`
+- Future improvements: `../docs/future-improvements.md`
+- POC details: `../docs/poc/local-transcription-poc.md`
+- Troubleshooting: `../docs/poc/troubleshooting.md`

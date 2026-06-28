@@ -19,14 +19,14 @@
     "count": 132,
     "mean_duration_seconds": 24.02219696969697,
     "median_duration_seconds": 24.430000000000064,
-    "mean_text_length": 153.4848484848485
+    "mean_text_length": 171.37121212121212
   },
   "file_sizes_bytes": {
-    "transcript.json": 788858,
+    "transcript.json": 789798,
     "transcript.srt": 150277,
     "transcript.md": 109961,
-    "merged_transcript.json": 116147,
-    "merged_transcript.srt": 63787,
-    "merged_transcript.md": 61867
+    "merged_transcript.json": 118509,
+    "merged_transcript.srt": 66148,
+    "merged_transcript.md": 64228
   }
 }
