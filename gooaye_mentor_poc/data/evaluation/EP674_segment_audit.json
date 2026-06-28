@@ -1,0 +1,71 @@
+{
+  "transcript_path": "data/transcripts/EP674/large-v3-turbo/transcript.json",
+  "segment_count": 2493,
+  "is_faster_whisper_segment_shape": true,
+  "appears_to_be_word_timestamps": false,
+  "segment_keys_sample": [
+    "avg_logprob",
+    "compression_ratio",
+    "configuration",
+    "end",
+    "model",
+    "no_speech_prob",
+    "segment_id",
+    "start",
+    "text"
+  ],
+  "duration_seconds": {
+    "mean": 1.2719334135579623,
+    "median": 1.2000000000000455,
+    "p10": 0.6600000000001274,
+    "p90": 1.9400000000000546,
+    "max": 30.0
+  },
+  "text_characters": {
+    "mean": 8.126754913758523,
+    "median": 8.0,
+    "p10": 5.0,
+    "p90": 12.0,
+    "max": 21.0
+  },
+  "counts": {
+    "duration_lt_0_5s": 76,
+    "duration_lt_1s": 795,
+    "cjk_chars_lt_3": 46,
+    "punctuation_or_blank_only": 0,
+    "duplicate_segment_ids": 0,
+    "adjacent_duplicate_text": 2,
+    "overlap_count": 0,
+    "same_timestamp_count": 0,
+    "non_monotonic_timestamp_count": 0
+  },
+  "max_overlap_seconds": 0.0,
+  "gap_seconds": {
+    "mean": 0.0031540930979132367,
+    "median": 0.0,
+    "p10": 0.0,
+    "p90": 0.0,
+    "max": 2.419999999999959
+  },
+  "adjacent_duplicate_examples": [
+    {
+      "index": 632,
+      "text": "几率是偏低",
+      "previous_segment_id": 631,
+      "segment_id": 632
+    },
+    {
+      "index": 796,
+      "text": "升息的可能性",
+      "previous_segment_id": 795,
+      "segment_id": 796
+    }
+  ],
+  "srt_file_size_bytes": 150277,
+  "markdown_file_size_bytes": 109961,
+  "fragmentation_assessment": "over-fragmented for SRT/Markdown readability",
+  "original_transcript_path": "/home/g9161/projects/gooaye_mentor_poc/data/transcripts/EP674/large-v3-turbo/transcript.json",
+  "project_relative_path": "data/transcripts/EP674/large-v3-turbo/transcript.json",
+  "runtime_absolute_path": "/home/g9161/projects/Podcast-Speaker-AI-Investment-Mentor/gooaye_mentor_poc/data/transcripts/EP674/large-v3-turbo/transcript.json",
+  "path_migration_note": "Repository moved under /home/g9161/projects/Podcast-Speaker-AI-Investment-Mentor; project-relative paths are now preferred."
+}

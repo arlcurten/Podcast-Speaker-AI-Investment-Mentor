@@ -1,0 +1,253 @@
+{
+  "metadata": {
+    "episode_id": "EP674",
+    "configuration_name": "large-v3-turbo_partial_60s",
+    "backend": "faster-whisper",
+    "model": "large-v3-turbo",
+    "model_revision": null,
+    "package_versions": {
+      "faster_whisper": "1.2.1",
+      "ctranslate2": "4.8.0",
+      "torch": "2.11.0+cu128"
+    },
+    "device": "cuda",
+    "compute_type": "float16",
+    "beam_size": 5,
+    "vad_enabled": true,
+    "vad_parameters": {
+      "min_silence_duration_ms": 500
+    },
+    "timestamp_settings": "segment-level timestamps",
+    "initial_prompt": "Gooaye\n股癌\n謝孟恭\n台積電\nTSMC\nNVIDIA\nNVDA\nIntel\nINTC\nAMD\nASML\nBroadcom\nSupermicro\nCoWoS\nNVLink\nAI server\n聯準會\n升息\n降息\n毛利率\n本益比\n庫藏股\n多頭\n空頭\n軋空\n停損\n部位\n財報\n供應鏈\n",
+    "source_audio": "/tmp/gooaye_clip_bfz36nkd/clip.wav",
+    "partial_audio_seconds": 60,
+    "audio_duration_seconds": 60.0,
+    "runtime_seconds": 18.17438019999986,
+    "realtime_factor": 0.30290633666666433,
+    "peak_ram_mb": 1077.03,
+    "peak_vram_mb": null,
+    "detected_language": "zh",
+    "language_probability": 1,
+    "segment_count": 19,
+    "transcript_char_count": 176,
+    "status": "success",
+    "failure_reason": null,
+    "completed_at": "2026-06-28T05:04:20.105651+00:00",
+    "vram_measurement_reliable": false,
+    "vram_measurement_note": "Original run used PyTorch CUDA counters, which do not capture CTranslate2 allocations. During EP674 large-v3-turbo full transcription, a manual nvidia-smi spot check showed about 3454 MiB used out of 4096 MiB, but this is not a reliable peak measurement and may include other GPU workloads.",
+    "vram_measurement_scope": "unknown for original run",
+    "vram_sampling_interval_seconds": null,
+    "baseline_vram_mb": null
+  },
+  "segments": [
+    {
+      "segment_id": 0,
+      "start": 0.0,
+      "end": 30.0,
+      "text": "博 博 博",
+      "avg_logprob": -1.7249999642372131,
+      "no_speech_prob": 0.0,
+      "compression_ratio": 0.7333333333333333,
+      "model": "large-v3-turbo",
+      "configuration": "large-v3-turbo"
+    },
+    {
+      "segment_id": 1,
+      "start": 30.0,
+      "end": 32.66,
+      "text": "扩展已经是全台最大的充电网",
+      "avg_logprob": -0.07593006243308385,
+      "no_speech_prob": 0.0,
+      "compression_ratio": 1.2926829268292683,
+      "model": "large-v3-turbo",
+      "configuration": "large-v3-turbo"
+    },
+    {
+      "segment_id": 2,
+      "start": 32.66,
+      "end": 34.64,
+      "text": "提供快充慢充家用充电",
+      "avg_logprob": -0.07593006243308385,
+      "no_speech_prob": 0.0,
+      "compression_ratio": 1.2926829268292683,
+      "model": "large-v3-turbo",
+      "configuration": "large-v3-turbo"
+    },
+    {
+      "segment_id": 3,
+      "start": 34.64,
+      "end": 36.68,
+      "text": "还有跨品牌充电漫游服务",
+      "avg_logprob": -0.07593006243308385,
+      "no_speech_prob": 0.0,
+      "compression_ratio": 1.2926829268292683,
+      "model": "large-v3-turbo",
+      "configuration": "large-v3-turbo"
+    },
+    {
+      "segment_id": 4,
+      "start": 36.68,
+      "end": 37.58,
+      "text": "意思就是说",
+      "avg_logprob": -0.07593006243308385,
+      "no_speech_prob": 0.0,
+      "compression_ratio": 1.2926829268292683,
+      "model": "large-v3-turbo",
+      "configuration": "large-v3-turbo"
+    },
+    {
+      "segment_id": 5,
+      "start": 37.58,
+      "end": 38.88,
+      "text": "不管你是平常通勤",
+      "avg_logprob": -0.07593006243308385,
+      "no_speech_prob": 0.0,
+      "compression_ratio": 1.2926829268292683,
+      "model": "large-v3-turbo",
+      "configuration": "large-v3-turbo"
+    },
+    {
+      "segment_id": 6,
+      "start": 38.88,
+      "end": 39.62,
+      "text": "假日出游",
+      "avg_logprob": -0.07593006243308385,
+      "no_speech_prob": 0.0,
+      "compression_ratio": 1.2926829268292683,
+      "model": "large-v3-turbo",
+      "configuration": "large-v3-turbo"
+    },
+    {
+      "segment_id": 7,
+      "start": 39.62,
+      "end": 41.2,
+      "text": "甚至是临时跑远一点",
+      "avg_logprob": -0.07593006243308385,
+      "no_speech_prob": 0.0,
+      "compression_ratio": 1.2926829268292683,
+      "model": "large-v3-turbo",
+      "configuration": "large-v3-turbo"
+    },
+    {
+      "segment_id": 8,
+      "start": 41.2,
+      "end": 42.88,
+      "text": "只要是EV Oasis的会员",
+      "avg_logprob": -0.07593006243308385,
+      "no_speech_prob": 0.0,
+      "compression_ratio": 1.2926829268292683,
+      "model": "large-v3-turbo",
+      "configuration": "large-v3-turbo"
+    },
+    {
+      "segment_id": 9,
+      "start": 42.88,
+      "end": 44.76,
+      "text": "都比较容易找到地方补电",
+      "avg_logprob": -0.07593006243308385,
+      "no_speech_prob": 0.0,
+      "compression_ratio": 1.2926829268292683,
+      "model": "large-v3-turbo",
+      "configuration": "large-v3-turbo"
+    },
+    {
+      "segment_id": 10,
+      "start": 44.76,
+      "end": 46.26,
+      "text": "不用一直焦虑甚几%",
+      "avg_logprob": -0.07593006243308385,
+      "no_speech_prob": 0.0,
+      "compression_ratio": 1.2926829268292683,
+      "model": "large-v3-turbo",
+      "configuration": "large-v3-turbo"
+    },
+    {
+      "segment_id": 11,
+      "start": 46.26,
+      "end": 48.02,
+      "text": "尤其现在电动车越来越多",
+      "avg_logprob": -0.07593006243308385,
+      "no_speech_prob": 0.0,
+      "compression_ratio": 1.2926829268292683,
+      "model": "large-v3-turbo",
+      "configuration": "large-v3-turbo"
+    },
+    {
+      "segment_id": 12,
+      "start": 48.02,
+      "end": 49.98,
+      "text": "充电这个事情跟加油一样",
+      "avg_logprob": -0.07593006243308385,
+      "no_speech_prob": 0.0,
+      "compression_ratio": 1.2926829268292683,
+      "model": "large-v3-turbo",
+      "configuration": "large-v3-turbo"
+    },
+    {
+      "segment_id": 13,
+      "start": 49.98,
+      "end": 51.26,
+      "text": "变成日常的一部分",
+      "avg_logprob": -0.07593006243308385,
+      "no_speech_prob": 0.0,
+      "compression_ratio": 1.2926829268292683,
+      "model": "large-v3-turbo",
+      "configuration": "large-v3-turbo"
+    },
+    {
+      "segment_id": 14,
+      "start": 51.26,
+      "end": 52.94,
+      "text": "那这样占点密度高",
+      "avg_logprob": -0.07593006243308385,
+      "no_speech_prob": 0.0,
+      "compression_ratio": 1.2926829268292683,
+      "model": "large-v3-turbo",
+      "configuration": "large-v3-turbo"
+    },
+    {
+      "segment_id": 15,
+      "start": 52.94,
+      "end": 54.98,
+      "text": "充电速度跟整体的便利性",
+      "avg_logprob": -0.07593006243308385,
+      "no_speech_prob": 0.0,
+      "compression_ratio": 1.2926829268292683,
+      "model": "large-v3-turbo",
+      "configuration": "large-v3-turbo"
+    },
+    {
+      "segment_id": 16,
+      "start": 54.98,
+      "end": 56.88,
+      "text": "就会直接影响到用车体验",
+      "avg_logprob": -0.07593006243308385,
+      "no_speech_prob": 0.0,
+      "compression_ratio": 1.2926829268292683,
+      "model": "large-v3-turbo",
+      "configuration": "large-v3-turbo"
+    },
+    {
+      "segment_id": 17,
+      "start": 56.88,
+      "end": 58.66,
+      "text": "如果说本来就是电车车主",
+      "avg_logprob": -0.07593006243308385,
+      "no_speech_prob": 0.0,
+      "compression_ratio": 1.2926829268292683,
+      "model": "large-v3-turbo",
+      "configuration": "large-v3-turbo"
+    },
+    {
+      "segment_id": 18,
+      "start": 58.66,
+      "end": 59.88,
+      "text": "或是正在考虑",
+      "avg_logprob": -0.14765625,
+      "no_speech_prob": 0.0,
+      "compression_ratio": 0.6206896551724138,
+      "model": "large-v3-turbo",
+      "configuration": "large-v3-turbo"
+    }
+  ]
+}

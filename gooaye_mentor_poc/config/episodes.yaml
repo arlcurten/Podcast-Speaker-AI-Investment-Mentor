@@ -1,0 +1,18 @@
+requested_rss_url: "https://feeds.soundon.fm/podcasts/4f2a74ec-cc7a-4284-be4b-74b882da701c"
+active_rss_url: "https://feeds.soundon.fm/podcasts/954689a5-3096-43a4-a80b-7810b219cef3.xml"
+notes:
+  - "Requested RSS returned HTTP 404 during local POC execution."
+  - "Active RSS was discovered via Apple Podcasts lookup for Gooaye 股癌."
+selected_episodes:
+  - episode_id: "EP674"
+    role: "latest_episode"
+    publication_date: "2026-06-27T07:23:35+00:00"
+    title: "EP674 | 🦋"
+  - episode_id: "EP292"
+    role: "2022_bear_market_nearby"
+    publication_date: "2022-10-29T08:33:20+00:00"
+    title: "EP292 | 🦴"
+  - episode_id: "EP353"
+    role: "2023_ai_theme_early_nearby"
+    publication_date: "2023-05-31T07:42:38+00:00"
+    title: "EP353 | 🎡"

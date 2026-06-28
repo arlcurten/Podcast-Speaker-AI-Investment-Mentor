@@ -1,0 +1,37 @@
+{
+  "operating_system": "Linux-6.18.33.1-microsoft-standard-WSL2-x86_64-with-glibc2.43",
+  "system": "Linux",
+  "machine": "x86_64",
+  "is_apple_silicon": false,
+  "cpu_model": "12th Gen Intel(R) Core(TM) i7-12700H",
+  "cpu_core_count_logical": 20,
+  "cpu_core_count_physical": 10,
+  "total_ram_gb": 7.59,
+  "available_ram_gb": 6.61,
+  "total_disk_gb": 1006.85,
+  "available_disk_gb": 943.43,
+  "python_version": "3.12.13 | packaged by conda-forge | (main, Mar  5 2026, 16:50:00) [GCC 14.3.0]",
+  "ffmpeg_version": "ffmpeg version 8.0.1-3ubuntu2 Copyright (c) 2000-2025 the FFmpeg developers",
+  "ffmpeg_error": null,
+  "ffprobe_version": "ffprobe version 8.0.1-3ubuntu2 Copyright (c) 2007-2025 the FFmpeg developers",
+  "ffprobe_error": null,
+  "faster_whisper_version": "1.2.1",
+  "ctranslate2_version": "4.8.0",
+  "has_nvidia_gpu": true,
+  "gpus": [
+    {
+      "name": "NVIDIA GeForce RTX 3050 Laptop GPU",
+      "vram_mb": "4096",
+      "driver_version": "581.95"
+    }
+  ],
+  "cuda_version_nvidia_smi": "13.0",
+  "torch_version": "2.11.0+cu128",
+  "torch_cuda_available": true,
+  "torch_cuda_version": "12.8",
+  "torch_cuda_device_count": 1,
+  "torch_cuda_device_name": "NVIDIA GeForce RTX 3050 Laptop GPU",
+  "torch_cuda_vram_mb": 4096,
+  "torch_mps_available": false,
+  "recommended_transcription_backend": "faster-whisper CUDA"
+}

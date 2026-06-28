@@ -1,0 +1,32 @@
+{
+  "episode_id": "EP674",
+  "configuration": "large-v3-turbo",
+  "source": "deterministic merge of raw ASR segments",
+  "does_not_modify_text": true,
+  "not_topic_segmentation": true,
+  "merge_parameters": {
+    "max_gap_seconds": 1.2,
+    "max_duration_seconds": 25.0,
+    "max_chars": 220
+  },
+  "raw_stats": {
+    "count": 2493,
+    "mean_duration_seconds": 1.2719334135579623,
+    "median_duration_seconds": 1.2000000000000455,
+    "mean_text_length": 8.126754913758523
+  },
+  "merged_stats": {
+    "count": 132,
+    "mean_duration_seconds": 24.02219696969697,
+    "median_duration_seconds": 24.430000000000064,
+    "mean_text_length": 153.4848484848485
+  },
+  "file_sizes_bytes": {
+    "transcript.json": 788858,
+    "transcript.srt": 150277,
+    "transcript.md": 109961,
+    "merged_transcript.json": 116147,
+    "merged_transcript.srt": 63787,
+    "merged_transcript.md": 61867
+  }
+}

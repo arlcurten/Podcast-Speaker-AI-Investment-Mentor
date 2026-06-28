@@ -1,0 +1,107 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Environment variables / secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+credentials.json
+
+# Logs and temporary files
+*.log
+*.tmp
+*.temp
+*.part
+.DS_Store
+Thumbs.db
+
+# IDE / editor
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Model caches and weights
+model_cache/
+models/
+.cache/
+huggingface/
+*.bin
+*.pt
+*.pth
+*.ckpt
+*.safetensors
+*.onnx
+
+# Raw RSS snapshots and generated manifests
+data/rss/*.xml
+data/manifests/*.jsonl
+data/manifests/*.csv
+
+# Downloaded and generated audio
+data/audio/
+data/benchmarks/**/*.mp3
+data/review_clips/
+*.mp3
+*.wav
+*.m4a
+*.flac
+*.aac
+
+# Generated transcripts
+data/transcripts/
+data/benchmarks/**/transcript.json
+data/benchmarks/**/transcript.srt
+data/benchmarks/**/transcript.md
+
+# Generated evaluation datasets
+data/evaluation/content_filtering_segments.csv
+data/evaluation/content_filtering_sample.csv
+
+# Keep small human-review templates and summaries trackable
+!data/evaluation/manual_review.csv
+!data/evaluation/*.schema.json
+!data/evaluation/*summary.json
+!data/evaluation/clean_gpu_benchmark.json
+
+# Runtime / benchmark artifacts that can be regenerated
+data/benchmarks/**/run_metadata.json
+data/benchmarks/**/failure.json
+data/benchmarks/**/benchmark_clip_metadata.json
+
+# Ignore only large/generated report artifacts explicitly
+reports/EP*_manual_review_package.md
+reports/EP*_segment_audit.md
+
+# Keep important operational documents tracked
+!reports/manual_review_guide.md
+!reports/pending_gpu_benchmarks.md
+!reports/local_poc_report.md
+!reports/clean_gpu_benchmark.md
+!reports/manual_review_summary.md
+
+# Keep source, config, documentation, and agent instructions tracked
+!AGENTS.md
+!README.md
+!config/
+!config/**
+!scripts/
+!scripts/**
+
+# Empty directory placeholders
+!.gitkeep

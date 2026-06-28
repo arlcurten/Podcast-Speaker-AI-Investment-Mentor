@@ -1,0 +1,14 @@
+{
+  "requested_rss_url": "https://feeds.soundon.fm/podcasts/4f2a74ec-cc7a-4284-be4b-74b882da701c",
+  "resolved_rss_url": "https://feeds.soundon.fm/podcasts/954689a5-3096-43a4-a80b-7810b219cef3.xml",
+  "rss_url": "https://feeds.soundon.fm/podcasts/954689a5-3096-43a4-a80b-7810b219cef3.xml",
+  "discovery_method": "apple_lookup_fallback",
+  "requested_rss_error": "404 Client Error: Not Found for url: https://feeds.soundon.fm/podcasts/4f2a74ec-cc7a-4284-be4b-74b882da701c",
+  "apple_collection_id": "1500839292",
+  "fetched_at": "2026-06-28T05:53:22.702197+00:00",
+  "snapshot": "data/rss/rss_snapshot_20260628T055322Z.xml",
+  "podcast_title": "Gooaye 股癌",
+  "channel_title": "Gooaye 股癌",
+  "episode_count": 674,
+  "ingestion_timestamp": "2026-06-28T05:53:22.702314+00:00"
+}

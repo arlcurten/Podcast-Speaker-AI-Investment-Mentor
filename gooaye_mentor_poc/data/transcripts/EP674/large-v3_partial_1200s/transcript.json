@@ -1,0 +1,165 @@
+{
+  "metadata": {
+    "episode_id": "EP674",
+    "configuration_name": "large-v3_partial_1200s",
+    "backend": "faster-whisper",
+    "model": "large-v3",
+    "model_revision": null,
+    "package_versions": {
+      "faster_whisper": "1.2.1",
+      "ctranslate2": "4.8.0",
+      "torch": "2.11.0+cu128"
+    },
+    "device": "cuda",
+    "compute_type": "int8_float16",
+    "beam_size": 5,
+    "vad_enabled": true,
+    "vad_parameters": {
+      "min_silence_duration_ms": 500
+    },
+    "timestamp_settings": "segment-level timestamps",
+    "initial_prompt": "Gooaye\n股癌\n謝孟恭\n台積電\nTSMC\nNVIDIA\nNVDA\nIntel\nINTC\nAMD\nASML\nBroadcom\nSupermicro\nCoWoS\nNVLink\nAI server\n聯準會\n升息\n降息\n毛利率\n本益比\n庫藏股\n多頭\n空頭\n軋空\n停損\n部位\n財報\n供應鏈\n",
+    "source_audio": "/tmp/gooaye_clip_ok5eq8hf/clip.wav",
+    "partial_audio_seconds": 1200,
+    "audio_duration_seconds": 1200.0,
+    "runtime_seconds": 54.59532771099998,
+    "realtime_factor": 0.04549610642583332,
+    "peak_ram_mb": 2421.2,
+    "peak_vram_mb": null,
+    "detected_language": null,
+    "language_probability": null,
+    "segment_count": 11,
+    "transcript_char_count": 199,
+    "status": "failed",
+    "failure_reason": "CUDA failed with error out of memory",
+    "completed_at": "2026-06-28T04:59:39.651587+00:00",
+    "vram_measurement_reliable": false,
+    "vram_measurement_note": "Original run used PyTorch CUDA counters, which do not capture CTranslate2 allocations. During EP674 large-v3-turbo full transcription, a manual nvidia-smi spot check showed about 3454 MiB used out of 4096 MiB, but this is not a reliable peak measurement and may include other GPU workloads.",
+    "vram_measurement_scope": "unknown for original run",
+    "vram_sampling_interval_seconds": null,
+    "baseline_vram_mb": null
+  },
+  "segments": [
+    {
+      "segment_id": 0,
+      "start": 0.0,
+      "end": 3.76,
+      "text": "歡迎收聽股外,我是謝孟恭,本集節目由EV OASIS贊助",
+      "avg_logprob": -0.4185267984867096,
+      "no_speech_prob": 0.0,
+      "compression_ratio": 0.8533333333333334,
+      "model": "large-v3",
+      "configuration": "large-v3"
+    },
+    {
+      "segment_id": 1,
+      "start": 30.0,
+      "end": 32.82,
+      "text": "擴展已經是全台最大的充電網",
+      "avg_logprob": -0.134724072319396,
+      "no_speech_prob": 0.91650390625,
+      "compression_ratio": 1.2942708333333333,
+      "model": "large-v3",
+      "configuration": "large-v3"
+    },
+    {
+      "segment_id": 2,
+      "start": 32.82,
+      "end": 36.92,
+      "text": "提供快充慢充家用充電還有跨品牌充電慢油服務",
+      "avg_logprob": -0.134724072319396,
+      "no_speech_prob": 0.91650390625,
+      "compression_ratio": 1.2942708333333333,
+      "model": "large-v3",
+      "configuration": "large-v3"
+    },
+    {
+      "segment_id": 3,
+      "start": 36.92,
+      "end": 39.72,
+      "text": "意思就是說不管你是平常通勤假日出遊",
+      "avg_logprob": -0.134724072319396,
+      "no_speech_prob": 0.91650390625,
+      "compression_ratio": 1.2942708333333333,
+      "model": "large-v3",
+      "configuration": "large-v3"
+    },
+    {
+      "segment_id": 4,
+      "start": 39.72,
+      "end": 43.06,
+      "text": "甚至是臨時跑遠一點只要是EV OASIS的會員",
+      "avg_logprob": -0.134724072319396,
+      "no_speech_prob": 0.91650390625,
+      "compression_ratio": 1.2942708333333333,
+      "model": "large-v3",
+      "configuration": "large-v3"
+    },
+    {
+      "segment_id": 5,
+      "start": 43.06,
+      "end": 46.64,
+      "text": "都比較容易找到地方補電不用一直焦慮剩幾趴",
+      "avg_logprob": -0.134724072319396,
+      "no_speech_prob": 0.91650390625,
+      "compression_ratio": 1.2942708333333333,
+      "model": "large-v3",
+      "configuration": "large-v3"
+    },
+    {
+      "segment_id": 6,
+      "start": 46.64,
+      "end": 48.18,
+      "text": "尤其現在電動車越來越多",
+      "avg_logprob": -0.134724072319396,
+      "no_speech_prob": 0.91650390625,
+      "compression_ratio": 1.2942708333333333,
+      "model": "large-v3",
+      "configuration": "large-v3"
+    },
+    {
+      "segment_id": 7,
+      "start": 48.18,
+      "end": 51.5,
+      "text": "充電這個事情跟加油一樣變成日常的一部分",
+      "avg_logprob": -0.134724072319396,
+      "no_speech_prob": 0.91650390625,
+      "compression_ratio": 1.2942708333333333,
+      "model": "large-v3",
+      "configuration": "large-v3"
+    },
+    {
+      "segment_id": 8,
+      "start": 51.5,
+      "end": 55.08,
+      "text": "那這樣暫點密度高充電速度跟整體的便利性",
+      "avg_logprob": -0.134724072319396,
+      "no_speech_prob": 0.91650390625,
+      "compression_ratio": 1.2942708333333333,
+      "model": "large-v3",
+      "configuration": "large-v3"
+    },
+    {
+      "segment_id": 9,
+      "start": 55.08,
+      "end": 57.14,
+      "text": "就會直接影響到用車體驗",
+      "avg_logprob": -0.134724072319396,
+      "no_speech_prob": 0.91650390625,
+      "compression_ratio": 1.2942708333333333,
+      "model": "large-v3",
+      "configuration": "large-v3"
+    },
+    {
+      "segment_id": 10,
+      "start": 57.14,
+      "end": 59.96,
+      "text": "如果說本來就是電車車主或是正在考慮",
+      "avg_logprob": -0.134724072319396,
+      "no_speech_prob": 0.91650390625,
+      "compression_ratio": 1.2942708333333333,
+      "model": "large-v3",
+      "configuration": "large-v3"
+    }
+  ]
+}

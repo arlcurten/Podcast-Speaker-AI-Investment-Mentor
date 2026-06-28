@@ -1,0 +1,16 @@
+{
+  "audio_path": "data/audio/EP674/episode.mp3",
+  "duration_seconds": 3180.277551,
+  "format": "mp3",
+  "codec": "mp3",
+  "bitrate": 132009,
+  "stream_bitrate": 132007,
+  "sample_rate": 44100,
+  "channels": 2,
+  "decodable": true,
+  "decode_error": null,
+  "original_audio_path": "/home/g9161/projects/gooaye_mentor_poc/data/audio/EP674/episode.mp3",
+  "project_relative_path": "data/audio/EP674/episode.mp3",
+  "runtime_absolute_path": "/home/g9161/projects/Podcast-Speaker-AI-Investment-Mentor/gooaye_mentor_poc/data/audio/EP674/episode.mp3",
+  "path_migration_note": "Repository moved under /home/g9161/projects/Podcast-Speaker-AI-Investment-Mentor; project-relative paths are now preferred."
+}
