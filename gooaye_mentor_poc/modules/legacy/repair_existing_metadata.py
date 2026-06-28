@@ -135,7 +135,7 @@ def repair_segment_audit() -> str | None:
 
 
 def repair_rss_metadata() -> str | None:
-    path = DATA / "manifests" / "rss_ingestion_metadata.json"
+    path = DATA / "source" / "rss_ingestion_metadata.json"
     if not path.exists():
         return None
     meta = load(path)

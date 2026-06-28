@@ -12,6 +12,7 @@ from typing import Any
 import requests
 
 from modules.common import DATA, find_episode, load_manifest, path_for_report, sha256_file, utc_now, write_json
+from modules.source.inspect_audio import inspect as inspect_audio
 
 
 MIN_REASONABLE_AUDIO_BYTES = 256 * 1024
@@ -69,7 +70,7 @@ def download(url: str, dest: Path, timeout: int, retries: int) -> dict[str, Any]
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--episode", required=True, help="episode_id, number, guid, or title substring")
-    parser.add_argument("--manifest", default=str(DATA / "manifests" / "episodes.jsonl"))
+    parser.add_argument("--manifest", default=str(DATA / "source" / "episodes.jsonl"))
     parser.add_argument("--timeout", type=int, default=60)
     parser.add_argument("--retries", type=int, default=3)
     args = parser.parse_args()
@@ -125,6 +126,12 @@ def main() -> int:
         **result,
     }
     write_json(metadata_path, metadata)
+    try:
+        audio_metadata = inspect_audio(dest)
+    except Exception as exc:
+        print(f"Audio validation failed after download: {exc}", file=sys.stderr)
+        return 5
+    write_json(out_dir / "audio_metadata.json", audio_metadata)
     print(json.dumps(metadata, ensure_ascii=False, indent=2))
     return 0
 

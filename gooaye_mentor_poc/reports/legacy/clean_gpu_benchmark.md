@@ -26,7 +26,7 @@ Status: completed
 ## Fixed Benchmark Clip
 
 - Source: `data/audio/EP674/episode.mp3`
-- Clip: `data/benchmarks/EP674/benchmark_clip.mp3`
+- Clip: `data/legacy/benchmarks/EP674/benchmark_clip.mp3`
 - Requested start/end: 1200.000s / 2100.000s
 - ffprobe duration: 900.022857s
 - SHA-256: `46311b2f8199b803e46f9e2cb296cae336c0b28c3ad73f76f7b6102488372ace`

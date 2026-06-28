@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Any
 
 from modules.common import DATA, write_json
+from modules.transcript.validate_merged_transcript import build_validation_result
 
 
 def srt_time(value: float) -> str:
@@ -111,12 +112,17 @@ def main() -> int:
         "merged_stats": duration_stats(merged),
     }
     write_outputs(out_dir, merged, metadata)
+    validation = build_validation_result(args.episode, args.configuration)
+    write_json(DATA / "evaluation" / f"{args.episode}_merge_integrity.json", validation)
+    if validation["status"] != "pass":
+        print(json.dumps(validation, ensure_ascii=False, indent=2))
+        return 1
     file_sizes = {
         name: (out_dir / name).stat().st_size
         for name in ["transcript.json", "transcript.srt", "transcript.md", "merged_transcript.json", "merged_transcript.srt", "merged_transcript.md"]
         if (out_dir / name).exists()
     }
-    summary = {**metadata, "file_sizes_bytes": file_sizes}
+    summary = {**metadata, "file_sizes_bytes": file_sizes, "merge_integrity_status": validation["status"]}
     write_json(DATA / "evaluation" / f"{args.episode}_merge_summary.json", summary)
     print(json.dumps(summary, ensure_ascii=False, indent=2))
     return 0

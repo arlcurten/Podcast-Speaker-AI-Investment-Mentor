@@ -97,7 +97,8 @@ def main() -> int:
     parser.add_argument("--configuration", default="large-v3-turbo")
     args = parser.parse_args()
     rows = load_runs(args.episode)
-    out_csv = DATA / "evaluation" / "benchmark_comparison.csv"
+    out_dir = DATA / "legacy" / "evaluation"
+    out_csv = out_dir / "benchmark_comparison.csv"
     fields = [
         "episode", "configuration", "status", "failure_reason", "model", "device", "compute_type",
         "audio_duration_seconds", "runtime_seconds", "realtime_factor", "peak_ram_mb", "peak_vram_mb",
@@ -108,10 +109,10 @@ def main() -> int:
     write_csv(out_csv, rows, fields)
     filtering = build_filtering_segments(args.episode, args.configuration)
     if filtering:
-        write_csv(DATA / "evaluation" / "content_filtering_segments.csv", filtering, list(filtering[0].keys()))
+        write_csv(out_dir / "content_filtering_segments.csv", filtering, list(filtering[0].keys()))
         sample = filtering[:3] + filtering[len(filtering)//2:len(filtering)//2+3] + filtering[-3:]
-        write_csv(DATA / "evaluation" / "content_filtering_sample.csv", sample, list(filtering[0].keys()))
-    write_json(DATA / "evaluation" / "benchmark_comparison.json", rows)
+        write_csv(out_dir / "content_filtering_sample.csv", sample, list(filtering[0].keys()))
+    write_json(out_dir / "benchmark_comparison.json", rows)
     print(f"Wrote {out_csv}")
     print(f"Runs compared: {len(rows)}")
     print(f"Content-filtering segments: {len(filtering)}")

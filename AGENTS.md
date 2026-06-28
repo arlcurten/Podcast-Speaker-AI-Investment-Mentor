@@ -47,6 +47,18 @@ Local transcription POC / transcript validation
 - Separate planning estimates from measured results.
 - Prefer project-relative paths for repository artifacts.
 
+## Simplicity And Organization Rules
+
+- Keep the repository easy to read before making it more complete.
+- Start from `README.md`; split details into separate docs only when the README becomes too long or the topic is independently useful.
+- Prefer fewer, clearer modules over many tiny modules. Split a module only when a step has a distinct responsibility, reusable implementation, or likely replacement path.
+- The Local POC is a sandbox/playground. Do not couple future production architecture to POC internals unless the user explicitly promotes a component.
+- Prefer one canonical artifact per stage. Avoid producing JSON, JSONL, CSV, and Markdown versions of the same result unless each has a real consumer.
+- Merge small configuration or terminology files when one shared source of truth is clearer. Split them later if maintenance pressure appears.
+- Temporary experiments may be created while investigating. Once they are no longer useful, either remove them or move useful references into `legacy`/`tmp` rather than leaving them in the active path.
+- Do not keep obsolete scripts in the main workflow. If they remain useful as references, move them under a clearly named legacy location.
+- Keep human-facing reports concise and reviewable; do not generate a separate report for every intermediate JSON file.
+
 ## Documentation Index
 
 - `docs/architecture.md`: full long-term architecture.
@@ -54,8 +66,8 @@ Local transcription POC / transcript validation
 - `docs/cloud-processing-plan.md`: future cloud transcription plan.
 - `docs/future-improvements.md`: deferred optimization ideas.
 - `docs/terminology.tsv`: shared terminology table for preserved terms, aliases, and corrections.
-- `gooaye_mentor_poc/docs/local-transcription-poc.md`: Local POC transcription results.
-- `gooaye_mentor_poc/docs/data-source-notes.md`: RSS, SoundOn, Apple lookup, and manifest notes.
-- `gooaye_mentor_poc/docs/troubleshooting.md`: POC troubleshooting and known failure modes.
+- `gooaye_mentor_poc/poc_docs/local-transcription-poc.md`: Local POC transcription results.
+- `gooaye_mentor_poc/poc_docs/data-source-notes.md`: RSS, SoundOn, Apple lookup, and manifest notes.
+- `gooaye_mentor_poc/poc_docs/troubleshooting.md`: POC troubleshooting and known failure modes.
 
 For Local POC operation rules, also read `gooaye_mentor_poc/AGENTS.md`.

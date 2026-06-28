@@ -14,13 +14,18 @@ gooaye_mentor_poc/
 ├── modules/
 │   ├── source/
 │   ├── transcript/
-│   ├── review/
-│   ├── benchmark/
-│   ├── reports/
-│   └── maintenance/
+│   ├── segmentation/
+│   ├── build_reports/
+│   └── legacy/
 ├── config/
-├── docs/
+├── poc_docs/
 ├── data/
+│   ├── source/
+│   ├── audio/
+│   ├── transcripts/
+│   ├── topic_segments/
+│   ├── evaluation/
+│   └── legacy/
 ├── reports/
 └── requirements.txt
 ```
@@ -31,9 +36,8 @@ gooaye_mentor_poc/
 RSS / manifest
   -> EP674 MP3 + audio metadata
   -> raw faster-whisper transcript
+  -> deterministic merged utterances + integrity validation
   -> Traditional Chinese normalization
-  -> deterministic merged utterances
-  -> merge integrity validation
   -> minimal topic/classification/routing POC
   -> concise human review file
 ```
@@ -45,13 +49,21 @@ The raw transcript is immutable evidence. Normalized, merged, topic, classificat
 Run commands from this directory:
 
 ```bash
-python3 main.py validate-merge --episode EP674 --configuration large-v3-turbo
+python3 main.py merge --episode EP674 --configuration large-v3-turbo
 python3 main.py normalize --episode EP674 --configuration large-v3-turbo
 python3 main.py topic-review-poc --episode EP674 --configuration large-v3-turbo
 python3 -m py_compile main.py modules/*.py modules/*/*.py
 ```
 
 ## Important Files
+
+```text
+data/source/episodes.jsonl
+data/source/rss_ingestion_metadata.json
+data/source/rss_snapshot_*.xml
+```
+
+RSS snapshot, episode manifest, and feed provenance.
 
 ```text
 data/transcripts/EP674/large-v3-turbo/transcript.json
@@ -66,6 +78,12 @@ data/topic_segments/EP674/topic_segments.json
 ```
 
 Current derived transcript and topic POC outputs.
+
+```text
+data/legacy/
+```
+
+Historical benchmark and comparison artifacts. These are not part of the active POC workflow.
 
 ```text
 reports/EP674_human_review.md
@@ -85,7 +103,7 @@ This POC does not implement production RAG, embeddings, vector database, Mentor 
 
 ## More Detail
 
-- POC results: `docs/local-transcription-poc.md`
-- Data source notes: `docs/data-source-notes.md`
-- Troubleshooting: `docs/troubleshooting.md`
+- POC results: `poc_docs/local-transcription-poc.md`
+- Data source notes: `poc_docs/data-source-notes.md`
+- Troubleshooting: `poc_docs/troubleshooting.md`
 - Project-wide docs: `../docs/`

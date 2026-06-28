@@ -71,7 +71,7 @@ def runtime_stats(runs: list[dict[str, Any]]) -> dict[str, Any] | None:
 
 
 def main() -> int:
-    bench_dir = DATA / "benchmarks" / "EP674"
+    bench_dir = DATA / "legacy" / "benchmarks" / "EP674"
     clip_meta = read_json_opt(bench_dir / "benchmark_clip_metadata.json") or {}
     baseline = read_json_opt(bench_dir / "gpu_baseline_controlled_desktop.json") or {}
     turbo_runs = load_turbo_runs(bench_dir / "large-v3-turbo-clean")
@@ -79,7 +79,8 @@ def main() -> int:
     large = read_json_opt(bench_dir / "large-v3-clean" / "run_metadata.json")
     if large:
         large.setdefault("transcript_text_sha256", transcript_hash(bench_dir / "large-v3-clean" / "transcript.json"))
-    existing = read_json_opt(DATA / "evaluation" / "clean_gpu_benchmark.json") or {}
+    evaluation_dir = DATA / "legacy" / "evaluation"
+    existing = read_json_opt(evaluation_dir / "clean_gpu_benchmark.json") or {}
     status = "completed" if turbo_runs else existing.get("status", "pending")
     version_source = turbo_runs[0] if turbo_runs else large or {}
     nvidia_text = baseline.get("nvidia_smi", "")
@@ -104,7 +105,7 @@ def main() -> int:
     }
     if existing and not turbo_runs:
         payload.update({k: v for k, v in existing.items() if k not in payload or not payload[k]})
-    write_json(DATA / "evaluation" / "clean_gpu_benchmark.json", payload)
+    write_json(evaluation_dir / "clean_gpu_benchmark.json", payload)
 
     lines = [
         "# Clean GPU Benchmark",
@@ -198,10 +199,11 @@ def main() -> int:
         "- Windows desktop / WSL GPU utilization attribution may be incomplete.",
         "- Transcript quality is not judged by this benchmark.",
     ]
-    REPORTS.mkdir(parents=True, exist_ok=True)
-    (REPORTS / "clean_gpu_benchmark.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
-    print(f"Wrote {DATA / 'evaluation' / 'clean_gpu_benchmark.json'}")
-    print(f"Wrote {REPORTS / 'clean_gpu_benchmark.md'}")
+    out = REPORTS / "legacy" / "clean_gpu_benchmark.md"
+    out.parent.mkdir(parents=True, exist_ok=True)
+    out.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    print(f"Wrote {evaluation_dir / 'clean_gpu_benchmark.json'}")
+    print(f"Wrote {out}")
     return 0
 
 

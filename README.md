@@ -63,7 +63,7 @@ Podcast-Speaker-AI-Investment-Mentor/
     ├── README.md
     ├── main.py
     ├── modules/
-    ├── docs/
+    ├── poc_docs/
     ├── config/
     ├── data/
     └── reports/
@@ -75,7 +75,7 @@ For current POC work:
 
 ```bash
 cd /home/g9161/projects/Podcast-Speaker-AI-Investment-Mentor/gooaye_mentor_poc
-python3 main.py validate-merge --episode EP674 --configuration large-v3-turbo
+python3 main.py merge --episode EP674 --configuration large-v3-turbo
 python3 main.py normalize --episode EP674 --configuration large-v3-turbo
 python3 main.py topic-review-poc --episode EP674 --configuration large-v3-turbo
 ```
@@ -93,5 +93,5 @@ gooaye_mentor_poc/reports/EP674_human_review.md
 - Cloud plan: `docs/cloud-processing-plan.md`
 - Future improvements: `docs/future-improvements.md`
 - Terminology: `docs/terminology.tsv`
-- POC details: `gooaye_mentor_poc/docs/local-transcription-poc.md`
-- POC troubleshooting: `gooaye_mentor_poc/docs/troubleshooting.md`
+- POC details: `gooaye_mentor_poc/poc_docs/local-transcription-poc.md`
+- POC troubleshooting: `gooaye_mentor_poc/poc_docs/troubleshooting.md`

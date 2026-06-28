@@ -12,12 +12,13 @@ RSS itself does not store audio. In this project:
 
 ## Episode Manifest
 
-The ingestion script parses RSS and writes internal manifests:
+The ingestion script parses RSS and writes source artifacts:
 
-- `data/manifests/episodes.jsonl`
-- `data/manifests/episodes.csv`
+- `data/source/rss_snapshot_*.xml`
+- `data/source/episodes.jsonl`
+- `data/source/rss_ingestion_metadata.json`
 
-The manifest is the stable internal episode index for later download, transcription, and evaluation steps. Later scripts should not repeatedly parse XML if the manifest already captures the feed snapshot being processed.
+The manifest is the stable internal episode index for later download, transcription, and evaluation steps. Later scripts should not repeatedly parse XML if `data/source/episodes.jsonl` already captures the feed snapshot being processed.
 
 Verified manifest fields include podcast title, episode title, episode number, GUID, publication date, duration, description, audio URL, audio MIME type, RSS enclosure length, ingestion timestamp, requested RSS URL, resolved RSS URL, discovery method, and Apple collection ID.
 

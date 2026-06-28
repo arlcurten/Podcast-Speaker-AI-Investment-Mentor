@@ -46,7 +46,7 @@ The clean same-clip benchmark has now completed under a controlled desktop basel
 Fixed clip:
 
 - Source: `gooaye_mentor_poc/data/audio/EP674/episode.mp3`
-- Clip: `gooaye_mentor_poc/data/benchmarks/EP674/benchmark_clip.mp3`
+- Clip: `gooaye_mentor_poc/data/legacy/benchmarks/EP674/benchmark_clip.mp3`
 - Requested start/end: `1200.00s` / `2100.00s`
 - Requested duration: `900.00s`
 - ffprobe duration: `900.022857s`
@@ -107,7 +107,7 @@ Future benchmark metadata should record:
 
 ## large-v3 Results
 
-Verified from `data/evaluation/benchmark_comparison.csv`:
+Verified from historical benchmark comparison artifacts in `data/legacy/evaluation/`:
 
 - `large-v3_partial_1200s` on CUDA `int8_float16`: failed with CUDA out of memory.
 - `large-v3_partial_300s_int8_float16` on CUDA `int8_float16`: failed with CUDA out of memory.
@@ -139,7 +139,7 @@ Verified from `data/evaluation/EP674_merge_summary.json`:
 - Text is not modified.
 - This is not semantic topic segmentation.
 
-The merge implementation now joins source segment text with a single space between non-empty stripped segment texts. Raw-to-merged integrity is verified by `gooaye_mentor_poc/main.py validate-merge`.
+The merge implementation now joins source segment text with a single space between non-empty stripped segment texts. Raw-to-merged integrity is verified automatically when running `gooaye_mentor_poc/main.py merge`.
 
 Verified from `gooaye_mentor_poc/data/evaluation/EP674_merge_integrity.json`:
 

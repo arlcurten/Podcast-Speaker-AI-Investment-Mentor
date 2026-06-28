@@ -136,6 +136,29 @@ def write_report(path: Path, result: dict[str, Any]) -> None:
     path.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 
+def build_validation_result(episode: str, configuration: str, sample_size: int = 10) -> dict[str, Any]:
+    base = DATA / "transcripts" / episode / configuration
+    raw_path = base / "transcript.json"
+    merged_path = base / "merged_transcript.json"
+    raw_segments = load_json(raw_path)["segments"]
+    merged_segments = load_json(merged_path)["segments"]
+    mismatches, coverage = validate_merged(raw_segments, merged_segments)
+    review = inspect_review_windows(raw_segments, merged_segments, DATA / "evaluation" / episode / "review_windows.json")
+    status = "pass" if not mismatches and coverage["missing_raw_segment_count"] == 0 and coverage["duplicate_source_segment_count"] == 0 else "fail"
+    return {
+        "episode_id": episode,
+        "configuration": configuration,
+        "status": status,
+        "raw_transcript": path_for_report(raw_path),
+        "merged_transcript": path_for_report(merged_path),
+        "deterministic_separator": "single ASCII space between non-empty stripped source texts",
+        "coverage": coverage,
+        "mismatch_count": len(mismatches),
+        "mismatch_sample": mismatches[:sample_size],
+        "review_windows": review,
+    }
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--episode", default="EP674")
@@ -144,26 +167,7 @@ def main() -> int:
     parser.add_argument("--write-report", action="store_true", help="Also write a Markdown report. JSON is the canonical output.")
     args = parser.parse_args()
 
-    base = DATA / "transcripts" / args.episode / args.configuration
-    raw_path = base / "transcript.json"
-    merged_path = base / "merged_transcript.json"
-    raw_segments = load_json(raw_path)["segments"]
-    merged_segments = load_json(merged_path)["segments"]
-    mismatches, coverage = validate_merged(raw_segments, merged_segments)
-    review = inspect_review_windows(raw_segments, merged_segments, DATA / "evaluation" / args.episode / "review_windows.json")
-    status = "pass" if not mismatches and coverage["missing_raw_segment_count"] == 0 and coverage["duplicate_source_segment_count"] == 0 else "fail"
-    result = {
-        "episode_id": args.episode,
-        "configuration": args.configuration,
-        "status": status,
-        "raw_transcript": path_for_report(raw_path),
-        "merged_transcript": path_for_report(merged_path),
-        "deterministic_separator": "single ASCII space between non-empty stripped source texts",
-        "coverage": coverage,
-        "mismatch_count": len(mismatches),
-        "mismatch_sample": mismatches[: args.sample_size],
-        "review_windows": review,
-    }
+    result = build_validation_result(args.episode, args.configuration, args.sample_size)
     json_path = DATA / "evaluation" / f"{args.episode}_merge_integrity.json"
     report_path = REPORTS / f"{args.episode}_merge_integrity.md"
     write_json(json_path, result)
@@ -172,7 +176,7 @@ def main() -> int:
         write_report(report_path, result)
         output["report"] = path_for_report(report_path)
     print(json.dumps(output, ensure_ascii=False, indent=2))
-    return 0 if status == "pass" else 1
+    return 0 if result["status"] == "pass" else 1
 
 
 if __name__ == "__main__":

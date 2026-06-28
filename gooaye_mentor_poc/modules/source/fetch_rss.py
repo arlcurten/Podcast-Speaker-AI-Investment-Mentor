@@ -14,7 +14,7 @@ from typing import Any
 
 import requests
 
-from modules.common import DATA, slugify_episode, utc_now, write_csv, write_json, write_jsonl
+from modules.common import DATA, slugify_episode, utc_now, write_json, write_jsonl
 
 
 RSS_URL = "https://feeds.soundon.fm/podcasts/4f2a74ec-cc7a-4284-be4b-74b882da701c"
@@ -134,7 +134,8 @@ def main() -> int:
         except Exception as fallback_exc:
             print(f"Failed to download RSS and Apple fallback failed: {fallback_exc}", file=sys.stderr)
             return 2
-    snapshot = DATA / "rss" / f"rss_snapshot_{datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%SZ')}.xml"
+    source_dir = DATA / "source"
+    snapshot = source_dir / f"rss_snapshot_{datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%SZ')}.xml"
     snapshot.parent.mkdir(parents=True, exist_ok=True)
     snapshot.write_bytes(response.content)
     try:
@@ -148,28 +149,8 @@ def main() -> int:
     except Exception as exc:
         print(f"Failed to parse RSS: {exc}", file=sys.stderr)
         return 3
-    fields = [
-        "podcast_title",
-        "episode_title",
-        "episode_number",
-        "episode_id",
-        "guid",
-        "publication_date",
-        "duration",
-        "description",
-        "audio_url",
-        "audio_mime_type",
-        "rss_enclosure_length",
-        "audio_length_from_rss",
-        "ingestion_timestamp",
-        "requested_rss_url",
-        "resolved_rss_url",
-        "discovery_method",
-        "apple_collection_id",
-    ]
-    write_jsonl(DATA / "manifests" / "episodes.jsonl", rows)
-    write_csv(DATA / "manifests" / "episodes.csv", rows, fields)
-    write_json(DATA / "manifests" / "rss_ingestion_metadata.json", {
+    write_jsonl(source_dir / "episodes.jsonl", rows)
+    write_json(source_dir / "rss_ingestion_metadata.json", {
         "requested_rss_url": requested_url,
         "resolved_rss_url": resolved_url,
         "rss_url": resolved_url,

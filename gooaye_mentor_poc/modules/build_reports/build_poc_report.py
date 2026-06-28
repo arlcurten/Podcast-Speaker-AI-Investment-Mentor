@@ -22,14 +22,14 @@ def first_existing(paths: list[Path]) -> Any | None:
 
 
 def manifest_count() -> int:
-    path = DATA / "manifests" / "episodes.jsonl"
+    path = DATA / "source" / "episodes.jsonl"
     if not path.exists():
         return 0
     return sum(1 for line in path.read_text(encoding="utf-8").splitlines() if line.strip())
 
 
 def load_comparison() -> list[dict[str, Any]]:
-    path = DATA / "evaluation" / "benchmark_comparison.json"
+    path = DATA / "legacy" / "evaluation" / "benchmark_comparison.json"
     return read_json_opt(path) or []
 
 
@@ -53,9 +53,9 @@ def fmt(value: Any) -> str:
 
 def main() -> int:
     env = read_json_opt(DATA / "environment_inspection.json") or {}
-    ingestion = read_json_opt(DATA / "manifests" / "rss_ingestion_metadata.json") or {}
+    ingestion = read_json_opt(DATA / "source" / "rss_ingestion_metadata.json") or {}
     ep_config = read_yamlish_config()
-    manifest_path = DATA / "manifests" / "episodes.jsonl"
+    manifest_path = DATA / "source" / "episodes.jsonl"
     if manifest_path.exists():
         ep672_found: str = "yes" if any("EP672" in line for line in manifest_path.read_text(encoding="utf-8").splitlines()) else "no"
     else:
@@ -200,7 +200,7 @@ def main() -> int:
         "- Cloud work disk suggestion: 100-200 GB for pilot/full batch staging, logs, and temporary decoded audio.",
         "- Object storage suggestion: 100 GB minimum for MP3, transcripts, metadata, and rerun headroom.",
         "- Before a 20-episode cloud pilot, complete basic manual review of the prepared windows and rerun clean GPU benchmarks when local GPU is idle.",
-        "- Pending local GPU commands are documented in `reports/pending_gpu_benchmarks.md`; they have not been executed.",
+        "- Historical local GPU benchmark notes are documented in `reports/legacy/pending_gpu_benchmarks.md`.",
         "",
         "## Go / No-Go decision",
         f"- RSS ingestion: {'Go' if ingestion and manifest_count() > 0 else 'No-Go'}",
@@ -210,7 +210,7 @@ def main() -> int:
         f"- Content classification feasibility: {'Conditional' if (DATA / 'evaluation' / 'content_filtering_sample.csv').exists() else 'No-Go'}",
         f"- 20-episode cloud pilot: {'Proceed after manual review and clean benchmark' if successful else 'Needs more testing'}",
     ]
-    out = REPORTS / "local_poc_report.md"
+    out = REPORTS / "legacy" / "local_poc_report.md"
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text("\n".join(lines) + "\n", encoding="utf-8")
     print(f"Wrote {out}")

@@ -129,24 +129,39 @@ Do not commit by default:
 - secrets, credentials, and `.env`
 - generated RSS snapshots and manifests unless intentionally versioned
 
+## POC Simplification Rules
+
+- Keep `main.py` as the small active workflow surface. Only expose commands that are still part of the current POC path.
+- Mark important active commands with `#!!` when the user has identified them as core steps. These commands may be improved or combined with validation, but should not be removed casually.
+- Keep modules coarse enough to be understandable: source acquisition, transcript processing, segmentation/review, report building, and legacy/reference utilities are usually enough.
+- Avoid splitting a step into separate audit, validate, convert, and report commands when the check naturally belongs at the end of the producing step.
+- Prefer this pattern:
+  - `download` also validates audio metadata.
+  - `transcribe` also writes the basic segment audit.
+  - `merge` also validates raw-to-merged mapping.
+  - `normalize` reads the shared terminology table.
+- Keep one current canonical output per stage when possible. Do not accumulate timestamped variants unless the user asks for an experiment history.
+- If a script or output was only for a completed or failed experiment, remove it if it has no reference value. If it may be useful later, move it to `modules/legacy/` or an ignored `tmp/` location.
+- Do not create a new config file when an existing shared table can represent the same information clearly. Current shared terminology lives at `../docs/terminology.tsv`.
+- Generated test/debug data should not sit beside active source-of-truth artifacts once the investigation is over.
+
 ## Module Layout
 
 - `main.py`: single POC entrypoint and command dispatcher.
 - `modules/source/`: environment, RSS, manifest, download, and audio inspection.
-- `modules/transcript/`: transcription, audit, merge, validation, normalization, and transcript comparison.
-- `modules/review/`: topic review POC helpers.
-- `modules/benchmark/`: local benchmark utilities.
-- `modules/reports/`: POC report generation.
-- `modules/maintenance/`: one-off metadata repair utilities.
+- `modules/transcript/`: transcription, automatic audit, merge with validation, and normalization.
+- `modules/segmentation/`: topic segmentation, classification, routing, and review package helpers.
+- `modules/build_reports/`: report generation from existing artifacts.
+- `modules/legacy/`: old benchmark, comparison, and migration repair utilities kept for reference.
 
 ## Documentation Index
 
 - `README.md`: Local POC file map and entry points.
 - `reports/EP674_human_review.md`: current concise human review package.
-- `reports/pending_gpu_benchmarks.md`: pending or completed local GPU benchmark notes.
-- `docs/local-transcription-poc.md`: EP674 transcription POC results.
-- `docs/data-source-notes.md`: RSS, SoundOn, Apple Podcasts, manifest, and enclosure-length notes.
-- `docs/troubleshooting.md`: symptom-driven POC fixes.
+- `reports/legacy/pending_gpu_benchmarks.md`: historical local GPU benchmark notes.
+- `poc_docs/local-transcription-poc.md`: EP674 transcription POC results.
+- `poc_docs/data-source-notes.md`: RSS, SoundOn, Apple Podcasts, manifest, and enclosure-length notes.
+- `poc_docs/troubleshooting.md`: symptom-driven POC fixes.
 - `../docs/architecture.md`: project-wide architecture.
 - `../docs/data-model.md`: project-wide data model.
 - `../docs/cloud-processing-plan.md`: future cloud pilot strategy.

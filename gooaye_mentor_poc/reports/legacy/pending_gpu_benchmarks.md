@@ -9,7 +9,7 @@ Status: completed under a controlled desktop baseline.
 A fixed benchmark clip has been prepared:
 
 ```text
-data/benchmarks/EP674/benchmark_clip.mp3
+data/legacy/benchmarks/EP674/benchmark_clip.mp3
 ```
 
 Clip details:
@@ -34,7 +34,7 @@ Results:
 - Stability: usable with minor desktop interference
 - large-v3 same-clip: success, 242.694s, RTF 0.270, peak total-device VRAM 3571 MiB
 
-See `reports/clean_gpu_benchmark.md`.
+See `reports/legacy/clean_gpu_benchmark.md`.
 
 Manual transcript quality remains pending. These are performance/feasibility results only.
 
@@ -55,10 +55,10 @@ Use the same fixed 15-minute EP674 clip to avoid a long full-episode rerun:
 ```bash
 cd /home/g9161/projects/Podcast-Speaker-AI-Investment-Mentor/gooaye_mentor_poc
 python3 main.py benchmark-clip \
-  --clip data/benchmarks/EP674/benchmark_clip.mp3 \
+  --clip data/legacy/benchmarks/EP674/benchmark_clip.mp3 \
   --episode EP674 \
   --model large-v3-turbo \
-  --output-dir data/benchmarks/EP674/large-v3-turbo-clean \
+  --output-dir data/legacy/benchmarks/EP674/large-v3-turbo-clean \
   --device cuda \
   --compute-type float16 \
   --audio-duration 900.022857 \
@@ -69,7 +69,7 @@ python3 main.py benchmark-clip \
 Expected output directory:
 
 ```text
-data/benchmarks/EP674/large-v3-turbo-clean/
+data/legacy/benchmarks/EP674/large-v3-turbo-clean/
 ```
 
 Record:
@@ -88,10 +88,10 @@ The local same-clip `large-v3` comparison completed successfully once. Do not ke
 ```bash
 cd /home/g9161/projects/Podcast-Speaker-AI-Investment-Mentor/gooaye_mentor_poc
 python3 main.py benchmark-clip \
-  --clip data/benchmarks/EP674/benchmark_clip.mp3 \
+  --clip data/legacy/benchmarks/EP674/benchmark_clip.mp3 \
   --episode EP674 \
   --model large-v3 \
-  --output-dir data/benchmarks/EP674/large-v3-clean \
+  --output-dir data/legacy/benchmarks/EP674/large-v3-clean \
   --device cuda \
   --compute-type int8_float16 \
   --audio-duration 900.022857 \

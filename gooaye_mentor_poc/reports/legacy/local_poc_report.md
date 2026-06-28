@@ -25,7 +25,7 @@ This report is generated from local artifacts only. Items not present on disk ar
 - Fetched at: 2026-06-28T05:53:22.702197+00:00
 - RSS success: yes
 - Manifest count: 674
-- RSS snapshot: data/rss/rss_snapshot_20260628T055322Z.xml
+- RSS snapshot: data/source/rss_snapshot_20260628T055322Z.xml
 - EP672 found in manifest: yes
 
 ### Downloaded episode: EP674
@@ -158,7 +158,7 @@ This report is generated from local artifacts only. Items not present on disk ar
 - Cloud work disk suggestion: 100-200 GB for pilot/full batch staging, logs, and temporary decoded audio.
 - Object storage suggestion: 100 GB minimum for MP3, transcripts, metadata, and rerun headroom.
 - Before a 20-episode cloud pilot, complete basic manual review of the prepared windows and rerun clean GPU benchmarks when local GPU is idle.
-- Pending local GPU commands are documented in `reports/pending_gpu_benchmarks.md`; they have not been executed.
+- Historical local GPU benchmark notes are documented in `reports/legacy/pending_gpu_benchmarks.md`.
 
 ## Go / No-Go decision
 - RSS ingestion: Go

@@ -14,6 +14,7 @@ from pathlib import Path
 from typing import Any
 
 from modules.common import DATA, path_for_report, project_relative_path, read_json, run_command, setup_logging, terminology_prompt, utc_now, write_json
+from modules.transcript.audit_transcript_segments import audit
 
 
 CONFIGS = {
@@ -266,6 +267,8 @@ def main() -> int:
         "completed_at": utc_now(),
     }
     write_outputs(out_dir, segments_out, metadata)
+    if status == "success":
+        write_json(DATA / "evaluation" / f"{args.episode}_segment_audit.json", audit(out_dir / "transcript.json"))
     if cleanup_parent:
         shutil.rmtree(cleanup_parent, ignore_errors=True)
     print(json.dumps(metadata, ensure_ascii=False, indent=2))

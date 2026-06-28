@@ -28,5 +28,6 @@
     "merged_transcript.json": 118509,
     "merged_transcript.srt": 66148,
     "merged_transcript.md": 64228
-  }
+  },
+  "merge_integrity_status": "pass"
 }
