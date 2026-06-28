@@ -12,6 +12,8 @@ These items are deferred optimization ideas. They are not current blockers for t
 
 ## Classification And Segmentation
 
+- Add a `trading_strategy` / 操作策略 content type based on EP674 human review feedback.
+- Improve boundary detection for explicit transition cues such as "接下來我們來..." and QA section starts.
 - Episode-adaptive thresholds for shows with different structures.
 - Better handling of mixed segments that combine personal chat, market reasoning, and Q&A.
 - Improved detection of companies, industries, tickers, numbers, conditions, risks, exceptions, and opinion changes.

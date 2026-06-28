@@ -51,10 +51,11 @@ Local transcription POC / transcript validation
 
 - `docs/architecture.md`: full long-term architecture.
 - `docs/data-model.md`: project data layers and invariants.
-- `docs/project-roadmap.md`: phase-by-phase roadmap.
 - `docs/cloud-processing-plan.md`: future cloud transcription plan.
-- `docs/poc/local-transcription-poc.md`: Local POC transcription results.
-- `docs/poc/data-source-notes.md`: RSS, SoundOn, Apple lookup, and manifest notes.
-- `docs/poc/troubleshooting.md`: POC troubleshooting and known failure modes.
+- `docs/future-improvements.md`: deferred optimization ideas.
+- `docs/terminology.tsv`: shared terminology table for preserved terms, aliases, and corrections.
+- `gooaye_mentor_poc/docs/local-transcription-poc.md`: Local POC transcription results.
+- `gooaye_mentor_poc/docs/data-source-notes.md`: RSS, SoundOn, Apple lookup, and manifest notes.
+- `gooaye_mentor_poc/docs/troubleshooting.md`: POC troubleshooting and known failure modes.
 
 For Local POC operation rules, also read `gooaye_mentor_poc/AGENTS.md`.

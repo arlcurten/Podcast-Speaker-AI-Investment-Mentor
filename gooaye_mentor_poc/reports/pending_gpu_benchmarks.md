@@ -43,7 +43,7 @@ Manual transcript quality remains pending. These are performance/feasibility res
 ```bash
 cd /home/g9161/projects/Podcast-Speaker-AI-Investment-Mentor/gooaye_mentor_poc
 nvidia-smi
-python3 scripts/inspect_environment.py
+python3 main.py inspect-env
 ```
 
 Confirm there is no game or unrelated heavy GPU process. The transcription script records total-device VRAM with `nvidia-smi`; if other processes are present, VRAM is not process-specific.
@@ -54,7 +54,7 @@ Use the same fixed 15-minute EP674 clip to avoid a long full-episode rerun:
 
 ```bash
 cd /home/g9161/projects/Podcast-Speaker-AI-Investment-Mentor/gooaye_mentor_poc
-python3 scripts/run_benchmark_clip.py \
+python3 main.py benchmark-clip \
   --clip data/benchmarks/EP674/benchmark_clip.mp3 \
   --episode EP674 \
   --model large-v3-turbo \
@@ -87,7 +87,7 @@ The local same-clip `large-v3` comparison completed successfully once. Do not ke
 
 ```bash
 cd /home/g9161/projects/Podcast-Speaker-AI-Investment-Mentor/gooaye_mentor_poc
-python3 scripts/run_benchmark_clip.py \
+python3 main.py benchmark-clip \
   --clip data/benchmarks/EP674/benchmark_clip.mp3 \
   --episode EP674 \
   --model large-v3 \
@@ -102,5 +102,5 @@ python3 scripts/run_benchmark_clip.py \
 Regenerate summaries:
 
 ```bash
-python3 scripts/build_clean_gpu_benchmark_report.py
+python3 main.py benchmark-report
 ```

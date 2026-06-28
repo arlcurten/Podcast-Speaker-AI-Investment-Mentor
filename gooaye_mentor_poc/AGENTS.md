@@ -42,7 +42,7 @@ Verified from `data/environment_inspection.json`:
 - ffmpeg and ffprobe available
 - recommended local backend: faster-whisper CUDA
 
-Treat this as an inspection snapshot, not a permanent guarantee. Re-run `python3 scripts/inspect_environment.py` when environment drift matters.
+Treat this as an inspection snapshot, not a permanent guarantee. Re-run `python3 main.py inspect-env` when environment drift matters.
 
 ## GPU Rules
 
@@ -112,7 +112,7 @@ Store these separately: `rss_enclosure_length`, `rss_length_valid`, `http_conten
 Default to CPU-safe validation:
 
 ```bash
-python3 -m py_compile scripts/*.py
+python3 -m py_compile main.py modules/*.py modules/*/*.py
 ```
 
 Do not start GPU tests, cloud resources, or multi-episode batches without explicit user approval. Do not hide errors; scripts should use non-zero exit codes for failures.
@@ -129,14 +129,24 @@ Do not commit by default:
 - secrets, credentials, and `.env`
 - generated RSS snapshots and manifests unless intentionally versioned
 
+## Module Layout
+
+- `main.py`: single POC entrypoint and command dispatcher.
+- `modules/source/`: environment, RSS, manifest, download, and audio inspection.
+- `modules/transcript/`: transcription, audit, merge, validation, normalization, and transcript comparison.
+- `modules/review/`: topic review POC helpers.
+- `modules/benchmark/`: local benchmark utilities.
+- `modules/reports/`: POC report generation.
+- `modules/maintenance/`: one-off metadata repair utilities.
+
 ## Documentation Index
 
-- `README.md`: Local POC commands and entry points.
-- `reports/manual_review_guide.md`: manual listening review workflow.
+- `README.md`: Local POC file map and entry points.
+- `reports/EP674_human_review.md`: current concise human review package.
 - `reports/pending_gpu_benchmarks.md`: pending or completed local GPU benchmark notes.
-- `../docs/poc/local-transcription-poc.md`: EP674 transcription POC results.
-- `../docs/poc/data-source-notes.md`: RSS, SoundOn, Apple Podcasts, manifest, and enclosure-length notes.
-- `../docs/poc/troubleshooting.md`: symptom-driven POC fixes.
+- `docs/local-transcription-poc.md`: EP674 transcription POC results.
+- `docs/data-source-notes.md`: RSS, SoundOn, Apple Podcasts, manifest, and enclosure-length notes.
+- `docs/troubleshooting.md`: symptom-driven POC fixes.
 - `../docs/architecture.md`: project-wide architecture.
 - `../docs/data-model.md`: project-wide data model.
 - `../docs/cloud-processing-plan.md`: future cloud pilot strategy.

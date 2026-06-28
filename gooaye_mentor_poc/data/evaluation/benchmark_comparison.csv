@@ -1,6 +1,0 @@
-episode,configuration,status,failure_reason,model,device,compute_type,audio_duration_seconds,runtime_seconds,realtime_factor,peak_ram_mb,peak_vram_mb,output_segment_count,transcript_length,recognized_terms,company_name_errors,ticker_errors,financial_term_errors,hallucinations,repetitions,timestamp_usability,overall_semantic_comprehensibility
-EP674,large-v3-turbo,success,,large-v3-turbo,cuda,float16,3180.277551,451.807040401,0.14206528617570963,1963.6,,2493,20260,升息,,,,,,manual review required,manual review required
-EP674,large-v3-turbo_partial_60s,success,,large-v3-turbo,cuda,float16,60.0,18.17438019999986,0.30290633666666433,1077.03,,19,176,,,,,,,manual review required,manual review required
-EP674,large-v3_partial_1200s,failed,CUDA failed with error out of memory,large-v3,cuda,int8_float16,1200.0,54.59532771099998,0.04549610642583332,2421.2,,11,199,,,,,,,manual review required,manual review required
-EP674,large-v3_partial_300s_int8_float16,failed,CUDA failed with error out of memory,large-v3,cuda,int8_float16,300.0,105.91876135299981,0.3530625378433327,2484.34,,108,1667,,,,,,,manual review required,manual review required
-EP674,large-v3_partial_60s_int8,success,,large-v3,cpu,int8,60.0,98.14158470300004,1.6356930783833339,4520.05,,3,386,,,,,,,manual review required,manual review required

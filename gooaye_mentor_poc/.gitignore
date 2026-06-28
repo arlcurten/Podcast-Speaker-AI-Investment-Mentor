@@ -100,10 +100,12 @@ reports/EP*_segment_audit.md
 !README.md
 !config/
 !config/**
-!scripts/
-!scripts/**
-scripts/__pycache__/
-scripts/**/*.pyc
+!main.py
+!modules/
+!modules/**
+modules/**/__pycache__/
+modules/**/*.pyc
+scripts/
 
 # Empty directory placeholders
 !.gitkeep

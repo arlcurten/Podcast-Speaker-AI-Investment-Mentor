@@ -1,0 +1,54 @@
+source_text	target_text	type	category	status	notes
+股癌	股癌	preserve	show	active	local podcast name
+Gooaye	股癌	alias	show	active	show alias
+謝孟恭	謝孟恭	preserve	person	active	host name
+台積電	台積電	preserve	company	active	Taiwan Semiconductor Manufacturing Company
+TSMC	TSMC	preserve	company	active	keep official spelling
+NVIDIA	NVIDIA	preserve	company	active	keep official spelling
+NVDA	NVDA	preserve	ticker	active	keep ticker spelling
+Intel	Intel	preserve	company	active	keep official spelling
+INTC	INTC	preserve	ticker	active	keep ticker spelling
+AMD	AMD	preserve	company	active	keep official spelling
+ASML	ASML	preserve	company	active	keep official spelling
+Broadcom	Broadcom	preserve	company	active	keep official spelling
+Supermicro	Supermicro	preserve	company	active	keep official spelling
+CoWoS	CoWoS	preserve	semiconductor	active	advanced packaging term
+NVLink	NVLink	preserve	semiconductor	active	interconnect term
+AI server	AI server	preserve	industry	active	keep English term
+聯準會	聯準會	preserve	macro	active	Taiwan usage
+升息	升息	preserve	macro	active	Taiwan usage
+降息	降息	preserve	macro	active	Taiwan usage
+毛利率	毛利率	preserve	finance	active	Taiwan usage
+本益比	本益比	preserve	finance	active	Taiwan usage
+庫藏股	庫藏股	preserve	finance	active	Taiwan usage
+多頭	多頭	preserve	market	active	Taiwan usage
+空頭	空頭	preserve	market	active	Taiwan usage
+軋空	軋空	preserve	market	active	Taiwan usage
+停損	停損	preserve	trading	active	Taiwan usage
+部位	部位	preserve	trading	active	Taiwan usage
+財報	財報	preserve	finance	active	Taiwan usage
+供應鏈	供應鏈	preserve	industry	active	Taiwan usage
+Palantir	Palantir	preserve	company	active	keep official spelling
+CrowdStrike	CrowdStrike	preserve	company	active	keep official spelling
+處置股	處置股	preserve	trading	active	Taiwan market mechanism
+季線	季線	preserve	trading	active	moving average term
+滿倉	滿倉	preserve	trading	active	full-position term
+Planter	Palantir	correction	company	human_reviewed	EP674 human review; ASR company-name correction
+Crowstrike	CrowdStrike	correction	company	human_reviewed	EP674 human review; ASR company-name correction
+科學巨頭	科技巨頭	correction	industry_term	human_reviewed	EP674 human review; tech giants
+儲置股	處置股	correction	trading_term	human_reviewed	EP674 human review; Taiwan market mechanism
+標股	飆股	correction	trading_term	human_reviewed	EP674 human review; momentum stock wording
+越觀越大尾	越關越大尾	correction	trading_term	human_reviewed	EP674 human review; Taiwan disposition-stock phrase
+減罵	減碼	correction	trading_term	human_reviewed	EP674 human review; position reduction
+紀線	季線	correction	trading_term	human_reviewed	EP674 human review; moving average term
+大軍線	大均線	correction	trading_term	human_reviewed	EP674 human review; moving average term
+滿蒼	滿倉	correction	trading_term	human_reviewed	EP674 human review; full-position term
+虧據頭	科技巨頭	correction	industry_term	human_reviewed	EP674 human review; AI/tech giants
+上司	喪失	correction	general_term	human_reviewed	EP674 human review; semantic correction in risk-awareness phrase
+龍景	榮景	correction	macro_term	human_reviewed	EP674 human review; prosperity/boom term
+中細的OEM	中系的OEM	correction	industry_term	human_reviewed	EP674 human review; Chinese OEM wording
+中細OEM	中系OEM	correction	industry_term	human_reviewed	EP674 human review; Chinese OEM wording
+稱線	稱羨	correction	general_term	human_reviewed	EP674 human review; ASR substitution
+賠家人	陪家人	correction	general_term	human_reviewed	EP674 human review; semantic correction
+真效	增效	correction	business_term	candidate	Observed in EP674 text; verify against audio before applying broadly
+不是他媽		ignore_candidate	profanity_or_filler	candidate	User noted this is a filler-like phrase that should not guide agent reasoning; do not delete automatically yet

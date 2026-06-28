@@ -135,7 +135,7 @@ This report is generated from local artifacts only. Items not present on disk ar
 - Output sizes: raw md=109961 bytes, merged md=61867 bytes; raw srt=150277, merged srt=63787
 
 ## Quality assessment
-- Manual review template exists in `data/evaluation/manual_review.csv`.
+- Current human review package exists in `reports/EP674_human_review.md`.
 - Review windows prepared: 4
 - Transcript has not completed human quality validation.
 - Chinese comprehensibility, company-name quality, ticker quality, financial terminology quality, timestamp quality, hallucination, repetition, and large-v3 vs turbo quality difference require human listening review. This script does not fabricate those judgments.

@@ -42,7 +42,7 @@
 - Investment relevance: 
 - Reasoning preservation: 
 - Important information preserved:
-  - company/entity names: 
+  - company/entity names: planter -> palantir; 科學巨頭->科技巨頭
   - numbers: 
   - conditions: 
   - causal relationships: 
@@ -76,7 +76,7 @@
 - Content classification: 
 - Investment relevance: 
 - Reasoning preservation: 
-- Important information preserved:
+- Important information preserved: 虧據頭->科技巨頭; 上司->喪失; 龍景->榮景
   - company/entity names: 
   - numbers: 
   - conditions: 
@@ -85,7 +85,7 @@
   - exceptions/counterexamples: 
   - opinion change: 
   - speaker behavioral tendencies: 
-- Free-form note: 
+- Free-form note: 不是他媽 (單純語助詞，無意義可以直接省略，agent不應讀進去)
 
 ---
 
@@ -111,7 +111,7 @@
 - Content classification: 
 - Investment relevance: 
 - Reasoning preservation: 
-- Important information preserved:
+- Important information preserved: 儲置股->處置股; 標股->飆股; 越觀越大尾->越關越大尾; 減罵->減碼
   - company/entity names: 
   - numbers: 
   - conditions: 
@@ -146,7 +146,7 @@
 - Content classification: 
 - Investment relevance: 
 - Reasoning preservation: 
-- Important information preserved:
+- Important information preserved: 紀線->季線
   - company/entity names: 
   - numbers: 
   - conditions: 
@@ -177,11 +177,11 @@
 
 ### Review Form
 
-- Topic boundary: 
+- Topic boundary: 這裡應該分兩段，前半段似乎漏掉一些，一開頭"目前看起來" -> 不知道是什麼的目前；後半段 "那接下來我們來稍微的聊一下 蘋果的漲價話題" -> 這部分應該是另一段，銜接後續的蘋果漲價討論
 - Content classification: 
 - Investment relevance: 
 - Reasoning preservation: 
-- Important information preserved:
+- Important information preserved: 大軍線->大均線
   - company/entity names: 
   - numbers: 
   - conditions: 
@@ -212,7 +212,7 @@
 
 ### Review Form
 
-- Topic boundary: 
+- Topic boundary: "接下來我們來進入QA的部分" -> 這邊之後應該就是QA的那1/3
 - Content classification: 
 - Investment relevance: 
 - Reasoning preservation: 

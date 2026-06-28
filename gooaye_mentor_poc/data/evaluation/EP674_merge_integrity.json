@@ -20,40 +20,6 @@
   "mismatch_sample": [],
   "review_windows": {
     "review_windows_path": "data/evaluation/EP674/review_windows.json",
-    "exists": true,
-    "windows": [
-      {
-        "window_type": "opening_general",
-        "start": 180.0,
-        "end": 420.0,
-        "raw_segment_count": 168,
-        "merged_segment_count": 11,
-        "merged_source_ids_cover_window_raw_ids": true
-      },
-      {
-        "window_type": "middle_analysis",
-        "start": 1431.12,
-        "end": 1731.12,
-        "raw_segment_count": 217,
-        "merged_segment_count": 13,
-        "merged_source_ids_cover_window_raw_ids": true
-      },
-      {
-        "window_type": "english_terms_candidate",
-        "start": 1896.06,
-        "end": 2136.06,
-        "raw_segment_count": 186,
-        "merged_segment_count": 11,
-        "merged_source_ids_cover_window_raw_ids": true
-      },
-      {
-        "window_type": "late_qa_candidate",
-        "start": 2480.62,
-        "end": 2720.62,
-        "raw_segment_count": 201,
-        "merged_segment_count": 11,
-        "merged_source_ids_cover_window_raw_ids": true
-      }
-    ]
+    "exists": false
   }
 }
