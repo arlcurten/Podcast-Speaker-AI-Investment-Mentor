@@ -113,7 +113,8 @@ def main() -> int:
     }
     write_outputs(out_dir, merged, metadata)
     validation = build_validation_result(args.episode, args.configuration)
-    write_json(DATA / "evaluation" / f"{args.episode}_merge_integrity.json", validation)
+    evaluation_dir = DATA / "evaluation" / args.episode
+    write_json(evaluation_dir / "merge_integrity.json", validation)
     if validation["status"] != "pass":
         print(json.dumps(validation, ensure_ascii=False, indent=2))
         return 1
@@ -123,7 +124,7 @@ def main() -> int:
         if (out_dir / name).exists()
     }
     summary = {**metadata, "file_sizes_bytes": file_sizes, "merge_integrity_status": validation["status"]}
-    write_json(DATA / "evaluation" / f"{args.episode}_merge_summary.json", summary)
+    write_json(evaluation_dir / "merge_summary.json", summary)
     print(json.dumps(summary, ensure_ascii=False, indent=2))
     return 0
 

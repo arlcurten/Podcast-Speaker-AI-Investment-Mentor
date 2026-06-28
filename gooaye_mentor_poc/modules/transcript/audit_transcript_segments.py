@@ -165,7 +165,7 @@ def main() -> int:
     if not transcript_path.exists():
         raise SystemExit(f"Transcript not found: {transcript_path}")
     report = audit(transcript_path)
-    out_json = DATA / "evaluation" / f"{args.episode}_segment_audit.json"
+    out_json = DATA / "evaluation" / args.episode / "segment_audit.json"
     out_md = REPORTS / f"{args.episode}_segment_audit.md"
     write_json(out_json, report)
     out_md.write_text(render_markdown(report), encoding="utf-8")

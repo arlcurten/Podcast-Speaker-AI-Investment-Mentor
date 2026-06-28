@@ -121,7 +121,7 @@ Interpretation:
 
 ## Segment Audit And Merged Layer
 
-Verified from `data/evaluation/EP674_segment_audit.json`:
+Verified from `data/evaluation/EP674/segment_audit.json`:
 
 - Raw segment count: `2493`
 - Faster-whisper segment shape: true
@@ -132,7 +132,7 @@ Verified from `data/evaluation/EP674_segment_audit.json`:
 - Non-monotonic timestamps: `0`
 - Assessment: over-fragmented for SRT/Markdown readability
 
-Verified from `data/evaluation/EP674_merge_summary.json`:
+Verified from `data/evaluation/EP674/merge_summary.json`:
 
 - Merged count: `132`
 - Merged layer is deterministic.
@@ -141,7 +141,7 @@ Verified from `data/evaluation/EP674_merge_summary.json`:
 
 The merge implementation now joins source segment text with a single space between non-empty stripped segment texts. Raw-to-merged integrity is verified automatically when running `gooaye_mentor_poc/main.py merge`.
 
-Verified from `gooaye_mentor_poc/data/evaluation/EP674_merge_integrity.json`:
+Verified from `gooaye_mentor_poc/data/evaluation/EP674/merge_integrity.json`:
 
 - Merged start timestamp equals the first contributing raw segment start.
 - Merged end timestamp equals the last contributing raw segment end.

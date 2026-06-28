@@ -118,7 +118,7 @@ def repair_audio_metadata() -> str | None:
 
 
 def repair_segment_audit() -> str | None:
-    path = DATA / "evaluation" / "EP674_segment_audit.json"
+    path = DATA / "evaluation" / "EP674" / "segment_audit.json"
     if not path.exists():
         return None
     meta = load(path)

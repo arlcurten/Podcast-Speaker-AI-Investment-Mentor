@@ -268,7 +268,7 @@ def main() -> int:
     }
     write_outputs(out_dir, segments_out, metadata)
     if status == "success":
-        write_json(DATA / "evaluation" / f"{args.episode}_segment_audit.json", audit(out_dir / "transcript.json"))
+        write_json(DATA / "evaluation" / args.episode / "segment_audit.json", audit(out_dir / "transcript.json"))
     if cleanup_parent:
         shutil.rmtree(cleanup_parent, ignore_errors=True)
     print(json.dumps(metadata, ensure_ascii=False, indent=2))

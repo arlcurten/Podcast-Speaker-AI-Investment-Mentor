@@ -315,7 +315,7 @@ def main() -> int:
     }
     out_dir = DATA / "topic_segments" / args.episode
     write_json(out_dir / "topic_segments.json", {"summary": summary, "topic_segments": topics, "routing_decisions": routes})
-    write_json(DATA / "evaluation" / f"{args.episode}_topic_segmentation_summary.json", summary)
+    write_json(DATA / "evaluation" / args.episode / "topic_segmentation_summary.json", summary)
     print(json.dumps({
         "topic_segments": len(topics),
         "outputs": {

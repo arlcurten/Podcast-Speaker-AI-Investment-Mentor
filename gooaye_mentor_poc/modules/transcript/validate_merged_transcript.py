@@ -168,7 +168,7 @@ def main() -> int:
     args = parser.parse_args()
 
     result = build_validation_result(args.episode, args.configuration, args.sample_size)
-    json_path = DATA / "evaluation" / f"{args.episode}_merge_integrity.json"
+    json_path = DATA / "evaluation" / args.episode / "merge_integrity.json"
     report_path = REPORTS / f"{args.episode}_merge_integrity.md"
     write_json(json_path, result)
     output = {"status": status, "json": path_for_report(json_path)}

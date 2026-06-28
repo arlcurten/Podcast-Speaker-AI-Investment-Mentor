@@ -63,8 +63,8 @@ def main() -> int:
     downloads = sorted((DATA / "audio").glob("*/download_metadata.json"))
     audio_metas = sorted((DATA / "audio").glob("*/audio_metadata.json"))
     comparison = load_comparison()
-    audit = read_json_opt(DATA / "evaluation" / "EP674_segment_audit.json") or {}
-    merge = read_json_opt(DATA / "evaluation" / "EP674_merge_summary.json") or {}
+    audit = read_json_opt(DATA / "evaluation" / "EP674" / "segment_audit.json") or {}
+    merge = read_json_opt(DATA / "evaluation" / "EP674" / "merge_summary.json") or {}
     human_review_path = REPORTS / "EP674_human_review.md"
     lines: list[str] = []
     lines += [

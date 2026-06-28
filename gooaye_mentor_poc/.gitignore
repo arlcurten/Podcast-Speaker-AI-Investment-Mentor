@@ -76,6 +76,7 @@ data/evaluation/content_filtering_sample.csv
 !data/evaluation/manual_review.csv
 !data/evaluation/*.schema.json
 !data/evaluation/*summary.json
+!data/evaluation/**/*.json
 
 # Runtime / benchmark artifacts that can be regenerated
 data/legacy/benchmarks/**/run_metadata.json
