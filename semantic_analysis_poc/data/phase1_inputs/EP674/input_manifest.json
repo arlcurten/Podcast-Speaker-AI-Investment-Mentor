@@ -1,0 +1,42 @@
+{
+  "episode_id": "EP674",
+  "source_phase": "Phase 1 - Transcription POC",
+  "source_location": "legacy_segment_poc",
+  "copied_for": "Phase 2 - Semantic Analysis POC",
+  "notes": [
+    "These files are copied evidence inputs for Phase 2.",
+    "Historical absolute paths embedded in copied metadata are provenance only.",
+    "Do not use deterministic Phase 1 topic segmentation or classification as the main Phase 2 semantic method."
+  ],
+  "raw_segment_count": 2493,
+  "files": {
+    "raw_transcript": {
+      "path": "semantic_analysis_poc/data/phase1_inputs/EP674/raw_large-v3-turbo_transcript.json",
+      "sha256": "9e1f38725e95ee78f569095e789586349928294c82150a67f589107fc4ab2039"
+    },
+    "raw_run_metadata": {
+      "path": "semantic_analysis_poc/data/phase1_inputs/EP674/raw_large-v3-turbo_run_metadata.json",
+      "sha256": "c0605c48d422b38a4f98959e92f239477539d684ab8fcf077f6966d05f9f1c40"
+    },
+    "merged_transcript": {
+      "path": "semantic_analysis_poc/data/phase1_inputs/EP674/derived_large-v3-turbo_merged_transcript.json",
+      "sha256": "5d3344d86a1d3135fa7386f0e829ed97d8f8c649a32b4c194716cf2535ff6afc"
+    },
+    "normalized_merged_transcript": {
+      "path": "semantic_analysis_poc/data/phase1_inputs/EP674/derived_large-v3-turbo_normalized_merged_transcript_zh_tw.json",
+      "sha256": "db21e8ec391dbb5ffa653b49ebc536339a6301da4c80c82058f1bcc50a80d36e"
+    },
+    "merge_integrity": {
+      "path": "semantic_analysis_poc/data/phase1_inputs/EP674/merge_integrity.json",
+      "sha256": "b33699a2d04a1eca65d92d2fcaea291fff3054e7b880cdef5551f550fead0d74"
+    },
+    "audio_metadata": {
+      "path": "semantic_analysis_poc/data/phase1_inputs/EP674/audio_metadata.json",
+      "sha256": "a36e2bfb18624bbf560c4a7584fcd1b50147513cfa758b23633fbf71bf9b99e7"
+    },
+    "download_metadata": {
+      "path": "semantic_analysis_poc/data/phase1_inputs/EP674/download_metadata.json",
+      "sha256": "5c0902c320b5c5edcd3f546e75c47c886f663f6fade7a68d020ef87135f1f301"
+    }
+  }
+}

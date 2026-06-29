@@ -35,20 +35,32 @@ The long-term project should preserve evidence and derivation boundaries. Each l
    - Preserves timestamps and source segment IDs.
    - Uses deterministic normalization and glossary replacement, not free-form LLM rewriting.
 
-8. Topic segments
-   - Semantic grouping by subject.
-   - Should reference merged utterance IDs or raw segment IDs.
-   - Current EP674 layer is a narrow deterministic POC for review, not a production classifier.
+8. Phase 2 input package
+   - A compact copy of the Phase 1 evidence needed for semantic extraction.
+   - Includes raw transcript, normalized merged transcript, merge integrity metadata, episode/audio metadata, and terminology reference.
 
-9. Future decision/reasoning cases
+9. Episode Semantic Map
+   - Level 1 semantic overview of major episode themes and threads.
+   - Must reference source evidence.
+
+10. Topic-thread Reasoning Records
+   - Level 2 reasoning records.
+   - Threads may be long, overlapping, or non-contiguous.
+   - Must preserve conditions, assumptions, risks, exceptions, counterexamples, opinion changes, decisions, and speaker behavior.
+
+11. Episode Synthesis
+   - Level 3 episode-level synthesis.
+   - Should summarize high-level patterns without erasing uncertainty or source evidence.
+
+12. Future decision/reasoning cases
    - Extracted investment reasoning examples.
    - Must link back to source timestamps and text.
 
-10. Future behavioral patterns
+13. Future behavioral patterns
    - Cross-case patterns such as risk attitude, changing views, and uncertainty handling.
    - Should remain auditable to source cases.
 
-11. Future speaker model
+14. Future speaker model
    - Higher-level representation used by the mentor system.
    - Should not erase uncertainty or source evidence.
 
@@ -61,7 +73,8 @@ The long-term project should preserve evidence and derivation boundaries. Each l
 - Prefer project-relative paths for artifacts inside the repository.
 - If an absolute path is useful, store it separately from the project-relative path.
 - Text normalization must retain original text and store normalized text separately.
-- If LLM extraction is introduced later, store prompts, model, version, and confidence/uncertainty notes.
+- LLM extraction must store prompts, model, provider, version, schema version, token/cost metadata when available, and confidence/uncertainty notes.
+- Terminology corrections must be annotations or parallel fields, not destructive transcript rewrites.
 - Do not treat transcript text as verified until manual review is complete.
 
 ## Project-Wide Path Rule
@@ -78,11 +91,22 @@ Verified:
 - EP674 raw `large-v3-turbo` transcript exists.
 - EP674 deterministic merged transcript exists and has passed raw-to-merged integrity validation.
 - EP674 Traditional Chinese normalized raw and merged transcript layers exist.
-- EP674 minimal deterministic topic segmentation, classification, and routing POC exists.
+- EP674 minimal deterministic topic segmentation, classification, and routing POC exists as legacy review/reference only.
 - EP674 segment audit and manual review package exist.
 
 Pending:
 
 - Manual quality judgments.
+- Phase 2 whole-episode LLM semantic extraction.
 - Reasoning-case extraction.
 - Behavioral pattern extraction.
+
+## Phase 2 Input Copy
+
+The active Phase 2 POC keeps a small self-contained input copy under:
+
+```text
+semantic_analysis_poc/data/phase1_inputs/EP674/
+```
+
+It intentionally does not copy MP3 files, benchmark artifacts, old deterministic topic outputs, or cloud/runtime scratch data.

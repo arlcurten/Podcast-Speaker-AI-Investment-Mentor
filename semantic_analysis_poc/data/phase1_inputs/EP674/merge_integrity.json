@@ -1,0 +1,25 @@
+{
+  "episode_id": "EP674",
+  "configuration": "large-v3-turbo",
+  "status": "pass",
+  "raw_transcript": "data/transcripts/EP674/raw_large-v3-turbo_transcript.json",
+  "merged_transcript": "data/transcripts/EP674/derived_large-v3-turbo_merged_transcript.json",
+  "deterministic_separator": "single ASCII space between non-empty stripped source texts",
+  "coverage": {
+    "raw_segment_count": 2493,
+    "merged_segment_count": 132,
+    "covered_raw_segment_count": 2493,
+    "missing_raw_segment_ids": [],
+    "missing_raw_segment_count": 0,
+    "duplicate_source_segment_ids": [],
+    "duplicate_source_segment_count": 0,
+    "extra_source_segment_ids": [],
+    "extra_source_segment_count": 0
+  },
+  "mismatch_count": 0,
+  "mismatch_sample": [],
+  "review_windows": {
+    "review_windows_path": "data/evaluation/EP674/review_windows.json",
+    "exists": false
+  }
+}

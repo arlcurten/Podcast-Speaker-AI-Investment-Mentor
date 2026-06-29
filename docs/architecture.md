@@ -1,6 +1,12 @@
 # Architecture
 
-This document describes the long-term architecture for the Podcast Speaker AI Investment Mentor. The current implementation is still in Local POC / transcript validation.
+This document describes the long-term architecture for the Podcast Speaker AI Investment Mentor.
+
+Current boundary:
+
+- Phase 1 Transcription POC is complete and preserved in `legacy_segment_poc/`.
+- Phase 2 Semantic Extraction POC is active in `semantic_analysis_poc/`.
+- Later retrieval and Mentor Agent phases are future work.
 
 ## Target Flow
 
@@ -15,20 +21,22 @@ Raw ASR
     ↓
 Merged utterances
     ↓
-Topic segments
+Whole-episode normalized transcript package
     ↓
-Decision / reasoning cases
+Level 1: Episode Semantic Map
     ↓
-Behavioral patterns
+Level 2: Topic-thread Reasoning Records
     ↓
-Speaker model
+Level 3: Episode Synthesis
+    ↓
+Cross-episode decision cases and behavioral patterns
     ↓
 Hierarchical RAG / Mentor Agent
 ```
 
-## Verified
+## Phase 1 Verified
 
-Verified in the Local POC:
+Verified in the completed transcription POC:
 
 - Apple lookup fallback can recover the active RSS feed after an old feed URL returns 404.
 - RSS ingestion produces a 674-row episode manifest.
@@ -36,22 +44,31 @@ Verified in the Local POC:
 - EP674 full `large-v3-turbo` transcription completed locally.
 - EP674 raw segment audit completed.
 - EP674 deterministic merged utterances were generated.
-- EP674 manual review package and clips were generated.
+- EP674 Traditional Chinese normalized merged transcript exists.
+- EP674 timestamp and source-segment integrity checks passed.
+- EP674 manual review package was generated.
 
-## Pending
+Phase 1 is now legacy/reference, frozen except for bug fixes or explicitly requested reproducibility checks.
 
-- Human listening review of transcript quality.
-- Clean same-clip GPU benchmark for `large-v3-turbo`.
-- Same-clip `large-v3` feasibility comparison on local 4 GB GPU.
-- Content classification feasibility.
-- Decision on 20-episode cloud pilot.
+## Phase 2 Active Direction
+
+Phase 2 should use the normalized whole-episode transcript as LLM input. The LLM is responsible for semantic understanding. Deterministic code should only handle transcript preparation, source mapping, API orchestration, schema validation, retry handling, metadata, storage, and reproducibility.
+
+Target hierarchy:
+
+1. Episode Semantic Map
+2. Topic-thread Reasoning Records
+3. Episode Synthesis
+
+Topic threads may be long, overlapping, or non-contiguous. The primary method should not be deterministic keyword segmentation, fixed episode-position weighting, fixed-duration windows, or single-label classification.
 
 ## Future
 
-- Topic segmentation.
-- Decision/reasoning case extraction.
-- Behavioral pattern modeling.
-- Speaker model construction.
+- API/model selection.
+- 3 to 20 episode pilot.
+- Full corpus processing.
+- Cross-episode decision cases and behavioral patterns.
+- Conditional speaker model construction.
 - Hierarchical retrieval.
 - Mentor Agent MVP.
 

@@ -8,43 +8,46 @@ The goal is not automated trading or order placement. The long-term goal is to p
 
 Current status:
 
-- The active implementation is a Local POC in `gooaye_mentor_poc/`.
-- EP674 has been ingested, downloaded, validated, transcribed, normalized, merged, and prepared for human review.
-- The project is still in transcript validation and representation design.
+- Phase 1 Transcription POC is complete and preserved as a stable reference in `legacy_segment_poc/`.
+- Phase 2 Semantic Extraction POC is the active workspace in `semantic_analysis_poc/`.
+- Phase 2 starts from whole-episode normalized transcript input and will use LLM-based, evidence-grounded semantic extraction.
 - RAG, vector database, full Mentor Agent, fine-tuning, and cloud batch processing are not implemented yet.
 
 Start here:
 
 - `AGENTS.md`: project-wide agent rules.
-- `gooaye_mentor_poc/README.md`: Local POC overview and commands.
+- `semantic_analysis_poc/README.md`: active Phase 2 workspace.
+- `legacy_segment_poc/README.md`: completed Phase 1 transcription POC reference.
 - `docs/terminology.tsv`: shared terminology table for preserved terms, aliases, and corrections.
 - `docs/future-improvements.md`: deferred optimization ideas.
 
 ## Project Flow
 
 ```text
-[done]    RSS / Apple lookup
-[done]    Episode manifest
-[done]    EP674 MP3 audio + metadata
-[done]    Raw ASR transcript
-[done]    Traditional Chinese normalization
-[done]    Deterministic merged utterances
-[current] Human review of transcript representation and topic boundaries
-[poc]     Minimal topic / classification / routing review
-[todo]    20-episode pilot
-[todo]    Topic and reasoning-case extraction
-[todo]    Behavioral pattern modeling
-[todo]    Retrieval-backed Mentor MVP
+[done]    Phase 1: RSS / Apple lookup
+[done]    Phase 1: Episode manifest
+[done]    Phase 1: EP674 MP3 audio + metadata
+[done]    Phase 1: Raw ASR transcript
+[done]    Phase 1: Traditional Chinese normalization
+[done]    Phase 1: Deterministic merged utterances and integrity validation
+[active]  Phase 2: Whole-episode LLM semantic extraction POC
+[future]  Phase 3: API/model selection
+[future]  Phase 4: 3 to 20 episode pilot
+[future]  Phase 5: Full corpus processing
+[future]  Phase 6: Cross-episode knowledge
+[future]  Phase 7: Mentor MVP
+[future]  Phase 8: Advanced version
 ```
 
-Every derived layer should remain traceable to episode, timestamp, and source segment IDs. Raw artifacts should not be overwritten by normalized, merged, corrected, or classified outputs.
+Every derived layer should remain traceable to episode, timestamp, and source segment IDs. Raw artifacts should not be overwritten by normalized, merged, corrected, or semantic extraction outputs.
 
-Near-term TODO:
+Phase 2 design direction:
 
-- Finish reviewing `gooaye_mentor_poc/reports/EP674_human_review.md`.
-- Add confirmed terminology corrections to `docs/terminology.tsv`.
-- Keep classification and segmentation improvements in `docs/future-improvements.md` until they are worth implementing.
-- Decide whether transcript quality is good enough for a broader pilot.
+- Use the whole normalized episode transcript as LLM input.
+- Supply terminology corrections as annotations, not destructive transcript rewrites.
+- Produce a three-level hierarchy: Episode Semantic Map, Topic-thread Reasoning Records, and Episode Synthesis.
+- Preserve uncertainty, assumptions, risks, exceptions, counterexamples, opinion changes, decisions, and speaker behavior.
+- Do not use deterministic keyword segmentation/classification as the primary semantic method.
 
 ## Repository Hierarchy
 
@@ -58,33 +61,32 @@ Podcast-Speaker-AI-Investment-Mentor/
 │   ├── cloud-processing-plan.md
 │   ├── future-improvements.md
 │   └── terminology.tsv
-└── gooaye_mentor_poc/
+├── legacy_segment_poc/
+│   └── ...
+└── semantic_analysis_poc/
     ├── AGENTS.md
     ├── README.md
-    ├── main.py
-    ├── modules/
-    ├── poc_docs/
     ├── config/
     ├── data/
-    └── reports/
+    ├── prompts/
+    ├── schemas/
+    ├── src/
+    ├── outputs/
+    ├── tests/
+    └── tmp/
 ```
 
 ## How To Use This Project
 
-For current POC work:
+For active Phase 2 work, start in `semantic_analysis_poc/`.
 
-```bash
-cd /home/g9161/projects/Podcast-Speaker-AI-Investment-Mentor/gooaye_mentor_poc
-python3 main.py merge --episode EP674 --configuration large-v3-turbo
-python3 main.py normalize --episode EP674 --configuration large-v3-turbo
-python3 main.py topic-review-poc --episode EP674 --configuration large-v3-turbo
-```
-
-For human review, open:
+For Phase 1 reference only:
 
 ```text
-gooaye_mentor_poc/reports/EP674_human_review.md
+legacy_segment_poc/
 ```
+
+Do not rerun Phase 1 transcription, GPU benchmark, RSS discovery, or episode download unless explicitly needed.
 
 ## More Detail
 
@@ -93,5 +95,6 @@ gooaye_mentor_poc/reports/EP674_human_review.md
 - Cloud plan: `docs/cloud-processing-plan.md`
 - Future improvements: `docs/future-improvements.md`
 - Terminology: `docs/terminology.tsv`
-- POC details: `gooaye_mentor_poc/poc_docs/local-transcription-poc.md`
-- POC troubleshooting: `gooaye_mentor_poc/poc_docs/troubleshooting.md`
+- Phase 1 POC details: `legacy_segment_poc/poc_docs/local-transcription-poc.md`
+- Phase 1 troubleshooting: `legacy_segment_poc/poc_docs/troubleshooting.md`
+- Phase 2 POC: `semantic_analysis_poc/README.md`

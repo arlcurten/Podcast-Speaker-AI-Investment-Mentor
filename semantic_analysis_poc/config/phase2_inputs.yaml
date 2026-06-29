@@ -1,0 +1,19 @@
+# Phase 2 input references.
+# Paths are relative to this directory.
+
+episode_id: EP674
+
+inputs:
+  raw_transcript: data/phase1_inputs/EP674/raw_large-v3-turbo_transcript.json
+  raw_run_metadata: data/phase1_inputs/EP674/raw_large-v3-turbo_run_metadata.json
+  merged_transcript: data/phase1_inputs/EP674/derived_large-v3-turbo_merged_transcript.json
+  normalized_merged_transcript: data/phase1_inputs/EP674/derived_large-v3-turbo_normalized_merged_transcript_zh_tw.json
+  merge_integrity: data/phase1_inputs/EP674/merge_integrity.json
+  audio_metadata: data/phase1_inputs/EP674/audio_metadata.json
+  download_metadata: data/phase1_inputs/EP674/download_metadata.json
+  terminology: ../docs/terminology.tsv
+
+planned_outputs:
+  episode_semantic_map: outputs/EP674/episode_semantic_map.json
+  topic_thread_reasoning_records: outputs/EP674/topic_thread_reasoning_records.json
+  episode_synthesis: outputs/EP674/episode_synthesis.json
