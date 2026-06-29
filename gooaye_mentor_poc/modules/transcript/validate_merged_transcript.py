@@ -137,9 +137,9 @@ def write_report(path: Path, result: dict[str, Any]) -> None:
 
 
 def build_validation_result(episode: str, configuration: str, sample_size: int = 10) -> dict[str, Any]:
-    base = DATA / "transcripts" / episode / configuration
-    raw_path = base / "transcript.json"
-    merged_path = base / "merged_transcript.json"
+    transcript_dir = DATA / "transcripts" / episode
+    raw_path = transcript_dir / f"raw_{configuration}_transcript.json"
+    merged_path = transcript_dir / f"derived_{configuration}_merged_transcript.json"
     raw_segments = load_json(raw_path)["segments"]
     merged_segments = load_json(merged_path)["segments"]
     mismatches, coverage = validate_merged(raw_segments, merged_segments)
@@ -171,7 +171,7 @@ def main() -> int:
     json_path = DATA / "evaluation" / args.episode / "merge_integrity.json"
     report_path = REPORTS / f"{args.episode}_merge_integrity.md"
     write_json(json_path, result)
-    output = {"status": status, "json": path_for_report(json_path)}
+    output = {"status": result["status"], "json": path_for_report(json_path)}
     if args.write_report:
         write_report(report_path, result)
         output["report"] = path_for_report(report_path)

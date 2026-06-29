@@ -15,7 +15,7 @@ Verified from `data/audio/EP674/download_metadata.json` and `data/audio/EP674/au
 
 ## large-v3-turbo Full Episode
 
-Verified from `data/transcripts/EP674/large-v3-turbo/run_metadata.json`:
+Verified from `data/transcripts/EP674/raw_large-v3-turbo_run_metadata.json`:
 
 - Backend: faster-whisper
 - Model: `large-v3-turbo`
@@ -152,14 +152,13 @@ Verified from `gooaye_mentor_poc/data/evaluation/EP674/merge_integrity.json`:
 
 EP674 now has a separate Traditional Chinese normalization layer:
 
-- Raw normalized transcript: `gooaye_mentor_poc/data/transcripts/EP674/large-v3-turbo/normalized_transcript_zh_tw.json`
-- Merged normalized transcript: `gooaye_mentor_poc/data/transcripts/EP674/large-v3-turbo/normalized_merged_transcript_zh_tw.json`
+- Merged normalized transcript: `gooaye_mentor_poc/data/transcripts/EP674/derived_large-v3-turbo_normalized_merged_transcript_zh_tw.json`
 - Method: OpenCC `s2twp` plus replacements from `docs/terminology.tsv`.
 - Raw ASR transcript remains unchanged.
 
 A minimal deterministic topic segmentation, classification, and routing POC exists for EP674:
 
-- Topic segments: `gooaye_mentor_poc/data/topic_segments/EP674/topic_segments.json`
+- Topic segments review reference: `gooaye_mentor_poc/data/topic_segments/EP674/topic_segments.json`
 - Human review package: `gooaye_mentor_poc/reports/EP674_human_review.md`
 
 This POC uses keyword and continuity heuristics with configurable thresholds in `gooaye_mentor_poc/config/topic_routing.yaml`. It is designed for human review and does not create a vector database, RAG index, or Mentor Agent.

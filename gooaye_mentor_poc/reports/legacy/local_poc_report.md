@@ -25,7 +25,7 @@ This report is generated from local artifacts only. Items not present on disk ar
 - Fetched at: 2026-06-28T05:53:22.702197+00:00
 - RSS success: yes
 - Manifest count: 674
-- RSS snapshot: data/source/rss_snapshot_20260628T055322Z.xml
+- RSS snapshot: data/rss_sources/rss_snapshot_20260628T055322Z.xml
 - EP672 found in manifest: yes
 
 ### Downloaded episode: EP674

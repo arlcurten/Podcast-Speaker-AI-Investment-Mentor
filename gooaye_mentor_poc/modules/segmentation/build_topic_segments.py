@@ -284,8 +284,8 @@ def main() -> int:
     args = parser.parse_args()
 
     config = yaml.safe_load(args.config.read_text(encoding="utf-8"))
-    base = DATA / "transcripts" / args.episode / args.configuration
-    normalized_path = base / "normalized_merged_transcript_zh_tw.json"
+    base = DATA / "transcripts" / args.episode
+    normalized_path = base / f"derived_{args.configuration}_normalized_merged_transcript_zh_tw.json"
     if not normalized_path.exists():
         raise SystemExit(f"Normalized merged transcript not found: {normalized_path}")
     normalized_payload = load_json(normalized_path)

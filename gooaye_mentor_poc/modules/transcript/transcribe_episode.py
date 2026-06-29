@@ -119,25 +119,11 @@ def make_clip(src: Path, seconds: int) -> Path:
     return tmp
 
 
-def srt_time(value: float) -> str:
-    millis = int(round(value * 1000))
-    h, rem = divmod(millis, 3600_000)
-    m, rem = divmod(rem, 60_000)
-    s, ms = divmod(rem, 1000)
-    return f"{h:02}:{m:02}:{s:02},{ms:03}"
-
-
 def write_outputs(out_dir: Path, segments: list[dict[str, Any]], metadata: dict[str, Any]) -> None:
     out_dir.mkdir(parents=True, exist_ok=True)
-    write_json(out_dir / "transcript.json", {"metadata": metadata, "segments": segments})
-    srt_lines = []
-    md_lines = [f"# Transcript {metadata['episode_id']} {metadata['configuration_name']}", ""]
-    for idx, seg in enumerate(segments, start=1):
-        srt_lines.extend([str(idx), f"{srt_time(seg['start'])} --> {srt_time(seg['end'])}", seg["text"].strip(), ""])
-        md_lines.append(f"[{seg['start']:.2f} - {seg['end']:.2f}] {seg['text'].strip()}")
-    (out_dir / "transcript.srt").write_text("\n".join(srt_lines), encoding="utf-8")
-    (out_dir / "transcript.md").write_text("\n".join(md_lines) + "\n", encoding="utf-8")
-    write_json(out_dir / "run_metadata.json", metadata)
+    config_name = metadata["configuration_name"]
+    write_json(out_dir / f"raw_{config_name}_transcript.json", {"metadata": metadata, "segments": segments})
+    write_json(out_dir / f"raw_{config_name}_run_metadata.json", metadata)
 
 
 def main() -> int:
@@ -182,7 +168,7 @@ def main() -> int:
         out_name = f"{args.config}_partial_{args.max_seconds}s"
     if args.compute_type:
         out_name = f"{out_name}_{args.compute_type}"
-    out_dir = DATA / "transcripts" / args.episode / out_name
+    out_dir = DATA / "transcripts" / args.episode
     process = psutil.Process(os.getpid())
     peak_rss = process.memory_info().rss
     vram_monitor = VramMonitor(device == "cuda")
@@ -268,7 +254,7 @@ def main() -> int:
     }
     write_outputs(out_dir, segments_out, metadata)
     if status == "success":
-        write_json(DATA / "evaluation" / args.episode / "segment_audit.json", audit(out_dir / "transcript.json"))
+        write_json(DATA / "evaluation" / args.episode / "segment_audit.json", audit(out_dir / f"raw_{out_name}_transcript.json"))
     if cleanup_parent:
         shutil.rmtree(cleanup_parent, ignore_errors=True)
     print(json.dumps(metadata, ensure_ascii=False, indent=2))

@@ -49,8 +49,8 @@ huggingface/
 *.onnx
 
 # Raw RSS snapshots and generated source manifests
-data/source/*.xml
-data/source/*.jsonl
+data/rss_sources/*.xml
+data/rss_sources/*.jsonl
 
 # Downloaded and generated audio
 data/audio/

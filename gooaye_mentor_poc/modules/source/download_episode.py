@@ -70,7 +70,7 @@ def download(url: str, dest: Path, timeout: int, retries: int) -> dict[str, Any]
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--episode", required=True, help="episode_id, number, guid, or title substring")
-    parser.add_argument("--manifest", default=str(DATA / "source" / "episodes.jsonl"))
+    parser.add_argument("--manifest", default=str(DATA / "rss_sources" / "episodes.jsonl"))
     parser.add_argument("--timeout", type=int, default=60)
     parser.add_argument("--retries", type=int, default=3)
     args = parser.parse_args()

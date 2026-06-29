@@ -4,19 +4,10 @@ from __future__ import annotations
 import argparse
 import json
 import statistics
-from pathlib import Path
 from typing import Any
 
 from modules.common import DATA, write_json
 from modules.transcript.validate_merged_transcript import build_validation_result
-
-
-def srt_time(value: float) -> str:
-    millis = int(round(value * 1000))
-    h, rem = divmod(millis, 3600_000)
-    m, rem = divmod(rem, 60_000)
-    s, ms = divmod(rem, 1000)
-    return f"{h:02}:{m:02}:{s:02},{ms:03}"
 
 
 def duration_stats(items: list[dict[str, Any]]) -> dict[str, float | int | None]:
@@ -74,17 +65,6 @@ def merge_segments(segments: list[dict[str, Any]], max_gap: float, max_duration:
     return merged
 
 
-def write_outputs(out_dir: Path, merged: list[dict[str, Any]], metadata: dict[str, Any]) -> None:
-    write_json(out_dir / "merged_transcript.json", {"metadata": metadata, "segments": merged})
-    srt_lines: list[str] = []
-    md_lines = [f"# Merged Transcript {metadata['episode_id']} {metadata['configuration']}", ""]
-    for idx, seg in enumerate(merged, start=1):
-        srt_lines.extend([str(idx), f"{srt_time(seg['start'])} --> {srt_time(seg['end'])}", seg["text"].strip(), ""])
-        md_lines.append(f"[{seg['start']:.2f} - {seg['end']:.2f}] {seg['text'].strip()}")
-    (out_dir / "merged_transcript.srt").write_text("\n".join(srt_lines), encoding="utf-8")
-    (out_dir / "merged_transcript.md").write_text("\n".join(md_lines) + "\n", encoding="utf-8")
-
-
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--episode", default="EP674")
@@ -93,8 +73,10 @@ def main() -> int:
     parser.add_argument("--max-duration", type=float, default=25.0)
     parser.add_argument("--max-chars", type=int, default=220)
     args = parser.parse_args()
-    out_dir = DATA / "transcripts" / args.episode / args.configuration
-    payload = json.loads((out_dir / "transcript.json").read_text(encoding="utf-8"))
+    transcript_dir = DATA / "transcripts" / args.episode
+    raw_path = transcript_dir / f"raw_{args.configuration}_transcript.json"
+    merged_path = transcript_dir / f"derived_{args.configuration}_merged_transcript.json"
+    payload = json.loads(raw_path.read_text(encoding="utf-8"))
     raw_segments = payload.get("segments", [])
     merged = merge_segments(raw_segments, args.max_gap, args.max_duration, args.max_chars)
     metadata = {
@@ -111,7 +93,7 @@ def main() -> int:
         "raw_stats": duration_stats(raw_segments),
         "merged_stats": duration_stats(merged),
     }
-    write_outputs(out_dir, merged, metadata)
+    write_json(merged_path, {"metadata": metadata, "segments": merged})
     validation = build_validation_result(args.episode, args.configuration)
     evaluation_dir = DATA / "evaluation" / args.episode
     write_json(evaluation_dir / "merge_integrity.json", validation)
@@ -119,9 +101,8 @@ def main() -> int:
         print(json.dumps(validation, ensure_ascii=False, indent=2))
         return 1
     file_sizes = {
-        name: (out_dir / name).stat().st_size
-        for name in ["transcript.json", "transcript.srt", "transcript.md", "merged_transcript.json", "merged_transcript.srt", "merged_transcript.md"]
-        if (out_dir / name).exists()
+        raw_path.name: raw_path.stat().st_size,
+        merged_path.name: merged_path.stat().st_size,
     }
     summary = {**metadata, "file_sizes_bytes": file_sizes, "merge_integrity_status": validation["status"]}
     write_json(evaluation_dir / "merge_summary.json", summary)

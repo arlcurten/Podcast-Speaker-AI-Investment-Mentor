@@ -161,7 +161,7 @@ def main() -> int:
     parser.add_argument("--episode", default="EP674")
     parser.add_argument("--configuration", default="large-v3-turbo")
     args = parser.parse_args()
-    transcript_path = DATA / "transcripts" / args.episode / args.configuration / "transcript.json"
+    transcript_path = DATA / "transcripts" / args.episode / f"raw_{args.configuration}_transcript.json"
     if not transcript_path.exists():
         raise SystemExit(f"Transcript not found: {transcript_path}")
     report = audit(transcript_path)

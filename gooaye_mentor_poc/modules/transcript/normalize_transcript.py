@@ -34,30 +34,6 @@ def normalize_text(text: str, converter: Any, glossary: list[dict[str, str]]) ->
     return normalized
 
 
-def normalize_raw_segments(
-    segments: list[dict[str, Any]],
-    converter: Any,
-    glossary: list[dict[str, str]],
-    method: str,
-    version: str,
-) -> list[dict[str, Any]]:
-    rows: list[dict[str, Any]] = []
-    for seg in segments:
-        segment_id = int(seg["segment_id"])
-        raw_text = str(seg.get("text", ""))
-        rows.append({
-            "id": segment_id,
-            "start": float(seg["start"]),
-            "end": float(seg["end"]),
-            "raw_text": raw_text,
-            "normalized_text_zh_tw": normalize_text(raw_text, converter, glossary),
-            "normalization_method": method,
-            "normalization_version": version,
-            "source_segment_ids": [segment_id],
-        })
-    return rows
-
-
 def normalize_merged_segments(
     segments: list[dict[str, Any]],
     converter: Any,
@@ -90,10 +66,10 @@ def main() -> int:
     parser.add_argument("--terminology", type=Path, default=TERMINOLOGY)
     args = parser.parse_args()
 
-    base = DATA / "transcripts" / args.episode / args.configuration
-    raw_path = base / "transcript.json"
-    merged_path = base / "merged_transcript.json"
-    raw_payload = json.loads(raw_path.read_text(encoding="utf-8"))
+    base = DATA / "transcripts" / args.episode
+    raw_path = base / f"raw_{args.configuration}_transcript.json"
+    merged_path = base / f"derived_{args.configuration}_merged_transcript.json"
+    normalized_path = base / f"derived_{args.configuration}_normalized_merged_transcript_zh_tw.json"
     merged_payload = json.loads(merged_path.read_text(encoding="utf-8"))
 
     converter, opencc_version = load_opencc(args.opencc_config)
@@ -118,15 +94,11 @@ def main() -> int:
         "uses_llm": False,
     }
 
-    raw_rows = normalize_raw_segments(raw_payload.get("segments", []), converter, replacements, method, version)
     merged_rows = normalize_merged_segments(merged_payload.get("segments", []), converter, replacements, method, version)
-    write_json(base / "normalized_transcript_zh_tw.json", {"metadata": metadata, "segments": raw_rows})
-    write_json(base / "normalized_merged_transcript_zh_tw.json", {"metadata": metadata, "segments": merged_rows})
+    write_json(normalized_path, {"metadata": metadata, "segments": merged_rows})
     print(json.dumps({
-        "raw_segments": len(raw_rows),
         "merged_segments": len(merged_rows),
-        "raw_output": path_for_report(base / "normalized_transcript_zh_tw.json"),
-        "merged_output": path_for_report(base / "normalized_merged_transcript_zh_tw.json"),
+        "merged_output": path_for_report(normalized_path),
         "method": method,
         "version": version,
     }, ensure_ascii=False, indent=2))

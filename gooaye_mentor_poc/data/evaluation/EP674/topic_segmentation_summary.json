@@ -1,7 +1,7 @@
 {
   "episode_id": "EP674",
   "configuration": "large-v3-turbo",
-  "source_normalized_merged_transcript": "data/transcripts/EP674/large-v3-turbo/normalized_merged_transcript_zh_tw.json",
+  "source_normalized_merged_transcript": "data/transcripts/EP674/derived_large-v3-turbo_normalized_merged_transcript_zh_tw.json",
   "topic_segment_count": 39,
   "total_topic_duration_seconds": 3176.37,
   "duration_by_content_type": {

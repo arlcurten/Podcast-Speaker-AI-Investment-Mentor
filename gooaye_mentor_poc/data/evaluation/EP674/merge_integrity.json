@@ -2,8 +2,8 @@
   "episode_id": "EP674",
   "configuration": "large-v3-turbo",
   "status": "pass",
-  "raw_transcript": "data/transcripts/EP674/large-v3-turbo/transcript.json",
-  "merged_transcript": "data/transcripts/EP674/large-v3-turbo/merged_transcript.json",
+  "raw_transcript": "data/transcripts/EP674/raw_large-v3-turbo_transcript.json",
+  "merged_transcript": "data/transcripts/EP674/derived_large-v3-turbo_merged_transcript.json",
   "deterministic_separator": "single ASCII space between non-empty stripped source texts",
   "coverage": {
     "raw_segment_count": 2493,

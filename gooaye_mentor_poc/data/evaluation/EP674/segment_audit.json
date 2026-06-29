@@ -1,5 +1,5 @@
 {
-  "transcript_path": "data/transcripts/EP674/large-v3-turbo/transcript.json",
+  "transcript_path": "data/transcripts/EP674/raw_large-v3-turbo_transcript.json",
   "segment_count": 2493,
   "is_faster_whisper_segment_shape": true,
   "appears_to_be_word_timestamps": false,
@@ -65,7 +65,7 @@
   "markdown_file_size_bytes": 109961,
   "fragmentation_assessment": "over-fragmented for SRT/Markdown readability",
   "original_transcript_path": "/home/g9161/projects/gooaye_mentor_poc/data/transcripts/EP674/large-v3-turbo/transcript.json",
-  "project_relative_path": "data/transcripts/EP674/large-v3-turbo/transcript.json",
-  "runtime_absolute_path": "/home/g9161/projects/Podcast-Speaker-AI-Investment-Mentor/gooaye_mentor_poc/data/transcripts/EP674/large-v3-turbo/transcript.json",
+  "project_relative_path": "data/transcripts/EP674/raw_large-v3-turbo_transcript.json",
+  "runtime_absolute_path": "/home/g9161/projects/Podcast-Speaker-AI-Investment-Mentor/gooaye_mentor_poc/data/transcripts/EP674/raw_large-v3-turbo_transcript.json",
   "path_migration_note": "Repository moved under /home/g9161/projects/Podcast-Speaker-AI-Investment-Mentor; project-relative paths are now preferred."
 }

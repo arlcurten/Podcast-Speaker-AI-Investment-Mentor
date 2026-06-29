@@ -18,7 +18,7 @@ def load(path: Path) -> dict[str, Any]:
 
 def repair_run_metadata() -> list[str]:
     changed: list[str] = []
-    for path in sorted((DATA / "transcripts").glob("*/**/run_metadata.json")):
+    for path in sorted((DATA / "transcripts").glob("*/raw_*_run_metadata.json")):
         meta = load(path)
         if meta.get("backend") == "faster-whisper":
             source_audio = meta.get("source_audio")
@@ -41,7 +41,8 @@ def repair_run_metadata() -> list[str]:
             meta.setdefault("vram_sampling_interval_seconds", None)
             meta.setdefault("baseline_vram_mb", None)
             write_json(path, meta)
-            transcript_path = path.parent / "transcript.json"
+            configuration = str(payload.get("configuration_name") or path.name.removeprefix("raw_").removesuffix("_run_metadata.json"))
+            transcript_path = path.parent / f"raw_{configuration}_transcript.json"
             if transcript_path.exists():
                 payload = json.loads(transcript_path.read_text(encoding="utf-8"))
                 if isinstance(payload.get("metadata"), dict):
@@ -135,7 +136,7 @@ def repair_segment_audit() -> str | None:
 
 
 def repair_rss_metadata() -> str | None:
-    path = DATA / "source" / "rss_ingestion_metadata.json"
+    path = DATA / "rss_sources" / "rss_ingestion_metadata.json"
     if not path.exists():
         return None
     meta = load(path)

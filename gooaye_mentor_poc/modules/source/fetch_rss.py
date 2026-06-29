@@ -134,7 +134,7 @@ def main() -> int:
         except Exception as fallback_exc:
             print(f"Failed to download RSS and Apple fallback failed: {fallback_exc}", file=sys.stderr)
             return 2
-    source_dir = DATA / "source"
+    source_dir = DATA / "rss_sources"
     snapshot = source_dir / f"rss_snapshot_{datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%SZ')}.xml"
     snapshot.parent.mkdir(parents=True, exist_ok=True)
     snapshot.write_bytes(response.content)

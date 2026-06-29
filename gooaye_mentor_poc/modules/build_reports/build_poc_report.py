@@ -22,7 +22,7 @@ def first_existing(paths: list[Path]) -> Any | None:
 
 
 def manifest_count() -> int:
-    path = DATA / "source" / "episodes.jsonl"
+    path = DATA / "rss_sources" / "episodes.jsonl"
     if not path.exists():
         return 0
     return sum(1 for line in path.read_text(encoding="utf-8").splitlines() if line.strip())
@@ -53,9 +53,9 @@ def fmt(value: Any) -> str:
 
 def main() -> int:
     env = read_json_opt(DATA / "environment_inspection.json") or {}
-    ingestion = read_json_opt(DATA / "source" / "rss_ingestion_metadata.json") or {}
+    ingestion = read_json_opt(DATA / "rss_sources" / "rss_ingestion_metadata.json") or {}
     ep_config = read_yamlish_config()
-    manifest_path = DATA / "source" / "episodes.jsonl"
+    manifest_path = DATA / "rss_sources" / "episodes.jsonl"
     if manifest_path.exists():
         ep672_found: str = "yes" if any("EP672" in line for line in manifest_path.read_text(encoding="utf-8").splitlines()) else "no"
     else:
@@ -168,7 +168,7 @@ def main() -> int:
             f"- Raw mean/median duration: {fmt(raw.get('mean_duration_seconds'))} / {fmt(raw.get('median_duration_seconds'))} seconds",
             f"- Merged mean/median duration: {fmt(merged.get('mean_duration_seconds'))} / {fmt(merged.get('median_duration_seconds'))} seconds",
             f"- Raw mean text length: {fmt(raw.get('mean_text_length'))}; merged mean text length: {fmt(merged.get('mean_text_length'))}",
-            f"- Output sizes: raw md={fmt(files.get('transcript.md'))} bytes, merged md={fmt(files.get('merged_transcript.md'))} bytes; raw srt={fmt(files.get('transcript.srt'))}, merged srt={fmt(files.get('merged_transcript.srt'))}",
+            f"- Output sizes: {', '.join(f'{name}={size} bytes' for name, size in files.items()) if files else 'not measured'}",
         ]
     successful = [r for r in comparison if r.get("status") == "success" and r.get("realtime_factor")]
     rtf = min([float(r["realtime_factor"]) for r in successful], default=None)

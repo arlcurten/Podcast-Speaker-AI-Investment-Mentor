@@ -161,7 +161,7 @@ def parse_duration_to_seconds(value: str | None) -> float | None:
 
 
 def load_manifest(path: Path | None = None) -> list[dict[str, Any]]:
-    manifest = path or DATA / "source" / "episodes.jsonl"
+    manifest = path or DATA / "rss_sources" / "episodes.jsonl"
     rows: list[dict[str, Any]] = []
     with manifest.open("r", encoding="utf-8") as fh:
         for line in fh:

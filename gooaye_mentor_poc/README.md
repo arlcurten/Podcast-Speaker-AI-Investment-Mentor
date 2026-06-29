@@ -20,7 +20,7 @@ gooaye_mentor_poc/
 ├── config/
 ├── poc_docs/
 ├── data/
-│   ├── source/
+│   ├── rss_sources/
 │   ├── audio/
 │   ├── transcripts/
 │   ├── topic_segments/
@@ -58,26 +58,26 @@ python3 -m py_compile main.py modules/*.py modules/*/*.py
 ## Important Files
 
 ```text
-data/source/episodes.jsonl
-data/source/rss_ingestion_metadata.json
-data/source/rss_snapshot_*.xml
+data/rss_sources/episodes.jsonl
+data/rss_sources/rss_ingestion_metadata.json
+data/rss_sources/rss_snapshot_*.xml
 ```
 
 RSS snapshot, episode manifest, and feed provenance.
 
 ```text
-data/transcripts/EP674/large-v3-turbo/transcript.json
+data/transcripts/EP674/raw_large-v3-turbo_transcript.json
 ```
 
 Canonical raw ASR transcript. Do not overwrite.
 
 ```text
-data/transcripts/EP674/large-v3-turbo/normalized_*.json
-data/transcripts/EP674/large-v3-turbo/merged_transcript.json
+data/transcripts/EP674/derived_large-v3-turbo_merged_transcript.json
+data/transcripts/EP674/derived_large-v3-turbo_normalized_merged_transcript_zh_tw.json
 data/topic_segments/EP674/topic_segments.json
 ```
 
-Current derived transcript and topic POC outputs.
+Current derived transcript and human-review reference outputs.
 
 ```text
 data/legacy/

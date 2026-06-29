@@ -18,9 +18,10 @@ def load_runs(episode: str) -> list[dict[str, Any]]:
     rows: list[dict[str, Any]] = []
     if not base.exists():
         return rows
-    for meta_path in sorted(base.glob("*/run_metadata.json")):
+    for meta_path in sorted(base.glob("raw_*_run_metadata.json")):
         meta = json.loads(meta_path.read_text(encoding="utf-8"))
-        transcript_path = meta_path.parent / "transcript.json"
+        configuration = str(meta.get("configuration_name") or meta_path.name.removeprefix("raw_").removesuffix("_run_metadata.json"))
+        transcript_path = meta_path.parent / f"raw_{configuration}_transcript.json"
         transcript = json.loads(transcript_path.read_text(encoding="utf-8")) if transcript_path.exists() else {"segments": []}
         text = "".join(seg.get("text", "") for seg in transcript.get("segments", []))
         rows.append({
@@ -51,9 +52,9 @@ def load_runs(episode: str) -> list[dict[str, Any]]:
 
 
 def build_filtering_segments(episode: str, configuration: str) -> list[dict[str, Any]]:
-    transcript_path = DATA / "transcripts" / episode / configuration / "transcript.json"
+    transcript_path = DATA / "transcripts" / episode / f"raw_{configuration}_transcript.json"
     if not transcript_path.exists():
-        matches = sorted((DATA / "transcripts" / episode).glob(f"{configuration}*/transcript.json"))
+        matches = sorted((DATA / "transcripts" / episode).glob(f"raw_{configuration}*_transcript.json"))
         if not matches:
             return []
         transcript_path = matches[0]
