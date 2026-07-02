@@ -45,9 +45,11 @@ Phase 2 design direction:
 
 - Use the whole normalized episode transcript as LLM input.
 - Supply terminology corrections as annotations, not destructive transcript rewrites.
-- Produce a three-level hierarchy: Episode Semantic Map, Topic-thread Reasoning Records, and Episode Synthesis.
+- Produce a three-level hierarchy: Episode Semantic Map, Topic-thread Reasoning Records, and optional Episode Consolidation.
+- Let Level 1 recommend whether Level 3 should use `full_synthesis`, `light_consolidation`, or `bypass`.
 - Preserve uncertainty, assumptions, risks, exceptions, counterexamples, opinion changes, decisions, and speaker behavior.
 - Do not use deterministic keyword segmentation/classification as the primary semantic method.
+- Do not invent an episode-level central message when the episode is conversational, multi-topic, or loosely structured.
 
 ## Repository Hierarchy
 
@@ -68,12 +70,7 @@ Podcast-Speaker-AI-Investment-Mentor/
     ├── README.md
     ├── config/
     ├── data/
-    ├── prompts/
-    ├── schemas/
-    ├── src/
-    ├── outputs/
-    ├── tests/
-    └── tmp/
+    └── ...
 ```
 
 ## How To Use This Project

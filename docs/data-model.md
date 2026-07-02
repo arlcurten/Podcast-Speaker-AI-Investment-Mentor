@@ -48,9 +48,10 @@ The long-term project should preserve evidence and derivation boundaries. Each l
    - Threads may be long, overlapping, or non-contiguous.
    - Must preserve conditions, assumptions, risks, exceptions, counterexamples, opinion changes, decisions, and speaker behavior.
 
-11. Episode Synthesis
-   - Level 3 episode-level synthesis.
-   - Should summarize high-level patterns without erasing uncertainty or source evidence.
+11. Optional Episode Consolidation
+   - Level 3 strategy-dependent consolidation.
+   - Supports `full_synthesis`, `light_consolidation`, and `bypass`.
+   - Should not invent a central message for conversational, multi-topic, or loosely structured episodes.
 
 12. Future decision/reasoning cases
    - Extracted investment reasoning examples.
@@ -75,6 +76,8 @@ The long-term project should preserve evidence and derivation boundaries. Each l
 - Text normalization must retain original text and store normalized text separately.
 - LLM extraction must store prompts, model, provider, version, schema version, token/cost metadata when available, and confidence/uncertainty notes.
 - Terminology corrections must be annotations or parallel fields, not destructive transcript rewrites.
+- Level 1 must record episode structure and recommend the Level 3 strategy.
+- Level 3 validators must only require fields for the selected strategy.
 - Do not treat transcript text as verified until manual review is complete.
 
 ## Project-Wide Path Rule

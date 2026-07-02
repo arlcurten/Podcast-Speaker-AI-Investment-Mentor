@@ -27,7 +27,7 @@ Level 1: Episode Semantic Map
     ↓
 Level 2: Topic-thread Reasoning Records
     ↓
-Level 3: Episode Synthesis
+Level 3: Optional Episode Consolidation
     ↓
 Cross-episode decision cases and behavioral patterns
     ↓
@@ -58,9 +58,17 @@ Target hierarchy:
 
 1. Episode Semantic Map
 2. Topic-thread Reasoning Records
-3. Episode Synthesis
+3. Optional Episode Consolidation
 
 Topic threads may be long, overlapping, or non-contiguous. The primary method should not be deterministic keyword segmentation, fixed episode-position weighting, fixed-duration windows, or single-label classification.
+
+Level 3 is strategy-dependent:
+
+- `full_synthesis`: use only when the episode has a clear central theme.
+- `light_consolidation`: use for multi-topic, conversational, mixed, or loosely structured episodes.
+- `bypass`: use when Level 2 reasoning records are already complete and largely independent.
+
+Do not force every episode into one unified narrative. Level 2 may be the canonical useful output.
 
 ## Future
 

@@ -4,7 +4,7 @@ These items are deferred optimization ideas. They are not current blockers for P
 
 ## Highest Priority
 
-1. Define schemas for Episode Semantic Map, Topic-thread Reasoning Records, and Episode Synthesis.
+1. Define schemas for Episode Semantic Map, Topic-thread Reasoning Records, and Optional Episode Consolidation.
 2. Compare a small number of long-context API models for quality, cost, stability, and structured output reliability.
 3. Build a small human-labeled gold set for semantic extraction review.
 4. Calibrate evidence-link quality and missing-context errors.

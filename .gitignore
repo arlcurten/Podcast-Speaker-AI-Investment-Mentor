@@ -150,6 +150,8 @@ activemq-data/
 # Environments
 .env
 .envrc
+.env.*
+!.env.example
 .venv
 env/
 venv/
@@ -216,3 +218,11 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# Project runtime outputs and local credentials
+semantic_analysis_poc/.env
+semantic_analysis_poc/.env.*
+!semantic_analysis_poc/.env.example
+semantic_analysis_poc/data/outputs/
+semantic_analysis_poc/data/model_comparison/
+semantic_analysis_poc/reports/

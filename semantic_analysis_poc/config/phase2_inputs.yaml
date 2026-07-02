@@ -14,6 +14,9 @@ inputs:
   terminology: ../docs/terminology.tsv
 
 planned_outputs:
-  episode_semantic_map: outputs/EP674/episode_semantic_map.json
-  topic_thread_reasoning_records: outputs/EP674/topic_thread_reasoning_records.json
-  episode_synthesis: outputs/EP674/episode_synthesis.json
+  episode_semantic_map: data/outputs/EP674/level1_episode_semantic_map.json
+  topic_thread_reasoning_records: data/outputs/EP674/level2_reasoning_records.json
+  optional_episode_consolidation: data/outputs/EP674/level3_optional_consolidation.json
+  human_review_report: reports/EP674_phase2_human_review.md
+
+design_contract: config/semantic_design.yaml

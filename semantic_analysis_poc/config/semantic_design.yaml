@@ -1,0 +1,133 @@
+# Phase 2 semantic extraction design contract.
+# This is a compact planning/config document, not an implemented schema validator.
+
+version: 0.1
+
+levels:
+  level1_episode_semantic_map:
+    purpose: "Identify what topics appear in the episode and how transcript regions relate."
+    semantic_role: "map_not_fixed_segmentation"
+    required_fields:
+      - episode_id
+      - episode_structure_type
+      - episode_structure_confidence
+      - main_topic_threads
+      - transcript_region_relationships
+      - non_contiguous_topic_regions
+      - important_reasoning_regions
+      - recommended_level3_strategy
+      - level3_strategy_reason
+      - source_evidence
+    episode_structure_type_values:
+      - single_theme
+      - multi_theme
+      - conversational
+      - qa_heavy
+      - mixed
+    recommended_level3_strategy_values:
+      - full_synthesis
+      - light_consolidation
+      - bypass
+
+  level2_reasoning_records:
+    purpose: "Extract complete reasoning inside important topic threads."
+    semantic_role: "primary_knowledge_layer"
+    required_fields:
+      - reasoning_record_id
+      - episode_id
+      - topic_thread_id
+      - claims
+      - observations
+      - reasoning_steps
+      - assumptions
+      - conditions
+      - risks
+      - exceptions
+      - uncertainty
+      - decisions_or_preferences
+      - actions_or_avoided_actions
+      - view_change_conditions
+      - speaker_behavior
+      - teaching_or_explanation_style
+      - tags
+      - source_evidence
+    notes:
+      - "A record may come from one continuous region or multiple non-contiguous transcript regions."
+      - "Level 2 may be the final useful semantic output for conversational or multi-topic episodes."
+
+  level3_optional_episode_consolidation:
+    purpose: "Decide whether to consolidate Level 2 outputs and how much."
+    semantic_role: "optional_strategy_dependent_layer"
+    strategy_values:
+      - full_synthesis
+      - light_consolidation
+      - bypass
+    required_for_all_strategies:
+      - episode_id
+      - selected_strategy
+      - strategy_reason
+      - source_level1_map_id
+      - source_reasoning_record_ids
+    strategy_specific_fields:
+      full_synthesis:
+        required_fields:
+          - major_views
+          - important_cases
+          - decision_principles
+          - risks_and_exceptions
+          - repeated_arguments
+          - corrections_or_contradictions
+          - opinion_changes
+          - overall_speaker_stance
+          - source_evidence
+      light_consolidation:
+        required_fields:
+          - topic_inventory
+          - merged_duplicate_or_overlapping_records
+          - cross_topic_links
+          - corrections_or_contradictions
+          - cross_episode_candidate_records
+        forbidden_behavior:
+          - "Do not invent an episode-level central message."
+          - "Do not over-compress independent topic threads."
+      bypass:
+        required_fields:
+          - bypass_reason
+          - canonical_output
+        canonical_output_value: "level2_reasoning_records"
+        forbidden_behavior:
+          - "Do not generate an artificial synthesis."
+          - "Do not force unrelated records into one narrative."
+
+prompt_rules:
+  - "Many episodes may have no central theme."
+  - "The speaker may move between unrelated topics."
+  - "Do not invent coherence."
+  - "Do not force a narrative."
+  - "Do not force fixed-duration topic segments."
+  - "Do not use fixed episode-position weighting."
+  - "Do not force single-label classification."
+  - "Topic threads may be long, overlapping, or non-contiguous."
+  - "Level 2 is allowed to be the final useful episode-level output."
+  - "Every high-level statement must preserve source evidence."
+
+validation_rules:
+  level1:
+    - "episode_structure_type must be one of the configured values."
+    - "recommended_level3_strategy must be one of the configured values."
+    - "level3_strategy_reason is required."
+  level2:
+    - "Every reasoning record must include source evidence with timestamps and source segment IDs."
+    - "Non-contiguous records must list each contributing transcript region."
+  level3:
+    - "Validate required fields based on selected_strategy."
+    - "Do not require full_synthesis fields when selected_strategy is light_consolidation or bypass."
+    - "For bypass, canonical_output must be level2_reasoning_records."
+    - "For light_consolidation, reject artificial central-message fields unless supported by evidence."
+
+human_review_fields:
+  - detected_episode_structure
+  - recommended_level3_strategy
+  - level3_strategy_reason
+  - whether_level3_added_useful_information
+  - whether_level3_over_compressed_the_episode

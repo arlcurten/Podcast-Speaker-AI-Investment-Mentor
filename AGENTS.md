@@ -53,6 +53,7 @@ Phase 2 — Semantic Extraction POC
 - Prefer project-relative paths for repository artifacts.
 - Phase 2 semantic extraction should be LLM-based, whole-episode-aware, evidence-grounded, hierarchical, and multi-tag.
 - Do not use deterministic keyword segmentation, fixed episode-position weighting, fixed-duration windows, or single-label classification as the main semantic method.
+- Level 3 is optional. Do not force a full episode synthesis, central theme, or unified narrative when Level 1 recommends `light_consolidation` or `bypass`.
 - Terminology corrections are annotations/context and must not destructively rewrite raw transcript evidence.
 
 ## Simplicity And Organization Rules
