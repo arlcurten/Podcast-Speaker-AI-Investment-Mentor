@@ -18,6 +18,7 @@ from modules.common import (
     sha256_file,
     write_json,
 )
+from modules.evidence import normalize_evidence_refs
 from modules.prompts import level1_prompt, level2_prompt, level3_prompt
 from modules.reporting import write_review_report
 from modules.schemas import LEVEL1_RESPONSE_FORMAT, LEVEL2_RESPONSE_FORMAT, LEVEL3_RESPONSE_FORMAT
@@ -63,7 +64,7 @@ def run_stage(
 ) -> tuple[dict[str, Any], dict[str, Any]]:
     result = client.chat_json(messages, response_format=response_format)
     try:
-        data = parse_json_object(result.content)
+        data = normalize_evidence_refs(parse_json_object(result.content))
     except ValueError as exc:
         failure_path = output_path.with_name(f"{output_path.stem}_failure.json")
         write_json(
@@ -174,6 +175,8 @@ def main() -> int:
     for s in raw.get("segments", []):
         if "id" in s:
             valid_source_ids.add(int(s["id"]))
+        elif "segment_id" in s:
+            valid_source_ids.add(int(s["segment_id"]))
     if not valid_source_ids:
         for s in segments:
             valid_source_ids.update(int(x) for x in s.get("source_segment_ids", []))

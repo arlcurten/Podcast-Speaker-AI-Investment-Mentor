@@ -12,6 +12,8 @@ LEVEL3_STRATEGIES = {"full_synthesis", "light_consolidation", "bypass"}
 def _evidence_items(obj: Any) -> list[dict[str, Any]]:
     items: list[dict[str, Any]] = []
     if isinstance(obj, dict):
+        if any(k in obj for k in ("merged_ids", "source_segment_id_ranges", "source_segment_ids")):
+            items.append(obj)
         if "source_evidence" in obj and isinstance(obj["source_evidence"], list):
             items.extend([x for x in obj["source_evidence"] if isinstance(x, dict)])
         for v in obj.values():

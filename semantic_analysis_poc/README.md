@@ -1,10 +1,16 @@
 # Semantic Analysis POC
 
-This is the active Phase 2 workspace for the Podcast Speaker AI Investment Mentor project.
+This is the active semantic analysis POC workspace for the Podcast Speaker AI Investment Mentor project.
 
 Phase 1 transcription is complete and preserved separately in `../legacy_segment_poc/`. This POC starts from Phase 1 outputs and prepares for LLM-based semantic extraction.
 
-No LLM call, API provider integration, RAG, vector database, Mentor Agent, or cloud workflow is implemented yet.
+Phase 2 semantic extraction and the initial one-episode Phase 3 model comparison have been run on EP674. The current primary pilot model is:
+
+```text
+qwen/qwen3-235b-a22b-2507
+```
+
+RAG, vector database, Mentor Agent, full corpus processing, and cloud workflow are not implemented here.
 
 ## Purpose
 
@@ -26,6 +32,7 @@ Phase 1 normalized transcript
   -> Level 1: Episode Semantic Map
   -> Level 2: Topic-thread Reasoning Records
   -> Level 3: Optional Episode Consolidation
+  -> small pilot summary
 ```
 
 Topic threads may be long, overlapping, or non-contiguous. The main semantic method should not be deterministic keyword segmentation, fixed episode-position weighting, fixed-duration windows, or single-label classification.
@@ -79,6 +86,8 @@ semantic_analysis_poc/
 - `config/`: Phase 2 input references, provider settings, and semantic design contract.
 - `data/phase1_inputs/`: small copied Phase 1 evidence inputs needed by this POC.
 - `config/semantic_design.yaml`: current semantic level, prompt, and validation contract.
+- `data/outputs/`: ignored generated semantic outputs.
+- `reports/`: ignored generated human-readable review and pilot reports.
 
 Do not create extra folders until the implementation actually needs them. When Phase 2 starts implementation, prefer the same simple style as `../legacy_segment_poc/`:
 
@@ -154,13 +163,20 @@ export OPENROUTER_API_KEY="..."
 python3 main.py preflight-auth
 ```
 
-Real execution after credentials and model are configured:
+Run one episode after credentials and model are configured:
 
 ```bash
 cd semantic_analysis_poc
 export OPENROUTER_API_KEY="..."
 export PHASE2_MODEL_ID="..."
 python3 main.py run-episode --episode EP674
+```
+
+Run the small pilot over all currently available Phase 1 inputs:
+
+```bash
+cd semantic_analysis_poc
+python3 main.py pilot --model-id qwen/qwen3-235b-a22b-2507 --max-episodes 5
 ```
 
 Expected outputs after real execution:
@@ -173,11 +189,17 @@ data/outputs/EP674/run_metadata.json
 reports/EP674_phase2_human_review.md
 ```
 
+Pilot summary:
+
+```text
+reports/phase4_pilot_summary.md
+```
+
 ## Current Status
 
-Minimal executable workflow. Run one real episode only:
+Current available Phase 1 input contains only EP674, so the pilot currently processes one episode rather than a true 3-5 episode sample. Add more normalized Phase 1 transcript inputs under `data/phase1_inputs/<EPXXX>/` before running a broader pilot.
 
 ```bash
 cd semantic_analysis_poc
-python3 main.py run-episode --episode EP674 --dry-run
+python3 main.py pilot --model-id qwen/qwen3-235b-a22b-2507 --report-only
 ```

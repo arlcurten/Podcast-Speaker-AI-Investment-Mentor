@@ -112,6 +112,12 @@ prompt_rules:
   - "Every high-level statement must preserve source evidence."
 
 validation_rules:
+  evidence:
+    - "Use merged_ids for merged transcript references."
+    - "Use source_segment_id_ranges for continuous raw segment IDs."
+    - "Use source_segment_ids only for isolated raw segment IDs."
+    - "Do not ask the LLM to enumerate every raw segment ID for long regions."
+    - "Complete raw mapping must be reconstructable from Phase 1 merged transcript data."
   level1:
     - "episode_structure_type must be one of the configured values."
     - "recommended_level3_strategy must be one of the configured values."
