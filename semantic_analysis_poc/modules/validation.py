@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from typing import Any
 
+from modules.evidence import expand_id_refs
+
 
 STRUCTURE_TYPES = {"single_theme", "multi_theme", "conversational", "qa_heavy", "mixed"}
 LEVEL3_STRATEGIES = {"full_synthesis", "light_consolidation", "bypass"}
@@ -36,6 +38,7 @@ def _validate_evidence_refs(
                     warnings.append(f"evidence[{idx}].{key} is outside episode duration: {ev[key]}")
         merged_ids = ev.get("merged_ids", [])
         source_ids = ev.get("source_segment_ids", [])
+        source_ranges = ev.get("source_segment_id_ranges", [])
         if not isinstance(merged_ids, list):
             warnings.append(f"evidence[{idx}].merged_ids should be a list")
         else:
@@ -44,10 +47,25 @@ def _validate_evidence_refs(
                 warnings.append(f"evidence[{idx}].merged_ids has invalid IDs: {bad[:10]}")
         if not isinstance(source_ids, list):
             warnings.append(f"evidence[{idx}].source_segment_ids should be a list")
+        if not isinstance(source_ranges, list):
+            warnings.append(f"evidence[{idx}].source_segment_id_ranges should be a list")
         else:
-            bad = [x for x in source_ids if x not in valid_source_ids]
-            if bad:
-                warnings.append(f"evidence[{idx}].source_segment_ids has invalid IDs: {bad[:10]}")
+            for range_idx, item in enumerate(source_ranges):
+                if not isinstance(item, dict):
+                    warnings.append(f"evidence[{idx}].source_segment_id_ranges[{range_idx}] should be an object")
+                    continue
+                start = item.get("start_id")
+                end = item.get("end_id")
+                if not isinstance(start, int) or not isinstance(end, int):
+                    warnings.append(f"evidence[{idx}].source_segment_id_ranges[{range_idx}] start/end should be integers")
+                elif start > end:
+                    warnings.append(f"evidence[{idx}].source_segment_id_ranges[{range_idx}] start_id > end_id")
+        expanded_source_ids = expand_id_refs(ev)
+        if len(source_ids) > 20:
+            warnings.append(f"evidence[{idx}].source_segment_ids has {len(source_ids)} IDs; use ranges for continuous IDs")
+        bad = [x for x in expanded_source_ids if x not in valid_source_ids]
+        if bad:
+            warnings.append(f"evidence[{idx}] has invalid source segment IDs: {bad[:10]}")
     return warnings
 
 

@@ -33,6 +33,27 @@ def input_path(config: dict[str, Any], key: str) -> Path:
     return ROOT / config["inputs"][key]
 
 
+def standard_episode_config(episode_id: str, base_config: dict[str, Any]) -> dict[str, Any]:
+    episode_dir = ROOT / "data" / "phase1_inputs" / episode_id
+    if not episode_dir.exists():
+        raise SystemExit(f"Configured episode_id {base_config.get('episode_id')} does not match --episode {episode_id}")
+    config = dict(base_config)
+    config["episode_id"] = episode_id
+    config["inputs"] = dict(base_config["inputs"])
+    config["inputs"].update(
+        {
+            "raw_transcript": f"data/phase1_inputs/{episode_id}/raw_large-v3-turbo_transcript.json",
+            "raw_run_metadata": f"data/phase1_inputs/{episode_id}/raw_large-v3-turbo_run_metadata.json",
+            "merged_transcript": f"data/phase1_inputs/{episode_id}/derived_large-v3-turbo_merged_transcript.json",
+            "normalized_merged_transcript": f"data/phase1_inputs/{episode_id}/derived_large-v3-turbo_normalized_merged_transcript_zh_tw.json",
+            "merge_integrity": f"data/phase1_inputs/{episode_id}/merge_integrity.json",
+            "audio_metadata": f"data/phase1_inputs/{episode_id}/audio_metadata.json",
+            "download_metadata": f"data/phase1_inputs/{episode_id}/download_metadata.json",
+        }
+    )
+    return config
+
+
 def run_stage(
     name: str,
     client: OpenAICompatibleClient,
@@ -85,7 +106,7 @@ def main() -> int:
     provider_config["model_id"] = args.model_id or resolve_env_value(provider_config.get("model_id")) or os.environ.get("PHASE2_MODEL_ID")
     episode_id = args.episode
     if config.get("episode_id") != episode_id:
-        raise SystemExit(f"Configured episode_id {config.get('episode_id')} does not match --episode {episode_id}")
+        config = standard_episode_config(episode_id, config)
 
     normalized_path = input_path(config, "normalized_merged_transcript")
     raw_path = input_path(config, "raw_transcript")

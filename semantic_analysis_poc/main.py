@@ -8,6 +8,7 @@ import sys
 
 COMMANDS = {
     "preflight-auth": "modules.preflight_auth",
+    "pilot": "modules.run_pilot",
     "run-episode": "modules.run_episode",
 }
 

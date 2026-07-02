@@ -3,6 +3,8 @@ from __future__ import annotations
 import json
 from typing import Any
 
+from modules.evidence import compact_id_refs
+
 
 SYSTEM_PROMPT = """You extract investment-reasoning semantics from Gooaye podcast transcripts.
 
@@ -19,7 +21,12 @@ Rules:
 - Level 2 is allowed to be the final useful episode-level output.
 - Every high-level statement must preserve source evidence.
 - Keep outputs concise enough to be reviewable.
-- Do not enumerate long raw source ID ranges. For each evidence item, include all relevant merged_ids when practical, but cap source_segment_ids at 20 IDs by using the first 10 and last 10 IDs for long regions. The full raw mapping remains available from the Phase 1 merged transcript.
+- Do not enumerate long raw source ID lists.
+- Evidence format:
+  - Use merged_ids for merged transcript references.
+  - Use source_segment_id_ranges for continuous raw segment IDs.
+  - Use source_segment_ids only for isolated raw IDs.
+  - The full raw mapping must be reconstructable from Phase 1 data; do not ask the output to list every raw segment ID.
 - Preserve uncertainty, assumptions, risks, exceptions, counterexamples, opinion changes, decisions, preferences, avoided actions, speaker behavior, and teaching style.
 - Return only valid JSON.
 """
@@ -31,7 +38,7 @@ def transcript_payload(segments: list[dict[str, Any]]) -> str:
             "merged_id": s.get("merged_id", s.get("id")),
             "start": s["start"],
             "end": s["end"],
-            "source_segment_ids": s["source_segment_ids"],
+            **compact_id_refs([int(x) for x in s.get("source_segment_ids", [])]),
             "text": s.get("normalized_text_zh_tw") or s.get("text") or s.get("raw_text", ""),
         }
         for s in segments
@@ -54,7 +61,7 @@ Keep Level 1 compact:
 - Return at most 8 main_topic_threads.
 - Return at most 8 important_reasoning_regions.
 - Each thread should use at most 3 region_refs.
-- Each evidence item should use concise quotes and capped source_segment_ids as described in the system rules.
+- Each evidence item should use concise quotes and compact evidence references as described in the system rules.
 
 Return JSON with this shape:
 {{
@@ -68,7 +75,7 @@ Return JSON with this shape:
       "topic_thread_id": "EP674-thread-001",
       "title": "...",
       "summary": "...",
-      "region_refs": [{{"start": 0.0, "end": 0.0, "merged_ids": [0], "source_segment_ids": [0]}}],
+      "region_refs": [{{"start": 0.0, "end": 0.0, "merged_ids": [0], "source_segment_id_ranges": [{{"start_id": 0, "end_id": 3}}], "source_segment_ids": []}}],
       "importance_reason": "...",
       "is_non_contiguous": false,
       "continues_or_expands": []
@@ -108,7 +115,7 @@ Keep Level 2 compact:
 - Return at most 12 reasoning_records.
 - Prefer complete, high-value reasoning records over many small records.
 - Each record should use at most 4 source_evidence items.
-- Each evidence item should use concise quotes and capped source_segment_ids as described in the system rules.
+- Each evidence item should use concise quotes and compact evidence references as described in the system rules.
 
 Return JSON with this shape:
 {{
@@ -134,7 +141,7 @@ Return JSON with this shape:
       "teaching_or_explanation_style": [],
       "tags": [],
       "source_evidence": [
-        {{"start": 0.0, "end": 0.0, "merged_ids": [0], "source_segment_ids": [0], "quote": "..."}}
+        {{"start": 0.0, "end": 0.0, "merged_ids": [0], "source_segment_id_ranges": [{{"start_id": 0, "end_id": 3}}], "source_segment_ids": [], "quote": "..."}}
       ],
       "confidence": 0.0
     }}

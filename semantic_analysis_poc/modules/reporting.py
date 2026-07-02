@@ -10,6 +10,21 @@ def fmt_seconds(value: Any) -> str:
     return "unknown"
 
 
+def fmt_evidence_ref(evidence: dict[str, Any]) -> str:
+    merged = evidence.get("merged_ids") or []
+    ranges = evidence.get("source_segment_id_ranges") or []
+    isolated = evidence.get("source_segment_ids") or []
+    parts = []
+    if merged:
+        parts.append(f"merged={merged[:8]}{'...' if len(merged) > 8 else ''}")
+    if ranges:
+        compact_ranges = [f"{r.get('start_id')}-{r.get('end_id')}" for r in ranges[:4] if isinstance(r, dict)]
+        parts.append(f"raw_ranges={compact_ranges}{'...' if len(ranges) > 4 else ''}")
+    if isolated:
+        parts.append(f"raw_ids={isolated[:8]}{'...' if len(isolated) > 8 else ''}")
+    return "; ".join(parts) if parts else "no evidence refs"
+
+
 def write_review_report(
     path: Path,
     episode_id: str,
@@ -63,7 +78,7 @@ def write_review_report(
     for record in records:
         evidence = record.get("source_evidence", [])
         region_text = ", ".join(
-            f"{fmt_seconds(e.get('start'))}-{fmt_seconds(e.get('end'))}" for e in evidence[:4]
+            f"{fmt_seconds(e.get('start'))}-{fmt_seconds(e.get('end'))} ({fmt_evidence_ref(e)})" for e in evidence[:4]
         )
         lines.extend([
             f"### {record.get('reasoning_record_id')} — {record.get('title')}",

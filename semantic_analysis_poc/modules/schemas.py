@@ -20,10 +20,22 @@ EVIDENCE_SCHEMA: dict[str, Any] = {
         "start": {"type": "number"},
         "end": {"type": "number"},
         "merged_ids": {"type": "array", "items": {"type": "integer"}},
+        "source_segment_id_ranges": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "start_id": {"type": "integer"},
+                    "end_id": {"type": "integer"},
+                },
+                "required": ["start_id", "end_id"],
+                "additionalProperties": False,
+            },
+        },
         "source_segment_ids": {"type": "array", "items": {"type": "integer"}},
         "quote": {"type": "string"},
     },
-    "required": ["start", "end", "merged_ids", "source_segment_ids"],
+    "required": ["start", "end", "merged_ids", "source_segment_id_ranges", "source_segment_ids"],
     "additionalProperties": True,
 }
 
