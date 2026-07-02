@@ -1,0 +1,10 @@
+episodes:
+  EP674:
+    level1: ../semantic_analysis_poc/data/outputs/EP674/level1_episode_semantic_map.json
+    level2: ../semantic_analysis_poc/data/outputs/EP674/level2_reasoning_records.json
+    level3: ../semantic_analysis_poc/data/outputs/EP674/level3_optional_consolidation.json
+    run_metadata: ../semantic_analysis_poc/data/outputs/EP674/run_metadata.json
+
+retrieval:
+  top_k: 3
+  min_score: 2.0
