@@ -226,3 +226,11 @@ semantic_analysis_poc/.env.*
 semantic_analysis_poc/data/outputs/
 semantic_analysis_poc/data/model_comparison/
 semantic_analysis_poc/reports/
+
+# Local generated Phase 1 inputs copied for Phase 2 runs.
+# Existing tracked canonical examples remain tracked by Git.
+semantic_analysis_poc/data/phase1_inputs/EP*/
+
+# Mentor runtime/evaluation JSON outputs are reproducible; keep concise
+# Markdown summaries and source/config files trackable.
+mentor_agent_poc/reports/*_results.json

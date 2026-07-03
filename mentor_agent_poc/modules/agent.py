@@ -15,14 +15,24 @@ def answer_question(
     provider_config: dict[str, Any],
     top_k: int = 3,
     min_score: float = 1.0,
+    retrieval_mode: str = "hybrid_dense",
+    retrieval_config: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     current_market_required = needs_current_market_data(question)
-    retrieved = search_reasoning_records(question, kb.records, top_k=top_k, min_score=min_score)
+    retrieved = search_reasoning_records(
+        question,
+        kb.records,
+        top_k=top_k,
+        min_score=min_score,
+        mode=retrieval_mode,
+        config=retrieval_config,
+        provider_config=provider_config if retrieval_mode == "hybrid_rerank" else None,
+    )
     if not retrieved:
         return {
             "question": question,
             "retrieved_records": [],
-            "answer": "目前 EP674 semantic knowledge 中沒有找到足夠相關的證據。這個 MVP 不會用一般模型知識補答案，也不能查詢即時市場資訊。",
+            "answer": "目前已載入的 podcast semantic knowledge 中沒有找到足夠相關的證據。這個 MVP 不會用一般模型知識補答案，也不能查詢即時市場資訊。",
             "citations": [],
             "review": {
                 "evidence_sufficient": False,
@@ -59,6 +69,8 @@ Retrieved podcast semantic records:
                 "matched_terms": item.matched_terms,
                 "matched_fields": item.matched_fields,
                 "score_breakdown": item.score_breakdown,
+                "selection_reason": item.selection_reason,
+                "rerank_reason": item.rerank_reason,
             }
             for item in retrieved
         ],
@@ -175,7 +187,7 @@ def enforce_current_market_guard(answer: str, current_market_required: bool) -> 
     if any(term in answer for term in ["不能判斷現在", "無法判斷現在", "沒有即時", "不具備即時"]):
         return answer
     prefix = (
-        "先說限制：這個 MVP 只使用 EP674 的歷史 podcast semantic knowledge，"
+        "先說限制：這個 MVP 只使用已載入集數的歷史 podcast semantic knowledge，"
         "沒有即時股價、財報、新聞或市場資料，所以不能判斷現在是否適合買賣；"
         "下面只能整理歷史推理框架。\n\n"
     )

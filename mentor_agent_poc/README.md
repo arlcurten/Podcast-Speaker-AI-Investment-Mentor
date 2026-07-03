@@ -12,7 +12,27 @@ user question
   -> return a concise source-grounded mentor-style answer
 ```
 
-The current data source is EP674 only.
+The current data sources are EP674, EP670, EP450, and EP57.
+
+## Architecture
+
+```text
+Phase 1 normalized transcripts
+        ↓
+Phase 2 semantic maps and reasoning records
+        ↓
+Mentor knowledge loader
+        ↓
+BM25 + metadata + local dense scoring
+        ↓
+domain / investment relevance gate
+        ↓
+evidence context assembly
+        ↓
+OpenRouter Mentor response
+        ↓
+episode / timestamp / record citations
+```
 
 ## What It Uses
 
@@ -31,6 +51,8 @@ The first version uses lightweight hybrid retrieval:
 BM25 lexical score
 + field-weighted metadata/tag matches
 + small Chinese query expansion table
++ local TF-IDF + LSA/SVD dense similarity over compact reasoning records
++ deterministic domain / investment-relevance gate
 ```
 
 It searches:
@@ -42,7 +64,19 @@ It searches:
 - decisions and speaker behavior
 - tags and evidence quotes
 
-No vector database is used yet.
+No vector database is used yet. The default retrieval mode is `hybrid_dense` with the domain gate enabled.
+
+Optional modes:
+
+```bash
+python3 main.py ask "他在操作上最重視哪些條件？" --mode lexical --debug
+python3 main.py ask "他在操作上最重視哪些條件？" --mode hybrid_dense --debug
+python3 main.py ask "他在操作上最重視哪些條件？" --mode hybrid_rerank --debug
+python3 main.py eval-retrieval
+python3 main.py eval-domain-gate
+```
+
+`hybrid_rerank` uses the configured OpenRouter chat model only on top candidates. It is useful for diagnosis, but `hybrid_dense` is the current default because it improves relevance without extra API latency.
 
 ## Model Setup
 
@@ -76,7 +110,25 @@ Run the small evaluation set:
 python3 main.py eval
 ```
 
+Run the cross-episode evaluation set:
+
+```bash
+python3 main.py eval-cross
+```
+
 Reports are written under `reports/`.
+
+Build the deterministic domain annotation index:
+
+```bash
+python3 main.py build-domain-index
+```
+
+Compare domain gate behavior without paid API calls:
+
+```bash
+python3 main.py eval-domain-gate
+```
 
 ## Demo Flow
 
@@ -85,23 +137,27 @@ Reports are written under `reports/`.
 3. Show a grounded answer.
 4. Show episode/timestamp citations.
 5. Show insufficient-evidence behavior.
+6. For cross-episode questions, check that episode/time contexts remain separate.
 
 Recommended demo questions:
 
 ```bash
 python3 main.py ask "他在操作上重視哪些條件？" --debug
 python3 main.py ask "面對不確定市場時，他會怎麼控制風險？" --debug
+python3 main.py ask "他在不同時期如何看待追高？" --debug
+python3 main.py ask "有哪些支持同一原則的不同案例？" --debug
 python3 main.py ask "現在可以買 Apple 嗎？" --debug
 python3 main.py ask "他有沒有談到房地產投資策略？" --debug
 ```
 
 ## Limitations
 
-- EP674 only.
+- Only four episodes are loaded.
 - No live market data or web search.
 - No portfolio integration.
 - No trading advice or execution.
-- No vector database or cross-episode behavioral model yet.
+- No vector database or formal cross-episode behavioral model yet.
 - If no evidence is retrieved, the agent should say evidence is insufficient rather than answer from general model knowledge.
+- Generated full transcripts, Phase 2 JSON outputs, API response JSON, and temporary indexes are local artifacts, not production storage.
 
 Additional episodes can be added by placing their Phase 2 outputs under `semantic_analysis_poc/data/outputs/<EPXXX>/` and adding them to `config/data.yaml`.

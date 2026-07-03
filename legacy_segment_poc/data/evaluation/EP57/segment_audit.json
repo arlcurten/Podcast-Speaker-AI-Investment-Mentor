@@ -1,0 +1,75 @@
+{
+  "transcript_path": "data/transcripts/EP57/raw_large-v3-turbo_transcript.json",
+  "project_relative_path": "data/transcripts/EP57/raw_large-v3-turbo_transcript.json",
+  "runtime_absolute_path": "/home/g9161/projects/Podcast-Speaker-AI-Investment-Mentor/legacy_segment_poc/data/transcripts/EP57/raw_large-v3-turbo_transcript.json",
+  "segment_count": 1663,
+  "is_faster_whisper_segment_shape": true,
+  "appears_to_be_word_timestamps": false,
+  "segment_keys_sample": [
+    "avg_logprob",
+    "compression_ratio",
+    "configuration",
+    "end",
+    "model",
+    "no_speech_prob",
+    "segment_id",
+    "start",
+    "text"
+  ],
+  "duration_seconds": {
+    "mean": 1.4048406494287433,
+    "median": 1.32000000000005,
+    "p10": 0.7599999999999909,
+    "p90": 2.1759999999998847,
+    "max": 5.5
+  },
+  "text_characters": {
+    "mean": 8.496692723992783,
+    "median": 8.0,
+    "p10": 4.0,
+    "p90": 13.0,
+    "max": 22.0
+  },
+  "counts": {
+    "duration_lt_0_5s": 43,
+    "duration_lt_1s": 426,
+    "cjk_chars_lt_3": 56,
+    "punctuation_or_blank_only": 0,
+    "duplicate_segment_ids": 0,
+    "adjacent_duplicate_text": 3,
+    "overlap_count": 0,
+    "same_timestamp_count": 0,
+    "non_monotonic_timestamp_count": 0
+  },
+  "max_overlap_seconds": 0.0,
+  "gap_seconds": {
+    "mean": 0.0006618531889290149,
+    "median": 0.0,
+    "p10": 0.0,
+    "p90": 0.0,
+    "max": 1.1000000000000227
+  },
+  "adjacent_duplicate_examples": [
+    {
+      "index": 78,
+      "text": "就直接忽略",
+      "previous_segment_id": 77,
+      "segment_id": 78
+    },
+    {
+      "index": 1045,
+      "text": "非常重要",
+      "previous_segment_id": 1044,
+      "segment_id": 1045
+    },
+    {
+      "index": 1662,
+      "text": "bye",
+      "previous_segment_id": 1661,
+      "segment_id": 1662
+    }
+  ],
+  "srt_file_size_bytes": null,
+  "markdown_file_size_bytes": null,
+  "fragmentation_assessment": "over-fragmented for SRT/Markdown readability"
+}

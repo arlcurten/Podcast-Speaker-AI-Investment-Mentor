@@ -1,0 +1,29 @@
+{
+  "episode_id": "EP670",
+  "configuration": "large-v3-turbo",
+  "source": "deterministic merge of raw ASR segments",
+  "does_not_modify_text": true,
+  "not_topic_segmentation": true,
+  "merge_parameters": {
+    "max_gap_seconds": 1.2,
+    "max_duration_seconds": 25.0,
+    "max_chars": 220
+  },
+  "raw_stats": {
+    "count": 2466,
+    "mean_duration_seconds": 1.2525020275750203,
+    "median_duration_seconds": 1.1600000000000819,
+    "mean_text_length": 8.20316301703163
+  },
+  "merged_stats": {
+    "count": 130,
+    "mean_duration_seconds": 23.762846153846155,
+    "median_duration_seconds": 24.229999999999905,
+    "mean_text_length": 173.57692307692307
+  },
+  "file_sizes_bytes": {
+    "raw_large-v3-turbo_transcript.json": 781368,
+    "derived_large-v3-turbo_merged_transcript.json": 116467
+  },
+  "merge_integrity_status": "pass"
+}

@@ -171,14 +171,32 @@ def load_manifest(path: Path | None = None) -> list[dict[str, Any]]:
 
 
 def find_episode(rows: list[dict[str, Any]], episode_id: str) -> dict[str, Any]:
-    query = episode_id.lower()
+    query = episode_id.strip().lower()
+    query_number = query[2:] if query.startswith("ep") else query
+    exact_matches: list[dict[str, Any]] = []
+    for row in rows:
+        row_episode_id = str(row.get("episode_id", "")).strip().lower()
+        row_episode_number = str(row.get("episode_number", "")).strip().lower()
+        exact_candidates = {
+            row_episode_id,
+            row_episode_number,
+            f"ep{row_episode_number}" if row_episode_number else "",
+            str(row.get("guid", "")).strip().lower(),
+        }
+        if query in exact_candidates or query_number == row_episode_number:
+            exact_matches.append(row)
+
+    if len(exact_matches) == 1:
+        return exact_matches[0]
+    if len(exact_matches) > 1:
+        raise KeyError(f"Episode query is ambiguous: {episode_id}")
+
     for row in rows:
         candidates = [
             str(row.get("episode_id", "")),
-            str(row.get("episode_number", "")),
             str(row.get("guid", "")),
             str(row.get("episode_title", "")),
         ]
-        if any(query == c.lower() or query in c.lower() for c in candidates):
+        if any(query in c.strip().lower() for c in candidates):
             return row
     raise KeyError(f"Episode not found in manifest: {episode_id}")
