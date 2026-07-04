@@ -2,7 +2,7 @@
 
 This is the legacy deterministic case-only RAG baseline.
 
-It retrieves Level 2 reasoning records and asks an LLM to synthesize an evidence-grounded answer. It does not contain the new Level 3 / Level 4 principle model or online applicability reasoning. It is retained for regression testing and comparison with the new `../reasoning_mentor_poc/`.
+It retrieves Level 2 reasoning records and asks an LLM to synthesize an evidence-grounded answer. It does not contain the new Level 3 / Level 4 principle model or online applicability reasoning. It is retained for regression testing and comparison with the new `../mentor_agent/`.
 
 Do not add future principle extraction, cross-episode decision-principle modeling, online applicability assessment, current-market tools, or production Agent features here. Keep this baseline stable unless a compatibility or correctness bug is found.
 
@@ -164,4 +164,4 @@ python3 main.py ask "他有沒有談到房地產投資策略？" --debug
 - If no evidence is retrieved, the agent should say evidence is insufficient rather than answer from general model knowledge.
 - Generated full transcripts, Phase 2 JSON outputs, API response JSON, and temporary indexes are local artifacts, not production storage.
 
-Additional episodes can be added by placing their Phase 2 outputs under `${PIPELINE_DATA_ROOT}/semantic_analysis/outputs/<EPXXX>/` and adding them to `config/data.yaml`. Larger reasoning-system changes should happen in `../reasoning_mentor_poc/`, not in this legacy baseline.
+Additional episodes can be added by placing their Phase 2 outputs under `${PIPELINE_DATA_ROOT}/semantic_analysis/outputs/<EPXXX>/` and adding them to `config/data.yaml`. Larger reasoning-system changes should happen in `../mentor_agent/`, not in this legacy baseline.

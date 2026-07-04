@@ -12,7 +12,7 @@ Current status:
 - Phase 2 Semantic Extraction POC is implemented in `semantic_analysis_poc/` for the current pilot episodes.
 - `legacy_mentor_rag_poc/` is a working legacy case-only RAG baseline over Level 2 reasoning records.
 - Offline Level 3/Level 4 principle extraction is implemented in `semantic_analysis_poc/`.
-- `reasoning_mentor_poc/` is the minimal workspace for the future online principle-plus-case Reasoning Mentor.
+- `mentor_agent/` is the formal principle-plus-case AI Investment Mentor runtime.
 - Vector database, current market tools, portfolio integration, fine-tuning, UI, deployment, and full corpus processing are not implemented yet.
 
 Start here:
@@ -20,7 +20,7 @@ Start here:
 - `AGENTS.md`: project-wide agent rules.
 - `semantic_analysis_poc/README.md`: offline semantic extraction workspace.
 - `legacy_mentor_rag_poc/README.md`: deterministic case-only RAG baseline.
-- `reasoning_mentor_poc/README.md`: new principle-plus-case Mentor skeleton.
+- `mentor_agent/README.md`: formal principle-plus-case Mentor runtime.
 - `legacy_segment_poc/README.md`: completed Phase 1 transcription POC reference.
 - `docs/reasoning_mentor_architecture.md`: planned four-level reasoning architecture.
 - `docs/private_data_setup.md`: how to connect the public source repo to the sibling private data repo.
@@ -40,8 +40,8 @@ Start here:
 [done]    Phase 2: Whole-episode LLM semantic extraction POC for pilot episodes
 [done]    Offline Level 3/4 principle extraction POC
 [done]    Legacy case-only Mentor RAG baseline over Level 2 records
-[active]  New online Reasoning Mentor POC skeleton and design boundary
-[future]  Principle-plus-case Mentor implementation
+[active]  Formal Mentor Agent runtime: principle-assisted / case-only grounded answering
+[future]  Full principle-guided reasoning after stronger Level 4 evidence
 [future]  Full corpus processing
 [future]  Phase 8: Advanced version
 ```
@@ -80,7 +80,7 @@ Podcast-Speaker-AI-Investment-Mentor/
 │   └── ...
 ├── legacy_mentor_rag_poc/
 │   └── ...
-└── reasoning_mentor_poc/
+└── mentor_agent/
     ├── README.md
     ├── main.py
     ├── config/
@@ -101,10 +101,10 @@ For the working case-only RAG demo, start in:
 legacy_mentor_rag_poc/
 ```
 
-For the next principle-plus-case Mentor architecture, start in:
+For the formal principle-plus-case Mentor runtime, start in:
 
 ```text
-reasoning_mentor_poc/
+mentor_agent/
 ```
 
 Do not rerun Phase 1 transcription, GPU benchmark, RSS discovery, or episode download unless explicitly needed.
@@ -147,4 +147,4 @@ Public samples are not production data. They must be synthetic, redacted, summar
 - Phase 1 troubleshooting: `legacy_segment_poc/poc_docs/troubleshooting.md`
 - Phase 2 POC: `semantic_analysis_poc/README.md`
 - Legacy case-only RAG baseline: `legacy_mentor_rag_poc/README.md`
-- New Reasoning Mentor skeleton: `reasoning_mentor_poc/README.md`
+- Formal Mentor Agent runtime: `mentor_agent/README.md`

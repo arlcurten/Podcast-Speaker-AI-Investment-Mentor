@@ -10,7 +10,7 @@ Phase 2 semantic extraction has been run on the current pilot episodes. Offline 
 qwen/qwen3-235b-a22b-2507
 ```
 
-RAG, vector database, Mentor Agent, full corpus processing, and cloud workflow are not implemented here. The case-only Mentor baseline lives in `../legacy_mentor_rag_poc/`; the new principle-plus-case Mentor skeleton lives in `../reasoning_mentor_poc/`.
+RAG, vector database, Mentor Agent, full corpus processing, and cloud workflow are not implemented here. The case-only Mentor baseline lives in `../legacy_mentor_rag_poc/`; the formal principle-plus-case Mentor runtime lives in `../mentor_agent/`.
 
 ## Purpose
 

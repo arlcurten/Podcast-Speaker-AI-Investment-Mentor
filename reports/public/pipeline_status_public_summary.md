@@ -9,7 +9,7 @@ This is a curated public aggregate summary. It is derived from private project a
 - The pilot corpus contains approximately 38 Level 2 reasoning records.
 - Offline Level 3 / Level 4 principle extraction has been implemented as a POC.
 - `legacy_mentor_rag_poc/` remains a deterministic case-only RAG baseline.
-- `reasoning_mentor_poc/` is a skeleton for future principle-plus-case online reasoning.
+- `mentor_agent/` is the first formal principle-plus-case online reasoning runtime.
 
 ## Public / Private Boundary
 
@@ -20,4 +20,3 @@ The complete transcripts, Level 1-4 outputs, model traces, private reports, and 
 - No full corpus processing has been started.
 - No production vector database, live market data tools, portfolio integration, UI, or deployment exists.
 - Public samples are not production data and should not be used as canonical pipeline input.
-

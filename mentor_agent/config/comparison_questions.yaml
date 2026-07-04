@@ -1,0 +1,20 @@
+questions:
+  - id: principle_applicable
+    query: 他在面對市場敘事和數據不一致時，會怎麼判斷？
+  - id: principle_not_applicable
+    query: 如果現在某檔股票剛出現新聞利多，是否應該直接追高？
+  - id: case_only
+    query: 他如何看待踏空和追高的取捨？
+  - id: conflicting_evidence
+    query: 他有沒有前後不一致或有條件差異的看法？
+  - id: exception_trigger
+    query: 哪些例外會讓他不套用原本的操作框架？
+  - id: insufficient
+    query: 他對某家沒有在節目中談過的新公司有什麼明確看法？
+  - id: current_market
+    query: 現在適合買台積電嗎？
+  - id: non_investment
+    query: 他對職涯選擇有什麼看法？
+  - id: missing_info
+    query: 我應該加碼嗎？
+
