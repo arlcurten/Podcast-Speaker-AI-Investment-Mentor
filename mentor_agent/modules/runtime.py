@@ -49,6 +49,15 @@ class MentorRuntime:
         route = final_route_from_assessment(assessment, candidate["candidate_route"])
         answer, answer_meta = self._generate_answer(analysis, principles, cases, assessment, route)
         guards = run_guards(answer, analysis.to_dict(), cases, assessment)
+        if not guards["ok"] and route != "insufficient_evidence":
+            answer = deterministic_answer(analysis, principles, cases, assessment, route)
+            guards = run_guards(answer, analysis.to_dict(), cases, assessment)
+            answer_meta = {
+                "used_llm": False,
+                "stage": "answer_safety_fallback",
+                "reason": "guard failure on model answer",
+                "original_answer_meta": answer_meta,
+            }
         return {
             "query": query,
             "selected_route": route,
@@ -76,6 +85,7 @@ class MentorRuntime:
             top_k=int(cfg.get("principle_top_k", 3)),
             min_score=float(cfg.get("min_principle_score", 0.8)),
         )
+        principles = filter_principles_for_query(analysis, principles)
         cases = self.case_search.search(
             analysis,
             top_k=int(cfg.get("case_top_k", 6)),
@@ -119,26 +129,25 @@ class MentorRuntime:
         if not self.use_llm:
             return fallback, {"used_llm": False}
         try:
-            payload, result = self._client().json_chat(
-                [
-                    {"role": "system", "content": APPLICABILITY_SYSTEM},
-                    {
-                        "role": "user",
-                        "content": json.dumps(
-                            {
-                                "query_analysis": analysis.to_dict(),
-                                "candidate_route": candidate,
-                                "principles": [compact_principle(x) for x in principles],
-                                "cases": [compact_case(x) for x in cases],
-                                "allowed_routes": ["principle_assisted", "case_only", "insufficient_evidence"],
-                            },
-                            ensure_ascii=False,
-                        ),
-                    },
-                ]
-            )
+            messages = [
+                {"role": "system", "content": APPLICABILITY_SYSTEM},
+                {
+                    "role": "user",
+                    "content": json.dumps(
+                        {
+                            "query_analysis": analysis.to_dict(),
+                            "candidate_route": candidate,
+                            "principles": [compact_principle(x) for x in principles],
+                            "cases": [compact_case(x) for x in cases],
+                            "allowed_routes": ["principle_assisted", "case_only", "insufficient_evidence"],
+                        },
+                        ensure_ascii=False,
+                    ),
+                },
+            ]
+            payload, result = self._client().json_chat(messages)
             normalized = normalize_assessment(payload, fallback)
-            return normalized, model_meta(result, "applicability")
+            return normalized, model_meta(result, "applicability", messages)
         except Exception as exc:
             fallback["warnings"] = [f"LLM applicability failed; deterministic fallback used: {exc}"]
             return fallback, {"used_llm": False, "error": str(exc), "stage": "applicability"}
@@ -156,26 +165,25 @@ class MentorRuntime:
         if not self.use_llm:
             return deterministic_answer(analysis, principles, cases, assessment, route), {"used_llm": False}
         try:
-            result = self._client().chat(
-                [
-                    {"role": "system", "content": ANSWER_SYSTEM},
-                    {
-                        "role": "user",
-                        "content": json.dumps(
-                            {
-                                "route": route,
-                                "query_analysis": analysis.to_dict(),
-                                "applicability_assessment": assessment,
-                                "principles": [compact_principle(x) for x in principles],
-                                "cases": [compact_case(x) for x in cases],
-                                "required_citations": citation_labels(cases),
-                            },
-                            ensure_ascii=False,
-                        ),
-                    },
-                ]
-            )
-            return result.content, model_meta(result, "answer")
+            messages = [
+                {"role": "system", "content": ANSWER_SYSTEM},
+                {
+                    "role": "user",
+                    "content": json.dumps(
+                        {
+                            "route": route,
+                            "query_analysis": analysis.to_dict(),
+                            "applicability_assessment": assessment,
+                            "principles": [compact_principle(x) for x in principles],
+                            "cases": [compact_case(x) for x in cases],
+                            "required_citations": citation_labels(cases),
+                        },
+                        ensure_ascii=False,
+                    ),
+                },
+            ]
+            result = self._client().chat(messages)
+            return result.content, model_meta(result, "answer", messages)
         except Exception as exc:
             return deterministic_answer(analysis, principles, cases, assessment, route), {
                 "used_llm": False,
@@ -192,7 +200,7 @@ Always preserve missing information, exceptions, conflicts, and current-data gap
 
 
 ANSWER_SYSTEM = """You are an AI Investment Mentor runtime, not the podcast speaker.
-Answer in Traditional Chinese. Be concise and practical.
+Answer in Traditional Chinese. Be concise and practical, preferably under 700 Chinese characters.
 Separate speaker historical evidence, model interpretation, current-data limitation, and user-scenario assumptions when relevant.
 Use Level 4 principles only as an organizing framework. Support speaker-specific claims with Level 2 record citations.
 Do not provide current buy/sell advice without current data tools. Include citations using episode, timestamp, and record IDs."""
@@ -229,6 +237,20 @@ def deterministic_assessment(
         "selected_route": route,
         "route_reasons": candidate["route_reasons"],
     }
+
+
+def filter_principles_for_query(analysis: QueryAnalysis, principles: list[RetrievalResult]) -> list[RetrievalResult]:
+    if not principles:
+        return []
+    query = analysis.query
+    domains = set(analysis.target_domains)
+    principle_terms = ["敘事", "數據", "資料", "估值", "利空", "利多", "結構", "narrative", "data"]
+    has_principle_context = any(term in query for term in principle_terms)
+    if analysis.query_type == "non_investment_domain":
+        return []
+    if not has_principle_context:
+        return []
+    return principles
 
 
 def normalize_assessment(payload: dict[str, Any], fallback: dict[str, Any]) -> dict[str, Any]:
@@ -301,13 +323,13 @@ def compact_case(item: RetrievalResult) -> dict[str, Any]:
         "score": item.score,
         "relationship": item.relationship,
         "claims": f.get("claims", [])[:3],
-        "reasoning_steps": f.get("reasoning_steps", [])[:4],
-        "conditions": f.get("conditions", [])[:4],
-        "risks": f.get("risks", [])[:4],
-        "exceptions": f.get("exceptions", [])[:4],
-        "uncertainty": f.get("uncertainty", [])[:3],
-        "speaker_behavior": f.get("speaker_behavior", [])[:3],
-        "citations": [c.label() for c in r.citations()[:3]],
+        "reasoning_steps": f.get("reasoning_steps", [])[:3],
+        "conditions": f.get("conditions", [])[:3],
+        "risks": f.get("risks", [])[:3],
+        "exceptions": f.get("exceptions", [])[:3],
+        "uncertainty": f.get("uncertainty", [])[:2],
+        "speaker_behavior": f.get("speaker_behavior", [])[:2],
+        "citations": [c.label() for c in r.citations()[:2]],
     }
 
 
@@ -347,7 +369,8 @@ def collect_fields(cases: list[RetrievalResult], field: str, limit: int) -> list
     return out[:limit]
 
 
-def model_meta(result: ChatResult, stage: str) -> dict[str, Any]:
+def model_meta(result: ChatResult, stage: str, messages: list[dict[str, str]] | None = None) -> dict[str, Any]:
+    prompt_chars = sum(len(m.get("content", "")) for m in messages or [])
     return {
         "used_llm": True,
         "stage": stage,
@@ -355,6 +378,7 @@ def model_meta(result: ChatResult, stage: str) -> dict[str, Any]:
         "usage": result.usage,
         "latency_seconds": result.latency_seconds,
         "retries": result.retries,
+        "prompt_chars": prompt_chars,
     }
 
 

@@ -28,7 +28,10 @@ class QueryAnalysis:
 def analyze_query_deterministic(query: str) -> QueryAnalysis:
     current = _has_any(query, ["現在", "今天", "目前", "最新", "現階段"])
     action = _has_any(query, ["買", "賣", "加碼", "減碼", "進場", "出場", "適合", "追高"])
-    if current and action:
+    if _has_any(query, ["職涯", "工作", "薪水", "轉職"]):
+        qtype = "non_investment_domain"
+        mode = "conceptual"
+    elif current and action:
         qtype = "current_market_question"
         mode = "current"
     elif _has_any(query, ["怎麼看", "如何看待", "通常", "有沒有", "哪些觀點"]):
@@ -36,9 +39,6 @@ def analyze_query_deterministic(query: str) -> QueryAnalysis:
         mode = "historical"
     elif _has_any(query, ["應該", "如果", "情境", "我"]):
         qtype = "new_scenario_decision"
-        mode = "conceptual"
-    elif _has_any(query, ["職涯", "工作", "薪水", "轉職"]):
-        qtype = "non_investment_domain"
         mode = "conceptual"
     else:
         qtype = "investment_concept"
@@ -62,7 +62,7 @@ def analyze_query_deterministic(query: str) -> QueryAnalysis:
             missing.append("user scenario lacks position size, time horizon, target, or risk constraints")
     if current:
         missing.append("current market/news/price data is not available in this runtime")
-    if _has_any(query, ["沒有在節目中談過", "沒談過", "沒有資料", "未載入"]):
+    if _has_any(query, ["沒有在節目中談過", "節目沒有談過", "沒談過", "沒有資料", "未載入"]):
         missing.append("query states the target is not covered by loaded podcast evidence")
 
     terms = extract_search_terms(query)

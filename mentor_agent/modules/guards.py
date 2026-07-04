@@ -6,11 +6,11 @@ from typing import Any
 from .retrieval import RetrievalResult
 
 
-def validate_citations(answer: str, cases: list[RetrievalResult]) -> dict[str, Any]:
+def validate_citations(answer: str, cases: list[RetrievalResult], *, require_citation: bool = True) -> dict[str, Any]:
     retrieved_ids = {case.item_id for case in cases}
     answer_ids = set(re.findall(r"EP\d+-reasoning-\d+", answer))
     invalid = sorted(answer_ids - retrieved_ids)
-    missing_citation = not bool(answer_ids) and bool(cases)
+    missing_citation = require_citation and not bool(answer_ids) and bool(cases)
     return {
         "ok": not invalid and not missing_citation,
         "retrieved_record_ids": sorted(retrieved_ids),
@@ -25,7 +25,18 @@ def current_market_guard(query_analysis: dict[str, Any], answer: str) -> dict[st
     required = bool(query_analysis.get("current_data_requirement"))
     if not required:
         return {"ok": True, "required": False, "warnings": []}
-    limitation_terms = ["沒有即時", "無法驗證", "不能判斷現在", "不具備即時", "current"]
+    limitation_terms = [
+        "沒有即時",
+        "無即時",
+        "缺乏即時",
+        "無法驗證",
+        "不能判斷現在",
+        "不具備即時",
+        "無當前",
+        "無法提供即時",
+        "不能回答當前",
+        "current",
+    ]
     ok = any(term in answer for term in limitation_terms)
     return {
         "ok": ok,
@@ -51,8 +62,9 @@ def principle_overreach_guard(assessment: dict[str, Any]) -> dict[str, Any]:
 
 
 def run_guards(answer: str, query_analysis: dict[str, Any], cases: list[RetrievalResult], assessment: dict[str, Any]) -> dict[str, Any]:
+    require_citation = assessment.get("selected_route") != "insufficient_evidence"
     checks = {
-        "citations": validate_citations(answer, cases),
+        "citations": validate_citations(answer, cases, require_citation=require_citation),
         "current_market": current_market_guard(query_analysis, answer),
         "unsupported_speaker_claim": unsupported_speaker_claim_guard(answer, cases),
         "principle_overreach": principle_overreach_guard(assessment),
@@ -61,4 +73,3 @@ def run_guards(answer: str, query_analysis: dict[str, Any], cases: list[Retrieva
     for check in checks.values():
         warnings.extend(check.get("warnings", []))
     return {"ok": all(check.get("ok", False) for check in checks.values()), "checks": checks, "warnings": warnings}
-

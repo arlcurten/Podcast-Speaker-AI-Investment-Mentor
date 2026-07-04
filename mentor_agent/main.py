@@ -30,6 +30,10 @@ def main(argv: list[str] | None = None) -> int:
     compare.add_argument("--query-file", default=str(ROOT / "config" / "comparison_questions.yaml"))
     compare.add_argument("--json", action="store_true")
 
+    validation = sub.add_parser("validate-reasoning", help="Run focused live reasoning-quality validation.")
+    validation.add_argument("--question-file", default=str(ROOT / "config" / "reasoning_validation_questions.yaml"))
+    validation.add_argument("--skip-legacy", action="store_true")
+
     sub.add_parser("validate-data", help="Validate private Level 2 and Level 4 artifacts.")
 
     args = parser.parse_args(argv)
@@ -52,6 +56,12 @@ def main(argv: list[str] | None = None) -> int:
     if args.command == "compare":
         result = run_comparison(runtime, Path(args.query_file))
         print(json.dumps(result, ensure_ascii=False, indent=2) if args.json else human_comparison(result))
+        return 0
+    if args.command == "validate-reasoning":
+        from .modules.validation_runner import run_reasoning_validation
+
+        result = run_reasoning_validation(Path(args.question_file), use_llm=not args.no_llm, run_legacy=not args.skip_legacy)
+        print(json.dumps(result, ensure_ascii=False, indent=2))
         return 0
     return 1
 
@@ -118,4 +128,3 @@ def human_comparison(result: dict) -> str:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-

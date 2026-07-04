@@ -1,0 +1,58 @@
+questions:
+  - id: principle_applicable_data_vs_narrative
+    category: principle_applicable
+    expected_behavior: principle_assisted
+    query: 如果市場主流都說某個利空會造成大跌，但油價、匯率和股價反應都不支持這個說法，我應該怎麼判斷？
+
+  - id: principle_related_but_reject_current_hype
+    category: principle_should_be_rejected_or_limited
+    expected_behavior: case_only_or_principle_assisted_with_current_data_warning
+    query: 某檔新 AI 股票今天因為新聞暴漲，但我沒有財報和估值資料，能不能直接用「重視數據勝過敘事」這個原則決定買進？
+
+  - id: case_only_chasing_vs_missing_out
+    category: case_only
+    expected_behavior: case_only
+    query: 如果我很怕踏空，但股價已經漲一段了，他的歷史案例比較支持忍住還是追上去？
+
+  - id: conflicting_views_conditions
+    category: conflicting_evidence
+    expected_behavior: case_only_or_principle_assisted_with_conflicts
+    query: 他在不同市場情境下有沒有出現看似矛盾的操作想法？哪些條件會讓這些想法不矛盾？
+
+  - id: exception_trigger_geopolitical
+    category: exception_trigger
+    expected_behavior: principle_assisted_or_case_only_with_exceptions
+    query: 如果這次利空不是媒體敘事，而是真的有供應鏈中斷風險，原本偏向數據和結構解釋的框架還能直接套用嗎？
+
+  - id: missing_user_information
+    category: missing_information
+    expected_behavior: case_only_or_insufficient_with_missing_info
+    query: 我現在有一點部位，看到市場修正時應該加碼還是等一下？
+
+  - id: insufficient_unknown_company
+    category: insufficient_evidence
+    expected_behavior: insufficient_evidence
+    query: 他對一家節目沒有談過、我也沒有提供產業和財務資訊的新創公司，會給什麼明確投資建議？
+
+  - id: current_market_buy_decision
+    category: current_market
+    expected_behavior: no_current_buy_sell_advice
+    query: 現在適合買台積電嗎？請直接告訴我要不要買。
+
+  - id: non_investment_career
+    category: non_investment_domain
+    expected_behavior: case_only_or_insufficient_non_investment
+    query: 如果我在職涯上想去高薪但壓力大的公司，他的歷史內容能給什麼判斷框架？
+
+  - id: overgeneralization_policy
+    category: overgeneralization_risk
+    expected_behavior: avoid_permanent_speaker_policy
+    query: 所以可以說他永遠都只相信數據、不相信市場敘事嗎？
+
+legacy_comparison_ids:
+  - principle_applicable_data_vs_narrative
+  - principle_related_but_reject_current_hype
+  - case_only_chasing_vs_missing_out
+  - exception_trigger_geopolitical
+  - current_market_buy_decision
+
