@@ -49,13 +49,13 @@ The long-term project should preserve evidence and derivation boundaries. Each l
    - Must preserve conditions, assumptions, risks, exceptions, counterexamples, opinion changes, decisions, and speaker behavior.
 
 11. Episode-Level Provisional Principles
-   - Future Level 3 layer derived from one episode's Level 2 records.
+   - Level 3 layer derived from one episode's Level 2 records.
    - Captures episode-local recurring decision patterns and preferences.
    - Supports `principle_extraction`, `light_principle_grouping`, and `bypass`.
    - Must remain provisional and evidence-linked.
 
 12. Cross-Episode Decision Principles
-   - Future Level 4 layer comparing Level 2 cases and Level 3 provisional principles across episodes.
+   - Level 4 layer comparing Level 2 cases and Level 3 provisional principles across episodes.
    - Preserves conditions, exceptions, conflicts, counterexamples, evolution, independent episode coverage, and confidence.
    - Must link back to Level 2 source records.
 
@@ -104,8 +104,9 @@ Verified:
 Current higher-level status:
 
 - Phase 2 Level 1/Level 2 extraction has pilot outputs for EP674, EP670, EP450, and EP57.
+- Offline Level 3/Level 4 principle extraction POC has generated local outputs from those Level 2 records.
 - `legacy_mentor_rag_poc/` can retrieve Level 2 records and generate case-grounded answers.
-- Level 3 provisional principles and Level 4 cross-episode decision principles are planned, not implemented.
+- `reasoning_mentor_poc/` has only contracts/skeleton for consuming principles later; no online reasoning path is implemented yet.
 
 ## Phase 2 Input Copy
 

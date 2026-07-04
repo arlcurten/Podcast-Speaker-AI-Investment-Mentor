@@ -11,7 +11,8 @@ Current status:
 - Phase 1 Transcription POC is complete and preserved as a stable reference in `legacy_segment_poc/`.
 - Phase 2 Semantic Extraction POC is implemented in `semantic_analysis_poc/` for the current pilot episodes.
 - `legacy_mentor_rag_poc/` is a working legacy case-only RAG baseline over Level 2 reasoning records.
-- `reasoning_mentor_poc/` is the new minimal workspace for the future principle-plus-case Reasoning Mentor.
+- Offline Level 3/Level 4 principle extraction is implemented in `semantic_analysis_poc/`.
+- `reasoning_mentor_poc/` is the minimal workspace for the future online principle-plus-case Reasoning Mentor.
 - Vector database, current market tools, portfolio integration, fine-tuning, UI, deployment, and full corpus processing are not implemented yet.
 
 Start here:
@@ -35,10 +36,9 @@ Start here:
 [done]    Phase 1: Traditional Chinese normalization
 [done]    Phase 1: Deterministic merged utterances and integrity validation
 [done]    Phase 2: Whole-episode LLM semantic extraction POC for pilot episodes
+[done]    Offline Level 3/4 principle extraction POC
 [done]    Legacy case-only Mentor RAG baseline over Level 2 records
-[active]  New Reasoning Mentor POC skeleton and design boundary
-[future]  Level 3: Episode-level provisional principles
-[future]  Level 4: Cross-episode decision principles
+[active]  New online Reasoning Mentor POC skeleton and design boundary
 [future]  Principle-plus-case Mentor implementation
 [future]  Full corpus processing
 [future]  Phase 8: Advanced version

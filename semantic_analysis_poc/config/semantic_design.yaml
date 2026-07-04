@@ -99,6 +99,63 @@ levels:
           - "Do not generate an artificial synthesis."
           - "Do not force unrelated records into one narrative."
 
+  level3_episode_provisional_principles:
+    purpose: "Extract episode-local provisional decision principles from Level 2 records."
+    semantic_role: "provisional_episode_local_principles"
+    strategy_values:
+      - principle_extraction
+      - light_principle_grouping
+      - bypass
+    required_fields:
+      - principle_id
+      - episode_id
+      - name
+      - domains
+      - decision_context
+      - core_preference
+      - reasoning_steps
+      - preferred_actions
+      - conditions
+      - exceptions
+      - supporting_records
+      - counterexamples
+      - contradictions
+      - confidence
+      - provisional
+      - extraction_strategy
+      - evidence_summary
+    notes:
+      - "provisional must always be true."
+      - "supporting_records must reference same-episode Level 2 record IDs."
+      - "Do not upgrade one-off comments into stable speaker principles."
+
+  level4_cross_episode_decision_principles:
+    purpose: "Identify revisable cross-episode decision principles from Level 3 principles and Level 2 cases."
+    semantic_role: "cross_episode_revisable_principles"
+    required_fields:
+      - principle_id
+      - name
+      - domains
+      - decision_context
+      - core_preference
+      - reasoning_steps
+      - preferred_actions
+      - conditions
+      - exceptions
+      - supporting_records
+      - supporting_episode_ids
+      - supporting_episode_count
+      - counterexamples
+      - contradictions
+      - principle_evolution
+      - confidence
+      - derived_from
+      - evidence_summary
+    notes:
+      - "supporting_records are the evidence; Level 3/4 principles are abstractions, not independent evidence."
+      - "Output Level 4 principles only when support spans at least two episodes."
+      - "Confidence must consider independent episode coverage, semantic consistency, conditions, exceptions, and contradictions."
+
 prompt_rules:
   - "Many episodes may have no central theme."
   - "The speaker may move between unrelated topics."
@@ -130,6 +187,15 @@ validation_rules:
     - "Do not require full_synthesis fields when selected_strategy is light_consolidation or bypass."
     - "For bypass, canonical_output must be level2_reasoning_records."
     - "For light_consolidation, reject artificial central-message fields unless supported by evidence."
+  level3_principles:
+    - "Every principle must be provisional."
+    - "Every supporting record must exist in the same episode's Level 2 output."
+    - "Single-record principles should remain low confidence or be flagged."
+  level4_principles:
+    - "Every supporting record must exist in Level 2 outputs."
+    - "supporting_episode_count must match unique supporting episodes."
+    - "One-episode candidates should remain Level 3 and should not be emitted as Level 4."
+    - "Do not hide contradictions or counterexamples."
 
 human_review_fields:
   - detected_episode_structure

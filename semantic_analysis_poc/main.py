@@ -7,9 +7,13 @@ import sys
 
 
 COMMANDS = {
+    "extract-level3": "modules.principles",
+    "extract-level4": "modules.principles",
     "preflight-auth": "modules.preflight_auth",
     "pilot": "modules.run_pilot",
+    "report-principles": "modules.principles",
     "run-episode": "modules.run_episode",
+    "validate-principles": "modules.principles",
 }
 
 

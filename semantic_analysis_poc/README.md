@@ -4,7 +4,7 @@ This is the offline semantic analysis POC workspace for the Podcast Speaker AI I
 
 Phase 1 transcription is complete and preserved separately in `../legacy_segment_poc/`. This POC starts from Phase 1 outputs and prepares for LLM-based semantic extraction.
 
-Phase 2 semantic extraction has been run on the current pilot episodes. The current primary pilot model is:
+Phase 2 semantic extraction has been run on the current pilot episodes. Offline Level 3/Level 4 principle extraction is now implemented as a POC. The current primary pilot model is:
 
 ```text
 qwen/qwen3-235b-a22b-2507
@@ -31,14 +31,14 @@ Phase 1 normalized transcript
   -> LLM semantic extraction
   -> Level 1: Episode Semantic Map
   -> Level 2: Reasoning Records / Cases
-  -> future Level 3: Episode-Level Provisional Principles
-  -> future Level 4: Cross-Episode Decision Principles
+  -> Level 3: Episode-Level Provisional Principles
+  -> Level 4: Cross-Episode Decision Principles
   -> small pilot summary
 ```
 
 Topic threads may be long, overlapping, or non-contiguous. The main semantic method should not be deterministic keyword segmentation, fixed episode-position weighting, fixed-duration windows, or single-label classification.
 
-Future Level 3 is principle-oriented and optional. Do not force every episode into a unified theme or narrative. A future Level 3 pass may use:
+Level 3 is principle-oriented and optional. Do not force every episode into a unified theme or narrative. It may use:
 
 - `principle_extraction`: extract episode-local recurring decision patterns.
 - `light_principle_grouping`: group related local patterns without inventing a central thesis.
@@ -61,7 +61,7 @@ Level 2 asks: what reasoning, conditions, risks, exceptions, and behavioral sign
 
 Reasoning records may come from one continuous region or multiple non-contiguous transcript regions. Each record should preserve claims, observations, causes, assumptions, conditions, risks, uncertainty, exceptions, decisions or preferences, avoided actions, view-change conditions, speaker behavior, teaching style, tags, and source evidence.
 
-Future Level 3 asks: are there episode-local decision principles worth extracting?
+Level 3 asks: are there episode-local decision principles worth extracting?
 
 - `principle_extraction`: identify provisional principles supported by multiple local records.
 - `light_principle_grouping`: preserve useful groupings without over-compressing a loose episode.
@@ -180,7 +180,7 @@ cd semantic_analysis_poc
 python3 main.py pilot --model-id qwen/qwen3-235b-a22b-2507 --max-episodes 5
 ```
 
-Expected outputs after real execution:
+Expected Level 1/2 outputs after real execution:
 
 ```text
 data/outputs/EP674/level1_episode_semantic_map.json
@@ -195,6 +195,26 @@ Pilot summary:
 ```text
 reports/phase4_pilot_summary.md
 ```
+
+Offline principle extraction:
+
+```bash
+cd semantic_analysis_poc
+python3 main.py extract-level3 --all-configured --model-id qwen/qwen3-235b-a22b-2507
+python3 main.py extract-level4 --model-id qwen/qwen3-235b-a22b-2507
+python3 main.py validate-principles
+python3 main.py report-principles
+```
+
+Principle outputs are generated artifacts:
+
+```text
+data/outputs/<EPISODE>/level3_principles.json
+data/outputs/cross_episode/level4_principles.json
+reports/cross_episode_level4_principles_review.md
+```
+
+Level 2 records remain the source of truth. Principles are provisional abstractions, not independent evidence.
 
 ## Current Status
 

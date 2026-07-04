@@ -7,7 +7,8 @@ Current boundary:
 - Phase 1 Transcription POC is complete and preserved in `legacy_segment_poc/`.
 - Phase 2 Semantic Extraction POC is implemented in `semantic_analysis_poc/` for the current pilot episodes.
 - `legacy_mentor_rag_poc/` is a working deterministic case-only RAG baseline.
-- `reasoning_mentor_poc/` is the minimal skeleton for the next principle-plus-case Reasoning Mentor.
+- Offline Level 3/Level 4 principle extraction is implemented as a POC in `semantic_analysis_poc/`.
+- `reasoning_mentor_poc/` remains a minimal skeleton for the future online principle-plus-case Reasoning Mentor.
 
 ## Target Flow
 
@@ -59,8 +60,8 @@ Target hierarchy:
 
 1. Episode Semantic Map
 2. Reasoning Records / Cases
-3. Future Episode-Level Provisional Principles
-4. Future Cross-Episode Decision Principles
+3. Episode-Level Provisional Principles
+4. Cross-Episode Decision Principles
 
 Topic threads may be long, overlapping, or non-contiguous. The primary method should not be deterministic keyword segmentation, fixed episode-position weighting, fixed-duration windows, or single-label classification.
 
@@ -71,6 +72,20 @@ Level 3 in the new architecture should be principle-oriented and strategy-depend
 - `bypass`: skip principle extraction when Level 2 cases are already the useful output.
 
 Do not force every episode into one unified narrative. Level 2 cases may be the canonical useful output for loosely structured episodes.
+
+## Principle Extraction Boundary
+
+Level 3/4 extraction is offline knowledge construction:
+
+```text
+Level 2 reasoning records
+    ↓
+Level 3 episode-local provisional principles
+    ↓
+Level 4 cross-episode decision principles
+```
+
+Level 2 cases remain the source of truth. Principles are abstractions and must not be counted as additional independent evidence.
 
 ## Mentor POC Boundary
 
@@ -86,7 +101,7 @@ domain filtering and context assembly
 LLM answer with citations
 ```
 
-The new `reasoning_mentor_poc/` should eventually use principles and cases:
+The new `reasoning_mentor_poc/` should eventually use the offline principles and cases:
 
 ```text
 query / scenario analysis

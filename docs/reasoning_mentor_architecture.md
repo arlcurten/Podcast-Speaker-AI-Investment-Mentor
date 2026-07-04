@@ -1,6 +1,6 @@
 # Reasoning Mentor Architecture
 
-This document defines the planned principle-plus-case Reasoning Mentor architecture. It does not describe an implemented production system yet.
+This document defines the principle-plus-case Reasoning Mentor architecture. Offline Level 3/Level 4 principle extraction is implemented as a POC; the online Reasoning Mentor runtime is not implemented yet.
 
 ## POC Responsibilities
 
@@ -13,8 +13,8 @@ semantic_analysis_poc
   -> offline semantic extraction:
      Level 1 Episode Semantic Map
      Level 2 Reasoning Records / Cases
-     future Level 3 Episode-Level Provisional Principles
-     future Level 4 Cross-Episode Decision Principles
+     Level 3 Episode-Level Provisional Principles
+     Level 4 Cross-Episode Decision Principles
 
 legacy_mentor_rag_poc
   -> deterministic case-only RAG baseline:
@@ -22,7 +22,7 @@ legacy_mentor_rag_poc
      context assembly -> LLM answer -> citations
 
 reasoning_mentor_poc
-  -> planned principle-plus-case reasoning:
+  -> planned online principle-plus-case reasoning:
      query analysis -> retrieve Level 4 principles ->
      retrieve supporting/conflicting/similar Level 2 cases ->
      online applicability check -> conditional answer -> citations
@@ -119,4 +119,4 @@ Future evaluation should compare:
 - incorrect generalization of speaker principles
 - answer stability
 
-This comparison has not been run yet.
+This comparison has not been run yet. The current completed work is offline principle extraction only.
