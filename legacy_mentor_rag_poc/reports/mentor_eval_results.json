@@ -1,0 +1,1989 @@
+[
+  {
+    "question": "他通常怎麼看追高？",
+    "retrieved_records": [
+      {
+        "record_id": "EP674-reasoning-003",
+        "episode_id": "EP674",
+        "title": "Break Below 60-Day Moving Average Signals Weakening Momentum and Higher Risk",
+        "score": 9.420321767301932,
+        "matched_terms": [
+          "moving_average",
+          "risk_management",
+          "technical_analysis"
+        ],
+        "matched_fields": {
+          "tags": [
+            "moving_average",
+            "risk_management",
+            "technical_analysis"
+          ]
+        },
+        "score_breakdown": {
+          "bm25": 4.919211067408905,
+          "field": 1.501110699893027,
+          "phrase": 3.0
+        }
+      },
+      {
+        "record_id": "EP674-reasoning-002",
+        "episode_id": "EP674",
+        "title": "Market Correction Likely Driven by Institutional Rebalancing, Not Geopolitical or Inflation Fears",
+        "score": 5.151520076525756,
+        "matched_terms": [
+          "market_correction"
+        ],
+        "matched_fields": {
+          "tags": [
+            "market_correction"
+          ]
+        },
+        "score_breakdown": {
+          "bm25": 1.6511498432280807,
+          "field": 0.5003702332976757,
+          "phrase": 3.0
+        }
+      }
+    ],
+    "answer": "1. 他通常不贊成追高，尤其當股價已跌破「季線」（60日均線）時，認為市場做多意願降低，結構上容易面臨賣壓。  \n2. 根據EP674，若股票跌破季線，代表近期買盤均被套牢，可能引發被套資金在反彈時趁機出脫，形成持續賣壓，因此傾向避開或減碼此類標的（EP674, 00:13:04-00:13:53, record EP674-reasoning-003）。  \n3. 此判斷在成交量放大且大盤走弱時更為可靠，但若有重大利多或基本面支撐，技術面訊號可能被覆蓋（EP674, 00:22:52-00:23:16, record EP674-reasoning-003）。  \n4. 目前無法確認機構實際資金流向，僅能依價格行為與邏輯推論，且未提及當前是否適合追高。  \n5. 引用來源：EP674, 00:13:04-00:13:53, record EP674-reasoning-003；EP674, 00:22:52-00:23:16, record EP674-reasoning-003。",
+    "citations": [
+      "EP674, 00:13:04-00:13:53, record EP674-reasoning-003",
+      "EP674, 00:13:53-00:13:56, record EP674-reasoning-003",
+      "EP674, 00:14:46-00:15:11, record EP674-reasoning-003",
+      "EP674, 00:22:52-00:23:16, record EP674-reasoning-003",
+      "EP674, 00:15:35-00:16:47, record EP674-reasoning-002",
+      "EP674, 00:16:47-00:17:12, record EP674-reasoning-002",
+      "EP674, 00:17:37-00:18:00, record EP674-reasoning-002",
+      "EP674, 00:18:24-00:18:49, record EP674-reasoning-002"
+    ],
+    "usage": {
+      "prompt_tokens": 1147,
+      "completion_tokens": 338,
+      "total_tokens": 1485,
+      "cost": 0.00032874,
+      "is_byok": false,
+      "prompt_tokens_details": {
+        "cached_tokens": 1136,
+        "cache_write_tokens": 0,
+        "audio_tokens": 0,
+        "video_tokens": 0
+      },
+      "cost_details": {
+        "upstream_inference_cost": 0.00032874,
+        "upstream_inference_prompt_cost": 5.834e-05,
+        "upstream_inference_completions_cost": 0.0002704
+      },
+      "completion_tokens_details": {
+        "reasoning_tokens": 0,
+        "image_tokens": 0,
+        "audio_tokens": 0
+      }
+    },
+    "latency_seconds": 12.858896577999985,
+    "retries": 0,
+    "review": {
+      "evidence_sufficient": true,
+      "citation_valid": true,
+      "current_market_data_required": false,
+      "warnings": [
+        "no major automated review warnings"
+      ]
+    }
+  },
+  {
+    "question": "他如何控制部位風險？",
+    "retrieved_records": [
+      {
+        "record_id": "EP674-reasoning-001",
+        "episode_id": "EP674",
+        "title": "Personal and Portfolio Success Driven by Market Beta and Disposition Stock Turnover",
+        "score": 13.998708267417816,
+        "matched_terms": [
+          "beta",
+          "conditions",
+          "portfolio",
+          "滿倉"
+        ],
+        "matched_fields": {
+          "title": [
+            "beta",
+            "portfolio"
+          ],
+          "claims": [
+            "beta",
+            "portfolio"
+          ],
+          "reasoning_steps": [
+            "beta"
+          ],
+          "assumptions": [
+            "beta"
+          ],
+          "uncertainty": [
+            "conditions"
+          ],
+          "decisions_or_preferences": [
+            "滿倉"
+          ]
+        },
+        "score_breakdown": {
+          "bm25": 7.840174852471359,
+          "field": 3.1585334149464575,
+          "phrase": 3.0
+        }
+      },
+      {
+        "record_id": "EP674-reasoning-003",
+        "episode_id": "EP674",
+        "title": "Break Below 60-Day Moving Average Signals Weakening Momentum and Higher Risk",
+        "score": 11.581191069783099,
+        "matched_terms": [
+          "risk",
+          "risk_management",
+          "technical_analysis"
+        ],
+        "matched_fields": {
+          "title": [
+            "risk"
+          ],
+          "reasoning_steps": [
+            "risk"
+          ],
+          "speaker_behavior": [
+            "risk"
+          ],
+          "tags": [
+            "risk_management",
+            "technical_analysis"
+          ]
+        },
+        "score_breakdown": {
+          "bm25": 6.390300839762435,
+          "field": 2.1908902300206643,
+          "phrase": 3.0
+        }
+      },
+      {
+        "record_id": "EP674-reasoning-002",
+        "episode_id": "EP674",
+        "title": "Market Correction Likely Driven by Institutional Rebalancing, Not Geopolitical or Inflation Fears",
+        "score": 5.459566755462361,
+        "matched_terms": [
+          "market_correction",
+          "risks"
+        ],
+        "matched_fields": {
+          "assumptions": [
+            "risks"
+          ],
+          "tags": [
+            "market_correction"
+          ]
+        },
+        "score_breakdown": {
+          "bm25": 3.3022996864561613,
+          "field": 0.6572670690061994,
+          "phrase": 1.5
+        }
+      }
+    ],
+    "answer": "1. **Likely reasoning framework**  \n他透過技術面規則與市場結構觀察來控制部位風險，強調客觀信號而非主觀預測，特別是利用均線系統作為進出場依據。\n\n2. **Relevant historical evidence**  \n當股票跌破「季線」（60日均線）時，他傾向避開或減碼，因價格位於均線下方代表近期買方皆被套牢，形成結構性賣壓，市場做多意願降低（EP674, 00:13:04-00:13:53, record EP674-reasoning-003）。此技術訊號在搭配高成交量與大盤轉弱時更具警示效果。\n\n3. **Conditions and risks**  \n此策略有效前提為市場無重大基本面利多逆轉技術面劣勢。若出現強勁財報或政策激勵，即使技術形勢受損，股價仍可能反彈（EP674, 00:14:46-00:15:11, record EP674-reasoning-003）。\n\n4. **What remains uncertain**  \n無法確認機構實際資金流動細節，僅能從價格行為推論風險變化；且過往成功可能受市場β帶動，非完全來自風險控管技巧（EP674, 00:01:43-00:02:31, record EP674-reasoning-001）。\n\n5. **Episode / timestamp citations**  \nEP674, 00:13:04-00:13:53, record EP674-reasoning-003；EP674, 00:14:46-00:15:11, record EP674-reasoning-003；EP674, 00:01:43-00:02:31, record EP674-reasoning-001",
+    "citations": [
+      "EP674, 00:01:43-00:02:31, record EP674-reasoning-001",
+      "EP674, 00:04:57-00:05:22, record EP674-reasoning-001",
+      "EP674, 00:06:34-00:06:59, record EP674-reasoning-001",
+      "EP674, 00:04:08-00:04:33, record EP674-reasoning-001",
+      "EP674, 00:13:04-00:13:53, record EP674-reasoning-003",
+      "EP674, 00:13:53-00:13:56, record EP674-reasoning-003",
+      "EP674, 00:14:46-00:15:11, record EP674-reasoning-003",
+      "EP674, 00:22:52-00:23:16, record EP674-reasoning-003",
+      "EP674, 00:15:35-00:16:47, record EP674-reasoning-002",
+      "EP674, 00:16:47-00:17:12, record EP674-reasoning-002",
+      "EP674, 00:17:37-00:18:00, record EP674-reasoning-002",
+      "EP674, 00:18:24-00:18:49, record EP674-reasoning-002"
+    ],
+    "usage": {
+      "prompt_tokens": 1659,
+      "completion_tokens": 460,
+      "total_tokens": 2119,
+      "cost": 0.0006078,
+      "is_byok": false,
+      "prompt_tokens_details": {
+        "cached_tokens": 0,
+        "cache_write_tokens": 0,
+        "audio_tokens": 0,
+        "video_tokens": 0
+      },
+      "cost_details": {
+        "upstream_inference_cost": 0.0006078,
+        "upstream_inference_prompt_cost": 0.0003318,
+        "upstream_inference_completions_cost": 0.000276
+      },
+      "completion_tokens_details": {
+        "reasoning_tokens": 0,
+        "image_tokens": 0,
+        "audio_tokens": 0
+      }
+    },
+    "latency_seconds": 15.68612325399954,
+    "retries": 0,
+    "review": {
+      "evidence_sufficient": true,
+      "citation_valid": true,
+      "current_market_data_required": false,
+      "warnings": [
+        "no major automated review warnings"
+      ]
+    }
+  },
+  {
+    "question": "他比較能接受踏空還是追高？",
+    "retrieved_records": [
+      {
+        "record_id": "EP674-reasoning-006",
+        "episode_id": "EP674",
+        "title": "Wealth Effect Drives More Investing, Not Spending, in Bull Markets",
+        "score": 21.007473432034335,
+        "matched_terms": [
+          "bull",
+          "cost",
+          "fear",
+          "market",
+          "markets",
+          "opportunity"
+        ],
+        "matched_fields": {
+          "title": [
+            "bull",
+            "markets"
+          ],
+          "claims": [
+            "bull",
+            "cost",
+            "market",
+            "markets",
+            "opportunity"
+          ],
+          "observations": [
+            "fear",
+            "market"
+          ],
+          "reasoning_steps": [
+            "cost",
+            "market",
+            "opportunity"
+          ],
+          "assumptions": [
+            "cost",
+            "opportunity"
+          ],
+          "risks": [
+            "market"
+          ],
+          "decisions_or_preferences": [
+            "market"
+          ],
+          "view_change_conditions": [
+            "market"
+          ],
+          "teaching_or_explanation_style": [
+            "cost",
+            "opportunity"
+          ]
+        },
+        "score_breakdown": {
+          "bm25": 14.282453495868221,
+          "field": 5.225019936166114,
+          "phrase": 1.5
+        }
+      },
+      {
+        "record_id": "EP674-reasoning-003",
+        "episode_id": "EP674",
+        "title": "Break Below 60-Day Moving Average Signals Weakening Momentum and Higher Risk",
+        "score": 14.308924000202621,
+        "matched_terms": [
+          "market",
+          "moving_average",
+          "psychology",
+          "risk_management",
+          "technical_analysis",
+          "比較"
+        ],
+        "matched_fields": {
+          "claims": [
+            "market"
+          ],
+          "assumptions": [
+            "market",
+            "psychology"
+          ],
+          "conditions": [
+            "market"
+          ],
+          "teaching_or_explanation_style": [
+            "market",
+            "psychology"
+          ],
+          "tags": [
+            "moving_average",
+            "risk_management",
+            "technical_analysis"
+          ],
+          "source_evidence": [
+            "比較"
+          ]
+        },
+        "score_breakdown": {
+          "bm25": 8.768582815768267,
+          "field": 2.5403411844343537,
+          "phrase": 3.0
+        }
+      },
+      {
+        "record_id": "EP674-reasoning-001",
+        "episode_id": "EP674",
+        "title": "Personal and Portfolio Success Driven by Market Beta and Disposition Stock Turnover",
+        "score": 10.418662535821943,
+        "matched_terms": [
+          "beta",
+          "market",
+          "比較"
+        ],
+        "matched_fields": {
+          "title": [
+            "beta",
+            "market"
+          ],
+          "claims": [
+            "beta",
+            "market"
+          ],
+          "reasoning_steps": [
+            "beta",
+            "market"
+          ],
+          "assumptions": [
+            "beta",
+            "market"
+          ],
+          "uncertainty": [
+            "market"
+          ],
+          "teaching_or_explanation_style": [
+            "market"
+          ],
+          "source_evidence": [
+            "比較"
+          ]
+        },
+        "score_breakdown": {
+          "bm25": 4.459742406225111,
+          "field": 2.9589201295968324,
+          "phrase": 3.0
+        }
+      }
+    ],
+    "answer": "1. **Likely reasoning framework**  \n他較傾向避免踏空，選擇滿倉參與市場趨勢，尤其在強勁多頭市場中，認為持有部位的機會成本遠高於追高的風險。\n\n2. **Relevant historical evidence**  \n他偏好「滿倉」以最大化參與市場趨勢的機會，並在市場強勢時持續加碼，因「在盤很好的時候…機會成本太高了…大家都會持續往市場裡面丟」（EP674-reasoning-006, EP674, 00:19:14-00:20:02）。此外，其過去成功經驗來自於市場β而非個股選取，且因處置股規則未賣出，反而享受後續漲勢，顯示他容忍追高以換取不踏空（EP674-reasoning-001, EP674, 00:01:43-00:02:31）。\n\n3. **Conditions and risks**  \n此偏好成立於市場處於強勢多頭環境，且以技術面未破壞為前提。一旦股價跌破季線，則會降低做多意願，顯示追高有技術支撐的前提（EP674-reasoning-003, EP674, 00:13:04-00:13:53）。\n\n4. **What remains uncertain**  \n若市場轉弱或缺乏β支撐，其對追高的容忍度是否仍高於踏空，則未明確說明。\n\n5. **Episode / timestamp citations**  \n- EP674, 00:19:14-00:20:02, record EP674-reasoning-006  \n- EP674, 00:01:43-00:02:31, record EP674-reasoning-001  \n- EP674, 00:13:04-00:13:53, record EP674-reasoning-003",
+    "citations": [
+      "EP674, 00:19:14-00:20:02, record EP674-reasoning-006",
+      "EP674, 00:38:12-00:38:37, record EP674-reasoning-006",
+      "EP674, 00:13:04-00:13:53, record EP674-reasoning-003",
+      "EP674, 00:13:53-00:13:56, record EP674-reasoning-003",
+      "EP674, 00:14:46-00:15:11, record EP674-reasoning-003",
+      "EP674, 00:22:52-00:23:16, record EP674-reasoning-003",
+      "EP674, 00:01:43-00:02:31, record EP674-reasoning-001",
+      "EP674, 00:04:57-00:05:22, record EP674-reasoning-001",
+      "EP674, 00:06:34-00:06:59, record EP674-reasoning-001",
+      "EP674, 00:04:08-00:04:33, record EP674-reasoning-001"
+    ],
+    "usage": {
+      "prompt_tokens": 1534,
+      "completion_tokens": 476,
+      "total_tokens": 2010,
+      "cost": 0.00041414,
+      "is_byok": false,
+      "prompt_tokens_details": {
+        "cached_tokens": 0,
+        "cache_write_tokens": 0,
+        "audio_tokens": 0,
+        "video_tokens": 0
+      },
+      "cost_details": {
+        "upstream_inference_cost": 0.00041414,
+        "upstream_inference_prompt_cost": 0.00013806,
+        "upstream_inference_completions_cost": 0.00027608
+      },
+      "completion_tokens_details": {
+        "reasoning_tokens": 0,
+        "image_tokens": 0,
+        "audio_tokens": 0
+      }
+    },
+    "latency_seconds": 8.046303000999615,
+    "retries": 0,
+    "review": {
+      "evidence_sufficient": true,
+      "citation_valid": true,
+      "current_market_data_required": false,
+      "warnings": [
+        "no major automated review warnings"
+      ]
+    }
+  },
+  {
+    "question": "哪些條件會讓他改變看法？",
+    "retrieved_records": [
+      {
+        "record_id": "EP674-reasoning-004",
+        "episode_id": "EP674",
+        "title": "Tension Between AI Component Supplier Profits and Tech Giant Spending",
+        "score": 5.867294288258625,
+        "matched_terms": [
+          "conditions"
+        ],
+        "matched_fields": {
+          "reasoning_steps": [
+            "conditions"
+          ]
+        },
+        "score_breakdown": {
+          "bm25": 2.4672942882586257,
+          "field": 0.4,
+          "phrase": 3.0
+        }
+      },
+      {
+        "record_id": "EP674-reasoning-001",
+        "episode_id": "EP674",
+        "title": "Personal and Portfolio Success Driven by Market Beta and Disposition Stock Turnover",
+        "score": 5.6072724957495055,
+        "matched_terms": [
+          "conditions"
+        ],
+        "matched_fields": {
+          "uncertainty": [
+            "conditions"
+          ]
+        },
+        "score_breakdown": {
+          "bm25": 2.187272495749506,
+          "field": 0.42000000000000004,
+          "phrase": 3.0
+        }
+      },
+      {
+        "record_id": "EP674-reasoning-003",
+        "episode_id": "EP674",
+        "title": "Break Below 60-Day Moving Average Signals Weakening Momentum and Higher Risk",
+        "score": 3.659737022469635,
+        "matched_terms": [
+          "risk_management"
+        ],
+        "matched_fields": {
+          "tags": [
+            "risk_management"
+          ]
+        },
+        "score_breakdown": {
+          "bm25": 1.639737022469635,
+          "field": 0.52,
+          "phrase": 1.5
+        }
+      }
+    ],
+    "answer": "1. **Likely reasoning framework**  \n改變看法的條件取決於市場能否持續容忍科技巨頭在缺乏回報的情況下大舉投入AI，以及技術股的動能結構是否惡化。\n\n2. **Relevant historical evidence**  \n若AI支出持續無可見成果，股東檢討聲浪可能升溫（EP674, 00:20:51-00:22:27, record EP674-reasoning-004）。此外，個股跌破季線（60日均線）將導致市場做多意願降低，視為風險信號（EP674, 00:13:04-00:13:53, record EP674-reasoning-003）。\n\n3. **Conditions and risks**  \n若科技巨頭無法展現AI投資的現金流回報，或市場整體動能轉弱（如多檔熱門股破季線），可能觸發對現行策略的重新評估。高毛利率的供應商表現與巨頭股價疲弱的背離也可能加劇懷疑（EP674, 00:20:51-00:22:27, record EP674-reasoning-004）。\n\n4. **What remains uncertain**  \n目前尚不清楚股東壓力何時會具體化，或技術面惡化是否會全面蔓延（EP674, 00:20:51-00:22:27, record EP674-reasoning-004）。\n\n5. **Episode / timestamp citations**  \nEP674, 00:20:51-00:22:27, record EP674-reasoning-004；EP674, 00:13:04-00:13:53, record EP674-reasoning-003",
+    "citations": [
+      "EP674, 00:20:51-00:22:27, record EP674-reasoning-004",
+      "EP674, 00:22:27-00:22:52, record EP674-reasoning-004",
+      "EP674, 00:01:43-00:02:31, record EP674-reasoning-001",
+      "EP674, 00:04:57-00:05:22, record EP674-reasoning-001",
+      "EP674, 00:06:34-00:06:59, record EP674-reasoning-001",
+      "EP674, 00:04:08-00:04:33, record EP674-reasoning-001",
+      "EP674, 00:13:04-00:13:53, record EP674-reasoning-003",
+      "EP674, 00:13:53-00:13:56, record EP674-reasoning-003",
+      "EP674, 00:14:46-00:15:11, record EP674-reasoning-003",
+      "EP674, 00:22:52-00:23:16, record EP674-reasoning-003"
+    ],
+    "usage": {
+      "prompt_tokens": 1557,
+      "completion_tokens": 445,
+      "total_tokens": 2002,
+      "cost": 0.00018463,
+      "is_byok": false,
+      "prompt_tokens_details": {
+        "cached_tokens": 0,
+        "cache_write_tokens": 0,
+        "audio_tokens": 0,
+        "video_tokens": 0
+      },
+      "cost_details": {
+        "upstream_inference_cost": 0.00018463,
+        "upstream_inference_prompt_cost": 0.00014013,
+        "upstream_inference_completions_cost": 4.45e-05
+      },
+      "completion_tokens_details": {
+        "reasoning_tokens": 0,
+        "image_tokens": 0,
+        "audio_tokens": 0
+      }
+    },
+    "latency_seconds": 22.68769562700072,
+    "retries": 0,
+    "review": {
+      "evidence_sufficient": true,
+      "citation_valid": true,
+      "current_market_data_required": false,
+      "warnings": [
+        "no major automated review warnings"
+      ]
+    }
+  },
+  {
+    "question": "這一集有哪些互相矛盾或有條件差異的觀點？",
+    "retrieved_records": [
+      {
+        "record_id": "EP674-reasoning-004",
+        "episode_id": "EP674",
+        "title": "Tension Between AI Component Supplier Profits and Tech Giant Spending",
+        "score": 5.7875505958688,
+        "matched_terms": [
+          "conditions"
+        ],
+        "matched_fields": {
+          "reasoning_steps": [
+            "conditions"
+          ]
+        },
+        "score_breakdown": {
+          "bm25": 2.4672942882586257,
+          "field": 0.32025630761017426,
+          "phrase": 3.0
+        }
+      },
+      {
+        "record_id": "EP674-reasoning-001",
+        "episode_id": "EP674",
+        "title": "Personal and Portfolio Success Driven by Market Beta and Disposition Stock Turnover",
+        "score": 5.52354161874019,
+        "matched_terms": [
+          "conditions"
+        ],
+        "matched_fields": {
+          "uncertainty": [
+            "conditions"
+          ]
+        },
+        "score_breakdown": {
+          "bm25": 2.187272495749506,
+          "field": 0.336269122990683,
+          "phrase": 3.0
+        }
+      },
+      {
+        "record_id": "EP674-reasoning-003",
+        "episode_id": "EP674",
+        "title": "Break Below 60-Day Moving Average Signals Weakening Momentum and Higher Risk",
+        "score": 3.5560702223628615,
+        "matched_terms": [
+          "risk_management"
+        ],
+        "matched_fields": {
+          "tags": [
+            "risk_management"
+          ]
+        },
+        "score_breakdown": {
+          "bm25": 1.639737022469635,
+          "field": 0.41633319989322654,
+          "phrase": 1.5
+        }
+      }
+    ],
+    "answer": "1. **Likely reasoning framework**  \n本集探討市場中不同層面的矛盾：獲利表現與股價走勢的背離、投資人信心與技術面訊號的衝突，以及運氣與策略在投資成果中的角色。\n\n2. **Relevant historical evidence**  \n- 元件供應商（如美光）毛利率達80–90%，獲利創新高，但科技巨頭（如Apple、Google）股價表現疲弱，AI支出龐大卻現金流為負，形成「供應商賺、使用者賠」的矛盾現象（EP674, 00:20:51-00:22:27, record EP674-reasoning-004）。  \n- 主持人個人投資組合因市場β（大盤動能）而大幅獲利，處置股反成飆股，但此成功被歸因於市場環境而非選股能力，顯示「結果好」不等於「策略優」（EP674, 00:01:43-00:02:31, record EP674-reasoning-001）。  \n- 技術面上，股價跌破季線（60日均線）會引發賣壓，市場做多意願降低，即使具題材的AI股亦難倖免，與前述「長期佈局科技巨頭」的偏好形成條件性衝突（EP674, 00:13:04-00:13:53, record EP674-reasoning-003）。\n\n3. **Conditions and risks**  \n- 科技巨頭若持續支出無回報，股東可能反彈，影響長期持股邏輯（EP674-reasoning-004）。  \n- 市場β若轉弱，滿倉策略將面臨大幅回檔風險（EP674-reasoning-001）。  \n- 技術破位股即使基本面佳，短期亦難逃賣壓，與長期持有觀點有條件衝突（EP674-reasoning-003）。\n\n4. **What remains uncertain**  \n- 股東何時會對科技巨頭AI支出提出檢討？  \n- 本次處置股變飆股是偶發還是新常態？  \n- 技術訊號與基本面邏輯何者將主導後市？\n\n5. **Episode / timestamp citations**  \nEP674, 00:20:51-00:22:27, record EP674-reasoning-004  \nEP674, 00:01:43-00:02:31, record EP674-reasoning-001  \nEP674, 00:13:04-00:13:53, record EP674-reasoning-003",
+    "citations": [
+      "EP674, 00:20:51-00:22:27, record EP674-reasoning-004",
+      "EP674, 00:22:27-00:22:52, record EP674-reasoning-004",
+      "EP674, 00:01:43-00:02:31, record EP674-reasoning-001",
+      "EP674, 00:04:57-00:05:22, record EP674-reasoning-001",
+      "EP674, 00:06:34-00:06:59, record EP674-reasoning-001",
+      "EP674, 00:04:08-00:04:33, record EP674-reasoning-001",
+      "EP674, 00:13:04-00:13:53, record EP674-reasoning-003",
+      "EP674, 00:13:53-00:13:56, record EP674-reasoning-003",
+      "EP674, 00:14:46-00:15:11, record EP674-reasoning-003",
+      "EP674, 00:22:52-00:23:16, record EP674-reasoning-003"
+    ],
+    "usage": {
+      "prompt_tokens": 1564,
+      "completion_tokens": 676,
+      "total_tokens": 2240,
+      "cost": 0.00020836,
+      "is_byok": false,
+      "prompt_tokens_details": {
+        "cached_tokens": 0,
+        "cache_write_tokens": 0,
+        "audio_tokens": 0,
+        "video_tokens": 0
+      },
+      "cost_details": {
+        "upstream_inference_cost": 0.00020836,
+        "upstream_inference_prompt_cost": 0.00014076,
+        "upstream_inference_completions_cost": 6.76e-05
+      },
+      "completion_tokens_details": {
+        "reasoning_tokens": 0,
+        "image_tokens": 0,
+        "audio_tokens": 0
+      }
+    },
+    "latency_seconds": 19.79286745799982,
+    "retries": 0,
+    "review": {
+      "evidence_sufficient": true,
+      "citation_valid": true,
+      "current_market_data_required": false,
+      "warnings": [
+        "no major automated review warnings"
+      ]
+    }
+  },
+  {
+    "question": "面對不確定市場時，他會怎麼控制風險？",
+    "retrieved_records": [
+      {
+        "record_id": "EP674-reasoning-002",
+        "episode_id": "EP674",
+        "title": "Market Correction Likely Driven by Institutional Rebalancing, Not Geopolitical or Inflation Fears",
+        "score": 13.09450116815806,
+        "matched_terms": [
+          "market_correction",
+          "narrative_analysis",
+          "risks",
+          "市場"
+        ],
+        "matched_fields": {
+          "assumptions": [
+            "risks"
+          ],
+          "tags": [
+            "market_correction",
+            "narrative_analysis"
+          ],
+          "source_evidence": [
+            "市場"
+          ]
+        },
+        "score_breakdown": {
+          "bm25": 8.89450116815806,
+          "field": 1.2,
+          "phrase": 3.0
+        }
+      },
+      {
+        "record_id": "EP674-reasoning-003",
+        "episode_id": "EP674",
+        "title": "Break Below 60-Day Moving Average Signals Weakening Momentum and Higher Risk",
+        "score": 9.051567354228252,
+        "matched_terms": [
+          "risk",
+          "risk_management",
+          "technical_analysis",
+          "市場"
+        ],
+        "matched_fields": {
+          "title": [
+            "risk"
+          ],
+          "reasoning_steps": [
+            "risk"
+          ],
+          "speaker_behavior": [
+            "risk"
+          ],
+          "tags": [
+            "risk_management",
+            "technical_analysis"
+          ],
+          "source_evidence": [
+            "市場"
+          ]
+        },
+        "score_breakdown": {
+          "bm25": 5.384900687561586,
+          "field": 2.1666666666666665,
+          "phrase": 1.5
+        }
+      },
+      {
+        "record_id": "EP674-reasoning-004",
+        "episode_id": "EP674",
+        "title": "Tension Between AI Component Supplier Profits and Tech Giant Spending",
+        "score": 7.043557005192823,
+        "matched_terms": [
+          "conditions",
+          "risk"
+        ],
+        "matched_fields": {
+          "reasoning_steps": [
+            "conditions"
+          ],
+          "decisions_or_preferences": [
+            "risk"
+          ]
+        },
+        "score_breakdown": {
+          "bm25": 3.376890338526156,
+          "field": 0.6666666666666666,
+          "phrase": 3.0
+        }
+      }
+    ],
+    "answer": "1. **Likely reasoning framework**  \n面對不確定市場時，他傾向依賴技術指標與結構性資金流動來控制風險，而非追逐宏觀敘事。他偏好數據驅動的解釋，並設立明確的進出場規則。\n\n2. **Relevant historical evidence**  \n他會特別留意股價是否跌破「季線」（60日均線），一旦跌破，代表近期買盤全數被套，市場做多意願降低，此時會建議減碼或避開相關個股，即使屬於AI等熱門題材亦然（EP674, 00:13:04-00:13:53, record EP674-reasoning-003）。此外，他認為近期市場修正主因是主權基金、退休金等機構進行部位再平衡，而非戰爭或通膨，因此會觀察油價（無供應衝擊下約70–80美元）與利率機率來排除極端風險（EP674, 00:15:35-00:16:47, record EP674-reasoning-002）。\n\n3. **Conditions and risks**  \n此策略成立的前提是無重大地緣政治事件或政策轉向。若出現突發事件（如油價暴漲），則技術與資金面判斷可能失效。此外，科技巨頭持續投入AI卻無現金流回報，長期可能引發股東質疑，增加市場調整風險（EP674, 00:20:51-00:22:27, record EP674-reasoning-004）。\n\n4. **What remains uncertain**  \n無法確認機構實際資金流動細節，僅能從價格行為推論；亦無法預知何時股東將對科技巨頭的AI支出提出明確檢討。\n\n5. **Episode / timestamp citations**  \n- EP674, 00:13:04-00:13:53, record EP674-reasoning-003  \n- EP674, 00:15:35-00:16:47, record EP674-reasoning-002  \n- EP674, 00:20:51-00:22:27, record EP674-reasoning-004",
+    "citations": [
+      "EP674, 00:15:35-00:16:47, record EP674-reasoning-002",
+      "EP674, 00:16:47-00:17:12, record EP674-reasoning-002",
+      "EP674, 00:17:37-00:18:00, record EP674-reasoning-002",
+      "EP674, 00:18:24-00:18:49, record EP674-reasoning-002",
+      "EP674, 00:13:04-00:13:53, record EP674-reasoning-003",
+      "EP674, 00:13:53-00:13:56, record EP674-reasoning-003",
+      "EP674, 00:14:46-00:15:11, record EP674-reasoning-003",
+      "EP674, 00:22:52-00:23:16, record EP674-reasoning-003",
+      "EP674, 00:20:51-00:22:27, record EP674-reasoning-004",
+      "EP674, 00:22:27-00:22:52, record EP674-reasoning-004"
+    ],
+    "usage": {
+      "prompt_tokens": 1561,
+      "completion_tokens": 551,
+      "total_tokens": 2112,
+      "cost": 0.00046007,
+      "is_byok": false,
+      "prompt_tokens_details": {
+        "cached_tokens": 0,
+        "cache_write_tokens": 0,
+        "audio_tokens": 0,
+        "video_tokens": 0
+      },
+      "cost_details": {
+        "upstream_inference_cost": 0.00046007,
+        "upstream_inference_prompt_cost": 0.00014049,
+        "upstream_inference_completions_cost": 0.00031958
+      },
+      "completion_tokens_details": {
+        "reasoning_tokens": 0,
+        "image_tokens": 0,
+        "audio_tokens": 0
+      }
+    },
+    "latency_seconds": 9.130955831999017,
+    "retries": 0,
+    "review": {
+      "evidence_sufficient": true,
+      "citation_valid": true,
+      "current_market_data_required": false,
+      "warnings": [
+        "no major automated review warnings"
+      ]
+    }
+  },
+  {
+    "question": "他如何看待踏空？",
+    "retrieved_records": [
+      {
+        "record_id": "EP674-reasoning-006",
+        "episode_id": "EP674",
+        "title": "Wealth Effect Drives More Investing, Not Spending, in Bull Markets",
+        "score": 23.50031942794132,
+        "matched_terms": [
+          "bull",
+          "cost",
+          "fear",
+          "market",
+          "markets",
+          "opportunity"
+        ],
+        "matched_fields": {
+          "title": [
+            "bull",
+            "markets"
+          ],
+          "claims": [
+            "bull",
+            "cost",
+            "market",
+            "markets",
+            "opportunity"
+          ],
+          "observations": [
+            "fear",
+            "market"
+          ],
+          "reasoning_steps": [
+            "cost",
+            "market",
+            "opportunity"
+          ],
+          "assumptions": [
+            "cost",
+            "opportunity"
+          ],
+          "risks": [
+            "market"
+          ],
+          "decisions_or_preferences": [
+            "market"
+          ],
+          "view_change_conditions": [
+            "market"
+          ],
+          "teaching_or_explanation_style": [
+            "cost",
+            "opportunity"
+          ]
+        },
+        "score_breakdown": {
+          "bm25": 14.282453495868221,
+          "field": 7.7178659320730985,
+          "phrase": 1.5
+        }
+      },
+      {
+        "record_id": "EP674-reasoning-001",
+        "episode_id": "EP674",
+        "title": "Personal and Portfolio Success Driven by Market Beta and Disposition Stock Turnover",
+        "score": 9.525360878102369,
+        "matched_terms": [
+          "beta",
+          "market"
+        ],
+        "matched_fields": {
+          "title": [
+            "beta",
+            "market"
+          ],
+          "claims": [
+            "beta",
+            "market"
+          ],
+          "reasoning_steps": [
+            "beta",
+            "market"
+          ],
+          "assumptions": [
+            "beta",
+            "market"
+          ],
+          "uncertainty": [
+            "market"
+          ],
+          "teaching_or_explanation_style": [
+            "market"
+          ]
+        },
+        "score_breakdown": {
+          "bm25": 3.867946909167966,
+          "field": 4.157413968934403,
+          "phrase": 1.5
+        }
+      },
+      {
+        "record_id": "EP674-reasoning-003",
+        "episode_id": "EP674",
+        "title": "Break Below 60-Day Moving Average Signals Weakening Momentum and Higher Risk",
+        "score": 5.091201182019947,
+        "matched_terms": [
+          "market",
+          "psychology"
+        ],
+        "matched_fields": {
+          "claims": [
+            "market"
+          ],
+          "assumptions": [
+            "market",
+            "psychology"
+          ],
+          "conditions": [
+            "market"
+          ],
+          "teaching_or_explanation_style": [
+            "market",
+            "psychology"
+          ]
+        },
+        "score_breakdown": {
+          "bm25": 3.2150348780905764,
+          "field": 1.8761663039293714,
+          "phrase": 0.0
+        }
+      }
+    ],
+    "answer": "1. **Likely reasoning framework**  \n他對「踏空」的看待，與市場動能、技術訊號及心理機會成本密切相關，強調在強勢市場中持有部位的重要性，並透過技術規則管理風險，避免因短線波動過早退出而錯失漲幅。\n\n2. **Relevant historical evidence**  \n在多頭市場中，他認為持續參與市場比短線操作更重要。例如在EP674中提到，因處置股規則未賣出，反而意外保留對飆股的暴露，導致「被動滿倉」創造高報酬，顯示他對「踏空」的防範是透過「不輕易出場」實現（EP674, 00:04:57-00:05:22, record EP674-reasoning-001）。他也指出，在盤勢強勁時，「每省下一塊錢不花，未來可能變兩塊」，反映錯過市場機會的成本極高，因此傾向繼續投資而非退出（EP674, 00:19:14-00:20:02, record EP674-reasoning-006）。\n\n3. **Conditions and risks**  \n然而，他並非無條件持有。當個股跌破季線（60日均線），他會認為技術結構轉弱，買盤意願降低，此時會建議謹慎或減碼，以避免進一步下行風險（EP674, 00:13:04-00:13:53, record EP674-reasoning-003）。這顯示他對「踏空」的容忍是有條件的——前提是市場或個股仍處於技術強勢。\n\n4. **What remains uncertain**  \n目前無法確定他在當前市場是否仍維持相同態度，亦未說明若錯過一檔已突破季線的強勢股時，是否會追價進場以避免踏空。其策略偏重「不主動出場」而非「錯過後重返」，後者如何處理則未明。\n\n5. **Episode / timestamp citations**  \n- EP674, 00:04:57-00:05:22, record EP674-reasoning-001  \n- EP674, 00:19:14-00:20:02, record EP674-reasoning-006  \n- EP674, 00:13:04-00:13:53, record EP674-reasoning-003",
+    "citations": [
+      "EP674, 00:19:14-00:20:02, record EP674-reasoning-006",
+      "EP674, 00:38:12-00:38:37, record EP674-reasoning-006",
+      "EP674, 00:01:43-00:02:31, record EP674-reasoning-001",
+      "EP674, 00:04:57-00:05:22, record EP674-reasoning-001",
+      "EP674, 00:06:34-00:06:59, record EP674-reasoning-001",
+      "EP674, 00:04:08-00:04:33, record EP674-reasoning-001",
+      "EP674, 00:13:04-00:13:53, record EP674-reasoning-003",
+      "EP674, 00:13:53-00:13:56, record EP674-reasoning-003",
+      "EP674, 00:14:46-00:15:11, record EP674-reasoning-003",
+      "EP674, 00:22:52-00:23:16, record EP674-reasoning-003"
+    ],
+    "usage": {
+      "prompt_tokens": 1517,
+      "completion_tokens": 595,
+      "total_tokens": 2112,
+      "cost": 0.00048163,
+      "is_byok": false,
+      "prompt_tokens_details": {
+        "cached_tokens": 0,
+        "cache_write_tokens": 0,
+        "audio_tokens": 0,
+        "video_tokens": 0
+      },
+      "cost_details": {
+        "upstream_inference_cost": 0.00048163,
+        "upstream_inference_prompt_cost": 0.00013653,
+        "upstream_inference_completions_cost": 0.0003451
+      },
+      "completion_tokens_details": {
+        "reasoning_tokens": 0,
+        "image_tokens": 0,
+        "audio_tokens": 0
+      }
+    },
+    "latency_seconds": 10.734331507001116,
+    "retries": 0,
+    "review": {
+      "evidence_sufficient": true,
+      "citation_valid": true,
+      "current_market_data_required": false,
+      "warnings": [
+        "no major automated review warnings"
+      ]
+    }
+  },
+  {
+    "question": "他在操作上重視哪些條件？",
+    "retrieved_records": [
+      {
+        "record_id": "EP674-reasoning-003",
+        "episode_id": "EP674",
+        "title": "Break Below 60-Day Moving Average Signals Weakening Momentum and Higher Risk",
+        "score": 8.939014970127463,
+        "matched_terms": [
+          "moving_average",
+          "risk_management"
+        ],
+        "matched_fields": {
+          "tags": [
+            "moving_average",
+            "risk_management"
+          ]
+        },
+        "score_breakdown": {
+          "bm25": 4.919211067408905,
+          "field": 1.019803902718557,
+          "phrase": 3.0
+        }
+      },
+      {
+        "record_id": "EP674-reasoning-001",
+        "episode_id": "EP674",
+        "title": "Personal and Portfolio Success Driven by Market Beta and Disposition Stock Turnover",
+        "score": 8.856035011215027,
+        "matched_terms": [
+          "conditions",
+          "portfolio"
+        ],
+        "matched_fields": {
+          "title": [
+            "portfolio"
+          ],
+          "claims": [
+            "portfolio"
+          ],
+          "uncertainty": [
+            "conditions"
+          ]
+        },
+        "score_breakdown": {
+          "bm25": 4.443998838220102,
+          "field": 1.412036172994925,
+          "phrase": 3.0
+        }
+      },
+      {
+        "record_id": "EP674-reasoning-004",
+        "episode_id": "EP674",
+        "title": "Tension Between AI Component Supplier Profits and Tech Giant Spending",
+        "score": 5.859526558534994,
+        "matched_terms": [
+          "conditions"
+        ],
+        "matched_fields": {
+          "reasoning_steps": [
+            "conditions"
+          ]
+        },
+        "score_breakdown": {
+          "bm25": 2.4672942882586257,
+          "field": 0.3922322702763681,
+          "phrase": 3.0
+        }
+      }
+    ],
+    "answer": "1. **Likely reasoning framework**  \n他操作上重視明確的技術性規則與市場結構信號，特別是均線系統與買賣壓力的變化，作為風險控管的依據。\n\n2. **Relevant historical evidence**  \n他特別重視股價是否跌破「季線」（60日均線），認為一旦跌破，代表近期所有買進者皆處於套牢狀態，將形成結構性賣壓，降低市場做多意願，即使熱門題材股（如AI）也不例外（EP674-reasoning-003）。此外，他偏好滿倉操作以充分參與市場趨勢，並因處置股規則意外保留部位，在市場強勁時獲得暴利，顯示他接受被動參與大盤β的策略（EP674-reasoning-001）。\n\n3. **Conditions and risks**  \n季線跌破的警示效果在高成交量與大盤走弱時更強；但若有重大利多，仍可能逆轉技術面劣勢（EP674-reasoning-003）。過度依賴市場β獲利可能導致過度自信，誤將運氣當實力（EP674-reasoning-001）。\n\n4. **What remains uncertain**  \n他對科技巨頭持續投入AI卻無回報的現象提出質疑，但不確定股東壓力何時會爆發，僅保持警覺（EP674-reasoning-004）。此外，處置股變飆股是否可複製，他也認為不具重現性（EP674-reasoning-001）。\n\n5. **Episode / timestamp citations**  \n- EP674, 00:13:04–00:13:53, record EP674-reasoning-003  \n- EP674, 00:14:46–00:15:11, record EP674-reasoning-003  \n- EP674, 00:22:52–00:23:16, record EP674-reasoning-003  \n- EP674, 00:01:43–00:02:31, record EP674-reasoning-001  \n- EP674, 00:04:57–00:05:22, record EP674-reasoning-001  \n- EP674, 00:20:51–00:22:27, record EP674-reasoning-004",
+    "citations": [
+      "EP674, 00:13:04-00:13:53, record EP674-reasoning-003",
+      "EP674, 00:13:53-00:13:56, record EP674-reasoning-003",
+      "EP674, 00:14:46-00:15:11, record EP674-reasoning-003",
+      "EP674, 00:22:52-00:23:16, record EP674-reasoning-003",
+      "EP674, 00:01:43-00:02:31, record EP674-reasoning-001",
+      "EP674, 00:04:57-00:05:22, record EP674-reasoning-001",
+      "EP674, 00:06:34-00:06:59, record EP674-reasoning-001",
+      "EP674, 00:04:08-00:04:33, record EP674-reasoning-001",
+      "EP674, 00:20:51-00:22:27, record EP674-reasoning-004",
+      "EP674, 00:22:27-00:22:52, record EP674-reasoning-004"
+    ],
+    "usage": {
+      "prompt_tokens": 1562,
+      "completion_tokens": 604,
+      "total_tokens": 2166,
+      "cost": 0.0004909,
+      "is_byok": false,
+      "prompt_tokens_details": {
+        "cached_tokens": 0,
+        "cache_write_tokens": 0,
+        "audio_tokens": 0,
+        "video_tokens": 0
+      },
+      "cost_details": {
+        "upstream_inference_cost": 0.0004909,
+        "upstream_inference_prompt_cost": 0.00014058,
+        "upstream_inference_completions_cost": 0.00035032
+      },
+      "completion_tokens_details": {
+        "reasoning_tokens": 0,
+        "image_tokens": 0,
+        "audio_tokens": 0
+      }
+    },
+    "latency_seconds": 10.091803682000318,
+    "retries": 0,
+    "review": {
+      "evidence_sufficient": true,
+      "citation_valid": true,
+      "current_market_data_required": false,
+      "warnings": [
+        "no major automated review warnings"
+      ]
+    }
+  },
+  {
+    "question": "這一集有哪些與投資心理相關的觀點？",
+    "retrieved_records": [
+      {
+        "record_id": "EP674-reasoning-006",
+        "episode_id": "EP674",
+        "title": "Wealth Effect Drives More Investing, Not Spending, in Bull Markets",
+        "score": 18.124534566353002,
+        "matched_terms": [
+          "behavioral_finance",
+          "fear",
+          "market",
+          "wealth_effect"
+        ],
+        "matched_fields": {
+          "claims": [
+            "market"
+          ],
+          "observations": [
+            "fear",
+            "market"
+          ],
+          "reasoning_steps": [
+            "market"
+          ],
+          "risks": [
+            "market"
+          ],
+          "decisions_or_preferences": [
+            "market"
+          ],
+          "view_change_conditions": [
+            "market"
+          ],
+          "tags": [
+            "behavioral_finance",
+            "wealth_effect"
+          ]
+        },
+        "score_breakdown": {
+          "bm25": 11.934660882702339,
+          "field": 3.189873683650664,
+          "phrase": 3.0
+        }
+      },
+      {
+        "record_id": "EP674-reasoning-003",
+        "episode_id": "EP674",
+        "title": "Break Below 60-Day Moving Average Signals Weakening Momentum and Higher Risk",
+        "score": 7.93925730543523,
+        "matched_terms": [
+          "market",
+          "psychology"
+        ],
+        "matched_fields": {
+          "claims": [
+            "market"
+          ],
+          "assumptions": [
+            "market",
+            "psychology"
+          ],
+          "conditions": [
+            "market"
+          ],
+          "teaching_or_explanation_style": [
+            "market",
+            "psychology"
+          ]
+        },
+        "score_breakdown": {
+          "bm25": 6.430069756181152,
+          "field": 1.5091875492540776,
+          "phrase": 0.0
+        }
+      },
+      {
+        "record_id": "EP674-reasoning-005",
+        "episode_id": "EP674",
+        "title": "Apple's Price Hike May Not Deter Core Customers Despite Online Backlash",
+        "score": 6.872145105279893,
+        "matched_terms": [
+          "sentiment"
+        ],
+        "matched_fields": {
+          "observations": [
+            "sentiment"
+          ],
+          "decisions_or_preferences": [
+            "sentiment"
+          ],
+          "actions_or_avoided_actions": [
+            "sentiment"
+          ]
+        },
+        "score_breakdown": {
+          "bm25": 5.980352462538847,
+          "field": 0.891792642741046,
+          "phrase": 0.0
+        }
+      }
+    ],
+    "answer": "1. **Likely reasoning framework**  \n投資心理受財富效應與機會成本驅動，在多頭市場中，投資人傾向再投資而非消費，因花錢的機會成本過高。此外，技術面訊號（如跌破季線）會影響市場心理，導致做多意願下降。\n\n2. **Relevant historical evidence**  \n在強勁多頭市場中，投資人認為「今天省下的一塊錢，未來會變成兩塊」，因此選擇繼續投入市場而非消費，顯示心理上將支出視為錯失的投資收益（EP674, 00:19:14-00:20:02, record EP674-reasoning-006）。此外，當股票跌破60日均線（季線），市場參與者心理上認為近期買入者皆被套牢，導致做多意願降低，產生結構性賣壓（EP674, 00:13:04-00:13:53, record EP674-reasoning-003）。\n\n3. **Conditions and risks**  \n此心理現象在高報酬環境中更明顯，但若市場修正，花費的機會成本降低，消費可能隨之上升（EP674-reasoning-006）。技術面心理效應也受整體市場強弱影響，若搭配高成交量與大盤疲弱，訊號更強（EP674-reasoning-003）。\n\n4. **What remains uncertain**  \n目前無法確認蘋果漲價是否真正影響核心用戶購買意願，因銷售數據尚未公布，僅能依賴行為觀察而非網路聲量（EP674, 00:24:29-00:25:19, record EP674-reasoning-005）。\n\n5. **Episode / timestamp citations**  \n- EP674, 00:19:14-00:20:02, record EP674-reasoning-006  \n- EP674, 00:13:04-00:13:53, record EP674-reasoning-003  \n- EP674, 00:24:29-00:25:19, record EP674-reasoning-005",
+    "citations": [
+      "EP674, 00:19:14-00:20:02, record EP674-reasoning-006",
+      "EP674, 00:38:12-00:38:37, record EP674-reasoning-006",
+      "EP674, 00:13:04-00:13:53, record EP674-reasoning-003",
+      "EP674, 00:13:53-00:13:56, record EP674-reasoning-003",
+      "EP674, 00:14:46-00:15:11, record EP674-reasoning-003",
+      "EP674, 00:22:52-00:23:16, record EP674-reasoning-003",
+      "EP674, 00:23:16-00:23:41, record EP674-reasoning-005",
+      "EP674, 00:24:29-00:25:19, record EP674-reasoning-005",
+      "EP674, 00:26:55-00:27:19, record EP674-reasoning-005"
+    ],
+    "usage": {
+      "prompt_tokens": 1407,
+      "completion_tokens": 538,
+      "total_tokens": 1945,
+      "cost": 0.00078298,
+      "is_byok": false,
+      "prompt_tokens_details": {
+        "cached_tokens": 5,
+        "cache_write_tokens": 0,
+        "audio_tokens": 0,
+        "video_tokens": 0
+      },
+      "cost_details": {
+        "upstream_inference_cost": 0.00078298,
+        "upstream_inference_prompt_cost": 0.00030954,
+        "upstream_inference_completions_cost": 0.00047344
+      },
+      "completion_tokens_details": {
+        "reasoning_tokens": 0,
+        "image_tokens": 0,
+        "audio_tokens": 0
+      }
+    },
+    "latency_seconds": 6.215784867999901,
+    "retries": 0,
+    "review": {
+      "evidence_sufficient": true,
+      "citation_valid": true,
+      "current_market_data_required": false,
+      "warnings": [
+        "no major automated review warnings"
+      ]
+    }
+  },
+  {
+    "question": "Apple 漲價這段他看重哪些判斷依據？",
+    "retrieved_records": [
+      {
+        "record_id": "EP674-reasoning-005",
+        "episode_id": "EP674",
+        "title": "Apple's Price Hike May Not Deter Core Customers Despite Online Backlash",
+        "score": 22.11972061270229,
+        "matched_terms": [
+          "apple",
+          "hike",
+          "price",
+          "pricing_power",
+          "果粉",
+          "蘋果"
+        ],
+        "matched_fields": {
+          "title": [
+            "apple",
+            "hike",
+            "price"
+          ],
+          "claims": [
+            "apple",
+            "price",
+            "果粉"
+          ],
+          "observations": [
+            "apple"
+          ],
+          "reasoning_steps": [
+            "price",
+            "果粉"
+          ],
+          "assumptions": [
+            "price"
+          ],
+          "tags": [
+            "apple",
+            "pricing_power"
+          ],
+          "source_evidence": [
+            "果粉",
+            "蘋果"
+          ]
+        },
+        "score_breakdown": {
+          "bm25": 14.368589879577467,
+          "field": 4.751130733124826,
+          "phrase": 3.0
+        }
+      },
+      {
+        "record_id": "EP674-reasoning-004",
+        "episode_id": "EP674",
+        "title": "Tension Between AI Component Supplier Profits and Tech Giant Spending",
+        "score": 14.256865948432232,
+        "matched_terms": [
+          "apple",
+          "giants",
+          "tech"
+        ],
+        "matched_fields": {
+          "title": [
+            "tech"
+          ],
+          "claims": [
+            "apple",
+            "giants",
+            "tech"
+          ],
+          "observations": [
+            "giants",
+            "tech"
+          ],
+          "reasoning_steps": [
+            "giants"
+          ],
+          "risks": [
+            "giants",
+            "tech"
+          ],
+          "decisions_or_preferences": [
+            "giants",
+            "tech"
+          ]
+        },
+        "score_breakdown": {
+          "bm25": 7.525008936600621,
+          "field": 3.731857011831611,
+          "phrase": 3.0
+        }
+      },
+      {
+        "record_id": "EP674-reasoning-002",
+        "episode_id": "EP674",
+        "title": "Market Correction Likely Driven by Institutional Rebalancing, Not Geopolitical or Inflation Fears",
+        "score": 13.57420869652359,
+        "matched_terms": [
+          "consumer",
+          "hike",
+          "price",
+          "tech",
+          "判斷",
+          "漲價"
+        ],
+        "matched_fields": {
+          "observations": [
+            "hike"
+          ],
+          "reasoning_steps": [
+            "consumer",
+            "price",
+            "tech"
+          ],
+          "assumptions": [
+            "price"
+          ],
+          "uncertainty": [
+            "price"
+          ],
+          "teaching_or_explanation_style": [
+            "price"
+          ],
+          "source_evidence": [
+            "判斷",
+            "漲價"
+          ]
+        },
+        "score_breakdown": {
+          "bm25": 8.321942570440195,
+          "field": 2.252266126083395,
+          "phrase": 3.0
+        }
+      }
+    ],
+    "answer": "1. 適用的推理框架  \n該分析著重於區分「聲量」與「實際購買行為」，並以銷售數據為最終驗證依據，而非網路輿情。\n\n2. 相關歷史證據  \nApple 此次漲價主因是記憶體成本上升（EP674-reasoning-005, EP674, 00:23:16-00:23:41）；核心用戶（果粉）對品牌忠誠度高，價格敏感度相對較低，因此預期仍會購買（EP674-reasoning-005, EP674, 00:24:29-00:25:19）；判斷漲價影響應以實際銷量為準，而非網路上的反彈聲量（EP674-reasoning-005, EP674, 00:26:55-00:27:19）。\n\n3. 條件與風險  \n此判斷成立的前提是競爭對手未推出更具吸引力的替代產品（EP674-reasoning-005）；若經濟持續疲弱，可能侵蝕連忠實客戶的購買意願（EP674-reasoning-005）；此外，新競爭者或技術突破也可能動搖用戶忠誠（EP674-reasoning-005）。\n\n4. 仍不確定之處  \n目前尚無實際銷售數據，漲價對需求的影響仍未確認（EP674-reasoning-005）。\n\n5. 出處  \nEP674, 00:23:16-00:23:41, record EP674-reasoning-005；EP674, 00:24:29-00:25:19, record EP674-reasoning-005；EP674, 00:26:55-00:27:19, record EP674-reasoning-005",
+    "citations": [
+      "EP674, 00:23:16-00:23:41, record EP674-reasoning-005",
+      "EP674, 00:24:29-00:25:19, record EP674-reasoning-005",
+      "EP674, 00:26:55-00:27:19, record EP674-reasoning-005",
+      "EP674, 00:20:51-00:22:27, record EP674-reasoning-004",
+      "EP674, 00:22:27-00:22:52, record EP674-reasoning-004",
+      "EP674, 00:15:35-00:16:47, record EP674-reasoning-002",
+      "EP674, 00:16:47-00:17:12, record EP674-reasoning-002",
+      "EP674, 00:17:37-00:18:00, record EP674-reasoning-002",
+      "EP674, 00:18:24-00:18:49, record EP674-reasoning-002"
+    ],
+    "usage": {
+      "prompt_tokens": 1543,
+      "completion_tokens": 483,
+      "total_tokens": 2026,
+      "cost": 0.00018717,
+      "is_byok": false,
+      "prompt_tokens_details": {
+        "cached_tokens": 0,
+        "cache_write_tokens": 0,
+        "audio_tokens": 0,
+        "video_tokens": 0
+      },
+      "cost_details": {
+        "upstream_inference_cost": 0.00018717,
+        "upstream_inference_prompt_cost": 0.00013887,
+        "upstream_inference_completions_cost": 4.83e-05
+      },
+      "completion_tokens_details": {
+        "reasoning_tokens": 0,
+        "image_tokens": 0,
+        "audio_tokens": 0
+      }
+    },
+    "latency_seconds": 15.41168018100143,
+    "retries": 0,
+    "review": {
+      "evidence_sufficient": true,
+      "citation_valid": true,
+      "current_market_data_required": false,
+      "warnings": [
+        "no major automated review warnings"
+      ]
+    }
+  },
+  {
+    "question": "科技巨頭和 AI 供應鏈之間的矛盾是什麼？",
+    "retrieved_records": [
+      {
+        "record_id": "EP674-reasoning-004",
+        "episode_id": "EP674",
+        "title": "Tension Between AI Component Supplier Profits and Tech Giant Spending",
+        "score": 19.627770728092948,
+        "matched_terms": [
+          "ai",
+          "conditions",
+          "什麼",
+          "巨頭",
+          "技巨",
+          "技巨頭",
+          "科技",
+          "科技巨"
+        ],
+        "matched_fields": {
+          "title": [
+            "ai"
+          ],
+          "claims": [
+            "ai"
+          ],
+          "observations": [
+            "ai"
+          ],
+          "reasoning_steps": [
+            "conditions"
+          ],
+          "conditions": [
+            "ai"
+          ],
+          "risks": [
+            "ai"
+          ],
+          "source_evidence": [
+            "什麼",
+            "巨頭",
+            "技巨",
+            "技巨頭",
+            "科技",
+            "科技巨"
+          ]
+        },
+        "score_breakdown": {
+          "bm25": 14.899281475030016,
+          "field": 3.2284892530629334,
+          "phrase": 1.5
+        }
+      },
+      {
+        "record_id": "EP674-reasoning-001",
+        "episode_id": "EP674",
+        "title": "Personal and Portfolio Success Driven by Market Beta and Disposition Stock Turnover",
+        "score": 2.94860103486073,
+        "matched_terms": [
+          "conditions"
+        ],
+        "matched_fields": {
+          "uncertainty": [
+            "conditions"
+          ]
+        },
+        "score_breakdown": {
+          "bm25": 1.093636247874753,
+          "field": 0.354964786985977,
+          "phrase": 1.5
+        }
+      }
+    ],
+    "answer": "1. **可能的推理框架**  \n科技巨頭（如蘋果、谷歌）在AI上大量投資，但股價表現疲弱、現金流為負，尚未看到明確回報；與此同時，AI組件供應商（如美光）卻因需求上升而獲利創高，毛利率達80–90%。這種「供應商賺錢、客戶燒錢」的現象形成結構性矛盾。\n\n2. **相關歷史證據**  \n美光等組件供應商正處於獲利高峰，「毛利率80幾…90%都有」；相對地，「科技巨頭…股價的表現非常不好」，且持續支出卻無明顯ROI（EP674, 00:20:51-00:22:27, record EP674-reasoning-004）。市場可能開始出現檢討聲浪，質疑股東是否能長期容忍此情況（EP674, 00:22:27-00:22:52, record EP674-reasoning-004）。\n\n3. **條件與風險**  \n若AI投資長期無法轉化為財務報酬，科技巨頭將面臨削減預算或證明ROI的壓力。雖然過去類似爭論（如Deep Seek）未引發共鳴，但當前環境可能不同（EP674, 00:20:51-00:22:27, record EP674-reasoning-004）。若領導層具可信度，市場或願容忍長期布局（EP674, 00:22:27-00:22:52, record EP674-reasoning-004）。\n\n4. **仍不確定之處**  \n尚不清楚股東反彈何時或是否會真正發生，且目前「看起來是沒有太多問題…但有很多事情還在醞釀中」（EP674, 00:20:51-00:22:27, record EP674-reasoning-004）。\n\n5. **節目／時間戳引用**  \nEP674, 00:20:51-00:22:27, record EP674-reasoning-004；EP674, 00:22:27-00:22:52, record EP674-reasoning-004",
+    "citations": [
+      "EP674, 00:20:51-00:22:27, record EP674-reasoning-004",
+      "EP674, 00:22:27-00:22:52, record EP674-reasoning-004",
+      "EP674, 00:01:43-00:02:31, record EP674-reasoning-001",
+      "EP674, 00:04:57-00:05:22, record EP674-reasoning-001",
+      "EP674, 00:06:34-00:06:59, record EP674-reasoning-001",
+      "EP674, 00:04:08-00:04:33, record EP674-reasoning-001"
+    ],
+    "usage": {
+      "prompt_tokens": 1152,
+      "completion_tokens": 575,
+      "total_tokens": 1727,
+      "cost": 0.00060544,
+      "is_byok": false,
+      "prompt_tokens_details": {
+        "cached_tokens": 176,
+        "cache_write_tokens": 0,
+        "audio_tokens": 0,
+        "video_tokens": 0
+      },
+      "cost_details": {
+        "upstream_inference_cost": 0.00060544,
+        "upstream_inference_prompt_cost": 0.00014544,
+        "upstream_inference_completions_cost": 0.00046
+      },
+      "completion_tokens_details": {
+        "reasoning_tokens": 0,
+        "image_tokens": 0,
+        "audio_tokens": 0
+      }
+    },
+    "latency_seconds": 18.722529856999245,
+    "retries": 0,
+    "review": {
+      "evidence_sufficient": true,
+      "citation_valid": true,
+      "current_market_data_required": false,
+      "warnings": [
+        "no major automated review warnings"
+      ]
+    }
+  },
+  {
+    "question": "他對職涯選擇有什麼看法？",
+    "retrieved_records": [
+      {
+        "record_id": "EP674-reasoning-007",
+        "episode_id": "EP674",
+        "title": "Prioritize Financial Stability Over Job Satisfaction in Early Career",
+        "score": 29.497756744124164,
+        "matched_terms": [
+          "career_advice",
+          "early_career",
+          "financial",
+          "financial_priority",
+          "job",
+          "mtk",
+          "satisfaction",
+          "stability"
+        ],
+        "matched_fields": {
+          "title": [
+            "financial",
+            "job",
+            "satisfaction",
+            "stability"
+          ],
+          "claims": [
+            "job",
+            "mtk",
+            "satisfaction"
+          ],
+          "observations": [
+            "financial",
+            "job"
+          ],
+          "assumptions": [
+            "financial"
+          ],
+          "conditions": [
+            "job"
+          ],
+          "exceptions": [
+            "job"
+          ],
+          "actions_or_avoided_actions": [
+            "job",
+            "satisfaction"
+          ],
+          "tags": [
+            "career_advice",
+            "early_career",
+            "financial_priority"
+          ],
+          "source_evidence": [
+            "mtk"
+          ]
+        },
+        "score_breakdown": {
+          "bm25": 19.011448253632015,
+          "field": 7.486308490492148,
+          "phrase": 3.0
+        }
+      },
+      {
+        "record_id": "EP674-reasoning-004",
+        "episode_id": "EP674",
+        "title": "Tension Between AI Component Supplier Profits and Tech Giant Spending",
+        "score": 5.754195958786886,
+        "matched_terms": [
+          "什麼",
+          "有什",
+          "有什麼"
+        ],
+        "matched_fields": {
+          "source_evidence": [
+            "什麼",
+            "有什",
+            "有什麼"
+          ]
+        },
+        "score_breakdown": {
+          "bm25": 5.176845689597259,
+          "field": 0.5773502691896257,
+          "phrase": 0.0
+        }
+      }
+    ],
+    "answer": "1. 可能的推理框架  \n他認為在職涯初期，應優先追求財務穩定與高收入，而非工作滿意度，將高薪職位視為累積資本與經驗的跳板。\n\n2. 相關歷史證據  \n他明確表示：「賺錢是比較重要的啦...上班本身...不就是為了去賺點錢嗎」，並指出像MTK這樣的高薪高 prestige 職位是「很多人夢寐以求可以去的地方...算是某種程度上的跳板」（EP674, 00:34:34-00:35:22, record EP674-reasoning-007）。\n\n3. 條件與風險  \n此建議的前提是工作不致造成嚴重心理傷害；若導致重大心理健康問題，則離職是合理的。長期處於不滿意的工作可能導致 burnout（EP674, 00:36:11-00:36:35, record EP674-reasoning-007）。\n\n4. 仍不確定的部分  \n他未討論中長期職涯轉換或熱情與成就的關聯性，僅聚焦於早期階段的務實策略。\n\n5. 出處 / 時間戳  \nEP674, 00:34:34-00:35:22, record EP674-reasoning-007；EP674, 00:36:11-00:36:35, record EP674-reasoning-007",
+    "citations": [
+      "EP674, 00:34:34-00:35:22, record EP674-reasoning-007",
+      "EP674, 00:36:11-00:36:35, record EP674-reasoning-007",
+      "EP674, 00:20:51-00:22:27, record EP674-reasoning-004",
+      "EP674, 00:22:27-00:22:52, record EP674-reasoning-004"
+    ],
+    "usage": {
+      "prompt_tokens": 981,
+      "completion_tokens": 362,
+      "total_tokens": 1343,
+      "cost": 0.00053438,
+      "is_byok": false,
+      "prompt_tokens_details": {
+        "cached_tokens": 5,
+        "cache_write_tokens": 0,
+        "audio_tokens": 0,
+        "video_tokens": 0
+      },
+      "cost_details": {
+        "upstream_inference_cost": 0.00053438,
+        "upstream_inference_prompt_cost": 0.00021582,
+        "upstream_inference_completions_cost": 0.00031856
+      },
+      "completion_tokens_details": {
+        "reasoning_tokens": 0,
+        "image_tokens": 0,
+        "audio_tokens": 0
+      }
+    },
+    "latency_seconds": 5.1544696540004225,
+    "retries": 0,
+    "review": {
+      "evidence_sufficient": true,
+      "citation_valid": true,
+      "current_market_data_required": false,
+      "warnings": [
+        "no major automated review warnings"
+      ]
+    }
+  },
+  {
+    "question": "合夥創業他重視什麼風險？",
+    "retrieved_records": [
+      {
+        "record_id": "EP674-reasoning-008",
+        "episode_id": "EP674",
+        "title": "Simple Ownership Structures Prevent Business Complexity and Conflict",
+        "score": 31.288028041991133,
+        "matched_terms": [
+          "business_philosophy",
+          "founder_control",
+          "ownership_structure",
+          "risk",
+          "skin-in-the-game",
+          "stakeholders"
+        ],
+        "matched_fields": {
+          "claims": [
+            "skin-in-the-game",
+            "stakeholders"
+          ],
+          "reasoning_steps": [
+            "risk",
+            "stakeholders"
+          ],
+          "tags": [
+            "business_philosophy",
+            "founder_control",
+            "ownership_structure"
+          ]
+        },
+        "score_breakdown": {
+          "bm25": 23.95960091724494,
+          "field": 2.82842712474619,
+          "phrase": 4.5
+        }
+      },
+      {
+        "record_id": "EP674-reasoning-003",
+        "episode_id": "EP674",
+        "title": "Break Below 60-Day Moving Average Signals Weakening Momentum and Higher Risk",
+        "score": 8.371884160852442,
+        "matched_terms": [
+          "risk",
+          "risk_management",
+          "technical_analysis"
+        ],
+        "matched_fields": {
+          "title": [
+            "risk"
+          ],
+          "reasoning_steps": [
+            "risk"
+          ],
+          "speaker_behavior": [
+            "risk"
+          ],
+          "tags": [
+            "risk_management",
+            "technical_analysis"
+          ]
+        },
+        "score_breakdown": {
+          "bm25": 4.750563817292799,
+          "field": 2.1213203435596424,
+          "phrase": 1.5
+        }
+      },
+      {
+        "record_id": "EP674-reasoning-004",
+        "episode_id": "EP674",
+        "title": "Tension Between AI Component Supplier Profits and Tech Giant Spending",
+        "score": 6.2527419007457805,
+        "matched_terms": [
+          "conditions",
+          "risk",
+          "什麼"
+        ],
+        "matched_fields": {
+          "reasoning_steps": [
+            "conditions"
+          ],
+          "decisions_or_preferences": [
+            "risk"
+          ],
+          "source_evidence": [
+            "什麼"
+          ]
+        },
+        "score_breakdown": {
+          "bm25": 3.868858424262596,
+          "field": 0.8838834764831843,
+          "phrase": 1.5
+        }
+      }
+    ],
+    "answer": "1. 合夥創業時，他重視股東結構過於複雜所帶來的決策遲緩與衝突風險。偏好創辦人全資或主導持股，以確保控制權與經營簡潔性。  \n2. 歷史證據顯示，他認為「股東不要太複雜…事情一定要儘量的單純…所有東西我能夠吃我就自己吃掉」，並強調創辦人需有「skin-in-the-game」的財務承諾，以強化投入程度（EP674, 00:49:33-00:52:59, record EP674-reasoning-008）。  \n3. 此模式風險在於過度依賴單一決策者，且缺乏多元觀點；適用條件為創辦人具備足夠資金或融資能力。  \n4. 尚未明確說明合夥關係中如何分配責任、決策機制或退場機制等細節，亦未提及信賴基礎或價值觀一致性等非財務因素。  \n5. 引用來源：EP674, 00:49:33-00:52:59, record EP674-reasoning-008。",
+    "citations": [
+      "EP674, 00:49:33-00:52:59, record EP674-reasoning-008",
+      "EP674, 00:13:04-00:13:53, record EP674-reasoning-003",
+      "EP674, 00:13:53-00:13:56, record EP674-reasoning-003",
+      "EP674, 00:14:46-00:15:11, record EP674-reasoning-003",
+      "EP674, 00:22:52-00:23:16, record EP674-reasoning-003",
+      "EP674, 00:20:51-00:22:27, record EP674-reasoning-004",
+      "EP674, 00:22:27-00:22:52, record EP674-reasoning-004"
+    ],
+    "usage": {
+      "prompt_tokens": 1331,
+      "completion_tokens": 286,
+      "total_tokens": 1617,
+      "cost": 0.00041415,
+      "is_byok": false,
+      "prompt_tokens_details": {
+        "cached_tokens": 0,
+        "cache_write_tokens": 0,
+        "audio_tokens": 0,
+        "video_tokens": 0
+      },
+      "cost_details": {
+        "upstream_inference_cost": 0.00041415,
+        "upstream_inference_prompt_cost": 0.00019965,
+        "upstream_inference_completions_cost": 0.0002145
+      },
+      "completion_tokens_details": {
+        "reasoning_tokens": 0,
+        "image_tokens": 0,
+        "audio_tokens": 0
+      }
+    },
+    "latency_seconds": 10.221027147999848,
+    "retries": 0,
+    "review": {
+      "evidence_sufficient": true,
+      "citation_valid": true,
+      "current_market_data_required": false,
+      "warnings": [
+        "no major automated review warnings"
+      ]
+    }
+  },
+  {
+    "question": "現在可以買 Apple 嗎？",
+    "retrieved_records": [
+      {
+        "record_id": "EP674-reasoning-005",
+        "episode_id": "EP674",
+        "title": "Apple's Price Hike May Not Deter Core Customers Despite Online Backlash",
+        "score": 24.89465644582693,
+        "matched_terms": [
+          "apple",
+          "hike",
+          "price",
+          "pricing_power",
+          "果粉",
+          "蘋果"
+        ],
+        "matched_fields": {
+          "title": [
+            "apple",
+            "hike",
+            "price"
+          ],
+          "claims": [
+            "apple",
+            "price",
+            "果粉"
+          ],
+          "observations": [
+            "apple"
+          ],
+          "reasoning_steps": [
+            "price",
+            "果粉"
+          ],
+          "assumptions": [
+            "price"
+          ],
+          "tags": [
+            "apple",
+            "pricing_power"
+          ],
+          "source_evidence": [
+            "果粉",
+            "蘋果"
+          ]
+        },
+        "score_breakdown": {
+          "bm25": 14.368589879577467,
+          "field": 6.026066566249461,
+          "phrase": 4.5
+        }
+      },
+      {
+        "record_id": "EP674-reasoning-004",
+        "episode_id": "EP674",
+        "title": "Tension Between AI Component Supplier Profits and Tech Giant Spending",
+        "score": 18.40896210793968,
+        "matched_terms": [
+          "apple",
+          "conditions",
+          "giants",
+          "tech"
+        ],
+        "matched_fields": {
+          "title": [
+            "tech"
+          ],
+          "claims": [
+            "apple",
+            "giants",
+            "tech"
+          ],
+          "observations": [
+            "giants",
+            "tech"
+          ],
+          "reasoning_steps": [
+            "conditions",
+            "giants"
+          ],
+          "risks": [
+            "giants",
+            "tech"
+          ],
+          "decisions_or_preferences": [
+            "giants",
+            "tech"
+          ]
+        },
+        "score_breakdown": {
+          "bm25": 8.758656080729933,
+          "field": 5.150306027209748,
+          "phrase": 4.5
+        }
+      },
+      {
+        "record_id": "EP674-reasoning-002",
+        "episode_id": "EP674",
+        "title": "Market Correction Likely Driven by Institutional Rebalancing, Not Geopolitical or Inflation Fears",
+        "score": 13.818925785736964,
+        "matched_terms": [
+          "consumer",
+          "hike",
+          "price",
+          "risks",
+          "tech"
+        ],
+        "matched_fields": {
+          "observations": [
+            "hike"
+          ],
+          "reasoning_steps": [
+            "consumer",
+            "price",
+            "tech"
+          ],
+          "assumptions": [
+            "price",
+            "risks"
+          ],
+          "uncertainty": [
+            "price"
+          ],
+          "teaching_or_explanation_style": [
+            "price"
+          ]
+        },
+        "score_breakdown": {
+          "bm25": 6.670792727212114,
+          "field": 2.6481330585248495,
+          "phrase": 4.5
+        }
+      }
+    ],
+    "answer": "先說限制：這個 MVP 只使用 EP674 的歷史 podcast semantic knowledge，沒有即時股價、財報、新聞或市場資料，所以不能判斷現在是否適合買賣；下面只能整理歷史推理框架。\n\n此 MVP 無法決定目前買賣適宜與否，僅能提供過往節目中的推理框架。\n\n1. **可能的推理框架**：  \n   投資決策應基於實際銷售數據而非網路聲量；核心用戶忠誠度可能抵禦價格上漲壓力，但需觀察競爭動態與宏觀經濟。\n\n2. **相關歷史證據**：  \n   - Apple 提價主因記憶體成本上升，但「果粉」仍可能持續購買（EP674, 00:23:16-00:23:41, record EP674-reasoning-005）。  \n   - 應以實際銷量而非網路上的反彈聲量判斷影響（EP674, 00:24:29-00:25:19, record EP674-reasoning-005）。  \n   - 零組件供應商獲利創新高，但科技巨頭股價表現疲弱，顯示市場對AI支出報酬率存疑（EP674, 00:20:51-00:22:27, record EP674-reasoning-004）。\n\n3. **條件與風險**：  \n   - 若競爭對手推出具吸引力替代品，或經濟持續疲弱，可能侵蝕忠誠度（EP674-reasoning-005）。  \n   - 股東若長期未見AI投資回報，可能對管理層提出質疑（EP674-reasoning-004）。\n\n4. **仍不確定之處**：  \n   - 缺乏最新銷售數據驗證提價影響（EP674-reasoning-005）。  \n   - 尚無明確跡象顯示股東將對科技巨頭AI支出進行檢討（EP674-reasoning-004）。\n\n5. **出處 / 時間戳**：  \n   EP674, 00:23:16-00:23:41, record EP674-reasoning-005；EP674, 00:24:29-00:25:19, record EP674-reasoning-005；EP674, 00:20:51-00:22:27, record EP674-reasoning-004。",
+    "citations": [
+      "EP674, 00:23:16-00:23:41, record EP674-reasoning-005",
+      "EP674, 00:24:29-00:25:19, record EP674-reasoning-005",
+      "EP674, 00:26:55-00:27:19, record EP674-reasoning-005",
+      "EP674, 00:20:51-00:22:27, record EP674-reasoning-004",
+      "EP674, 00:22:27-00:22:52, record EP674-reasoning-004",
+      "EP674, 00:15:35-00:16:47, record EP674-reasoning-002",
+      "EP674, 00:16:47-00:17:12, record EP674-reasoning-002",
+      "EP674, 00:17:37-00:18:00, record EP674-reasoning-002",
+      "EP674, 00:18:24-00:18:49, record EP674-reasoning-002"
+    ],
+    "usage": {
+      "prompt_tokens": 1533,
+      "completion_tokens": 566,
+      "total_tokens": 2099,
+      "cost": 0.00019457,
+      "is_byok": false,
+      "prompt_tokens_details": {
+        "cached_tokens": 0,
+        "cache_write_tokens": 0,
+        "audio_tokens": 0,
+        "video_tokens": 0
+      },
+      "cost_details": {
+        "upstream_inference_cost": 0.00019457,
+        "upstream_inference_prompt_cost": 0.00013797,
+        "upstream_inference_completions_cost": 5.66e-05
+      },
+      "completion_tokens_details": {
+        "reasoning_tokens": 0,
+        "image_tokens": 0,
+        "audio_tokens": 0
+      }
+    },
+    "latency_seconds": 23.550553427001432,
+    "retries": 0,
+    "review": {
+      "evidence_sufficient": true,
+      "citation_valid": true,
+      "current_market_data_required": true,
+      "warnings": [
+        "no major automated review warnings"
+      ]
+    }
+  },
+  {
+    "question": "他有沒有談到房地產投資策略？",
+    "retrieved_records": [],
+    "answer": "目前 EP674 semantic knowledge 中沒有找到足夠相關的證據。這個 MVP 不會用一般模型知識補答案，也不能查詢即時市場資訊。",
+    "citations": [],
+    "review": {
+      "evidence_sufficient": false,
+      "warnings": [
+        "no retrieved evidence"
+      ],
+      "current_market_data_required": false
+    }
+  }
+]

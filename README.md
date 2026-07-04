@@ -8,43 +8,56 @@ The goal is not automated trading or order placement. The long-term goal is to p
 
 Current status:
 
-- The active implementation is a Local POC in `gooaye_mentor_poc/`.
-- EP674 has been ingested, downloaded, validated, transcribed, normalized, merged, and prepared for human review.
-- The project is still in transcript validation and representation design.
-- RAG, vector database, full Mentor Agent, fine-tuning, and cloud batch processing are not implemented yet.
+- Phase 1 Transcription POC is complete and preserved as a stable reference in `legacy_segment_poc/`.
+- Phase 2 Semantic Extraction POC is implemented in `semantic_analysis_poc/` for the current pilot episodes.
+- `legacy_mentor_rag_poc/` is a working legacy case-only RAG baseline over Level 2 reasoning records.
+- Offline Level 3/Level 4 principle extraction is implemented in `semantic_analysis_poc/`.
+- `reasoning_mentor_poc/` is the minimal workspace for the future online principle-plus-case Reasoning Mentor.
+- Vector database, current market tools, portfolio integration, fine-tuning, UI, deployment, and full corpus processing are not implemented yet.
 
 Start here:
 
 - `AGENTS.md`: project-wide agent rules.
-- `gooaye_mentor_poc/README.md`: Local POC overview and commands.
+- `semantic_analysis_poc/README.md`: offline semantic extraction workspace.
+- `legacy_mentor_rag_poc/README.md`: deterministic case-only RAG baseline.
+- `reasoning_mentor_poc/README.md`: new principle-plus-case Mentor skeleton.
+- `legacy_segment_poc/README.md`: completed Phase 1 transcription POC reference.
+- `docs/reasoning_mentor_architecture.md`: planned four-level reasoning architecture.
 - `docs/terminology.tsv`: shared terminology table for preserved terms, aliases, and corrections.
 - `docs/future-improvements.md`: deferred optimization ideas.
 
 ## Project Flow
 
 ```text
-[done]    RSS / Apple lookup
-[done]    Episode manifest
-[done]    EP674 MP3 audio + metadata
-[done]    Raw ASR transcript
-[done]    Traditional Chinese normalization
-[done]    Deterministic merged utterances
-[current] Human review of transcript representation and topic boundaries
-[poc]     Minimal topic / classification / routing review
-[todo]    20-episode pilot
-[todo]    Topic and reasoning-case extraction
-[todo]    Behavioral pattern modeling
-[todo]    Retrieval-backed Mentor MVP
+[done]    Phase 1: RSS / Apple lookup
+[done]    Phase 1: Episode manifest
+[done]    Phase 1: EP674 MP3 audio + metadata
+[done]    Phase 1: Raw ASR transcript
+[done]    Phase 1: Traditional Chinese normalization
+[done]    Phase 1: Deterministic merged utterances and integrity validation
+[done]    Phase 2: Whole-episode LLM semantic extraction POC for pilot episodes
+[done]    Offline Level 3/4 principle extraction POC
+[done]    Legacy case-only Mentor RAG baseline over Level 2 records
+[active]  New online Reasoning Mentor POC skeleton and design boundary
+[future]  Principle-plus-case Mentor implementation
+[future]  Full corpus processing
+[future]  Phase 8: Advanced version
 ```
 
-Every derived layer should remain traceable to episode, timestamp, and source segment IDs. Raw artifacts should not be overwritten by normalized, merged, corrected, or classified outputs.
+Every derived layer should remain traceable to episode, timestamp, and source segment IDs. Raw artifacts should not be overwritten by normalized, merged, corrected, or semantic extraction outputs.
 
-Near-term TODO:
+Current semantic design direction:
 
-- Finish reviewing `gooaye_mentor_poc/reports/EP674_human_review.md`.
-- Add confirmed terminology corrections to `docs/terminology.tsv`.
-- Keep classification and segmentation improvements in `docs/future-improvements.md` until they are worth implementing.
-- Decide whether transcript quality is good enough for a broader pilot.
+- Use the whole normalized episode transcript as LLM input.
+- Supply terminology corrections as annotations, not destructive transcript rewrites.
+- Produce Level 1 Episode Semantic Maps and Level 2 Reasoning Records / Cases.
+- Level 3 extracts episode-local provisional principles from Level 2 records.
+- Level 4 compares principles and cases across episodes.
+- Principle confidence is multi-dimensional and deterministically constrained; Level 3 high overall confidence is not allowed.
+- Future online routing must use runtime eligibility and cite Level 2 source records, not principles alone.
+- Preserve uncertainty, assumptions, risks, exceptions, counterexamples, opinion changes, decisions, and speaker behavior.
+- Do not use deterministic keyword segmentation/classification as the primary semantic method.
+- Do not invent long-term speaker principles without cross-episode evidence.
 
 ## Repository Hierarchy
 
@@ -58,40 +71,51 @@ Podcast-Speaker-AI-Investment-Mentor/
 │   ├── cloud-processing-plan.md
 │   ├── future-improvements.md
 │   └── terminology.tsv
-└── gooaye_mentor_poc/
-    ├── AGENTS.md
+├── legacy_segment_poc/
+│   └── ...
+├── semantic_analysis_poc/
+│   └── ...
+├── legacy_mentor_rag_poc/
+│   └── ...
+└── reasoning_mentor_poc/
     ├── README.md
     ├── main.py
-    ├── modules/
-    ├── poc_docs/
     ├── config/
-    ├── data/
-    └── reports/
+    ├── modules/
+    ├── prompts/
+    └── ...
 ```
 
 ## How To Use This Project
 
-For current POC work:
+For transcription and normalization reference, start in `legacy_segment_poc/`.
 
-```bash
-cd /home/g9161/projects/Podcast-Speaker-AI-Investment-Mentor/gooaye_mentor_poc
-python3 main.py merge --episode EP674 --configuration large-v3-turbo
-python3 main.py normalize --episode EP674 --configuration large-v3-turbo
-python3 main.py topic-review-poc --episode EP674 --configuration large-v3-turbo
-```
+For offline semantic extraction, start in `semantic_analysis_poc/`.
 
-For human review, open:
+For the working case-only RAG demo, start in:
 
 ```text
-gooaye_mentor_poc/reports/EP674_human_review.md
+legacy_mentor_rag_poc/
 ```
+
+For the next principle-plus-case Mentor architecture, start in:
+
+```text
+reasoning_mentor_poc/
+```
+
+Do not rerun Phase 1 transcription, GPU benchmark, RSS discovery, or episode download unless explicitly needed.
 
 ## More Detail
 
 - Architecture: `docs/architecture.md`
+- Reasoning Mentor architecture: `docs/reasoning_mentor_architecture.md`
 - Data model: `docs/data-model.md`
 - Cloud plan: `docs/cloud-processing-plan.md`
 - Future improvements: `docs/future-improvements.md`
 - Terminology: `docs/terminology.tsv`
-- POC details: `gooaye_mentor_poc/poc_docs/local-transcription-poc.md`
-- POC troubleshooting: `gooaye_mentor_poc/poc_docs/troubleshooting.md`
+- Phase 1 POC details: `legacy_segment_poc/poc_docs/local-transcription-poc.md`
+- Phase 1 troubleshooting: `legacy_segment_poc/poc_docs/troubleshooting.md`
+- Phase 2 POC: `semantic_analysis_poc/README.md`
+- Legacy case-only RAG baseline: `legacy_mentor_rag_poc/README.md`
+- New Reasoning Mentor skeleton: `reasoning_mentor_poc/README.md`

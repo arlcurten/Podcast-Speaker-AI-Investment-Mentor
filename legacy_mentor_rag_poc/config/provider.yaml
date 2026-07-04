@@ -1,0 +1,18 @@
+# OpenAI-compatible Chat Completions provider config.
+# Credentials must come from environment variables, never tracked files.
+
+provider: openai_compatible
+base_url: https://openrouter.ai/api/v1
+api_key_env: OPENROUTER_API_KEY
+
+# MENTOR_MODEL_ID overrides this value.
+model_id: qwen/qwen3-235b-a22b-2507
+
+temperature: 0.2
+timeout_seconds: 120
+max_output_tokens: 1200
+max_retries: 1
+
+headers:
+  http_referer:
+  x_title: Podcast Speaker AI Investment Legacy Mentor RAG POC

@@ -1,6 +1,14 @@
 # Architecture
 
-This document describes the long-term architecture for the Podcast Speaker AI Investment Mentor. The current implementation is still in Local POC / transcript validation.
+This document describes the long-term architecture for the Podcast Speaker AI Investment Mentor.
+
+Current boundary:
+
+- Phase 1 Transcription POC is complete and preserved in `legacy_segment_poc/`.
+- Phase 2 Semantic Extraction POC is implemented in `semantic_analysis_poc/` for the current pilot episodes.
+- `legacy_mentor_rag_poc/` is a working deterministic case-only RAG baseline.
+- Offline Level 3/Level 4 principle extraction is implemented as a POC in `semantic_analysis_poc/`.
+- `reasoning_mentor_poc/` remains a minimal skeleton for the future online principle-plus-case Reasoning Mentor.
 
 ## Target Flow
 
@@ -15,20 +23,22 @@ Raw ASR
     ↓
 Merged utterances
     ↓
-Topic segments
+Whole-episode normalized transcript package
     ↓
-Decision / reasoning cases
+Level 1: Episode Semantic Map
     ↓
-Behavioral patterns
+Level 2: Topic-thread Reasoning Records
     ↓
-Speaker model
+Level 3: Episode-Level Provisional Principles
     ↓
-Hierarchical RAG / Mentor Agent
+Level 4: Cross-Episode Decision Principles
+    ↓
+Principle-plus-case Reasoning Mentor
 ```
 
-## Verified
+## Phase 1 Verified
 
-Verified in the Local POC:
+Verified in the completed transcription POC:
 
 - Apple lookup fallback can recover the active RSS feed after an old feed URL returns 404.
 - RSS ingestion produces a 674-row episode manifest.
@@ -36,24 +46,83 @@ Verified in the Local POC:
 - EP674 full `large-v3-turbo` transcription completed locally.
 - EP674 raw segment audit completed.
 - EP674 deterministic merged utterances were generated.
-- EP674 manual review package and clips were generated.
+- EP674 Traditional Chinese normalized merged transcript exists.
+- EP674 timestamp and source-segment integrity checks passed.
+- EP674 manual review package was generated.
 
-## Pending
+Phase 1 is now legacy/reference, frozen except for bug fixes or explicitly requested reproducibility checks.
 
-- Human listening review of transcript quality.
-- Clean same-clip GPU benchmark for `large-v3-turbo`.
-- Same-clip `large-v3` feasibility comparison on local 4 GB GPU.
-- Content classification feasibility.
-- Decision on 20-episode cloud pilot.
+## Phase 2 Semantic Extraction
+
+Phase 2 uses the normalized whole-episode transcript as LLM input. The LLM is responsible for semantic understanding. Deterministic code handles transcript preparation, source mapping, API orchestration, schema validation, retry handling, metadata, storage, and reproducibility.
+
+Target hierarchy:
+
+1. Episode Semantic Map
+2. Reasoning Records / Cases
+3. Episode-Level Provisional Principles
+4. Cross-Episode Decision Principles
+
+Topic threads may be long, overlapping, or non-contiguous. The primary method should not be deterministic keyword segmentation, fixed episode-position weighting, fixed-duration windows, or single-label classification.
+
+Level 3 in the new architecture should be principle-oriented and strategy-dependent:
+
+- `principle_extraction`: identify episode-local recurring decision patterns.
+- `light_principle_grouping`: group overlapping local patterns without inventing a central theme.
+- `bypass`: skip principle extraction when Level 2 cases are already the useful output.
+
+Do not force every episode into one unified narrative. Level 2 cases may be the canonical useful output for loosely structured episodes.
+
+## Principle Extraction Boundary
+
+Level 3/4 extraction is offline knowledge construction:
+
+```text
+Level 2 reasoning records
+    ↓
+Level 3 episode-local provisional principles
+    ↓
+Level 4 cross-episode decision principles
+```
+
+Level 2 cases remain the source of truth. Principles are abstractions and must not be counted as additional independent evidence.
+
+## Mentor POC Boundary
+
+`legacy_mentor_rag_poc/` is a completed case-only baseline:
+
+```text
+query
+    ↓
+retrieve Level 2 reasoning records
+    ↓
+domain filtering and context assembly
+    ↓
+LLM answer with citations
+```
+
+The new `reasoning_mentor_poc/` should eventually use the offline principles and cases:
+
+```text
+query / scenario analysis
+    ↓
+retrieve Level 4 principles
+    ↓
+retrieve supporting, conflicting, and similar Level 2 cases
+    ↓
+online applicability check
+    ↓
+conditional answer with citations
+```
 
 ## Future
 
-- Topic segmentation.
-- Decision/reasoning case extraction.
-- Behavioral pattern modeling.
-- Speaker model construction.
-- Hierarchical retrieval.
-- Mentor Agent MVP.
+- Level 3 provisional principle extraction.
+- Level 4 cross-episode decision-principle construction.
+- Principle-plus-case Reasoning Mentor implementation.
+- Full corpus processing.
+- Conditional speaker model construction.
+- Current information tools, only after historical reasoning is stable.
 
 ## Boundaries
 

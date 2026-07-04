@@ -35,20 +35,35 @@ The long-term project should preserve evidence and derivation boundaries. Each l
    - Preserves timestamps and source segment IDs.
    - Uses deterministic normalization and glossary replacement, not free-form LLM rewriting.
 
-8. Topic segments
-   - Semantic grouping by subject.
-   - Should reference merged utterance IDs or raw segment IDs.
-   - Current EP674 layer is a narrow deterministic POC for review, not a production classifier.
+8. Phase 2 input package
+   - A compact copy of the Phase 1 evidence needed for semantic extraction.
+   - Includes raw transcript, normalized merged transcript, merge integrity metadata, episode/audio metadata, and terminology reference.
 
-9. Future decision/reasoning cases
-   - Extracted investment reasoning examples.
-   - Must link back to source timestamps and text.
+9. Episode Semantic Map
+   - Level 1 semantic overview of major episode themes and threads.
+   - Must reference source evidence.
 
-10. Future behavioral patterns
+10. Topic-thread Reasoning Records
+   - Level 2 reasoning records.
+   - Threads may be long, overlapping, or non-contiguous.
+   - Must preserve conditions, assumptions, risks, exceptions, counterexamples, opinion changes, decisions, and speaker behavior.
+
+11. Episode-Level Provisional Principles
+   - Level 3 layer derived from one episode's Level 2 records.
+   - Captures episode-local recurring decision patterns and preferences.
+   - Supports `principle_extraction`, `light_principle_grouping`, and `bypass`.
+   - Must remain provisional and evidence-linked.
+
+12. Cross-Episode Decision Principles
+   - Level 4 layer comparing Level 2 cases and Level 3 provisional principles across episodes.
+   - Preserves conditions, exceptions, conflicts, counterexamples, evolution, independent episode coverage, and confidence.
+   - Must link back to Level 2 source records.
+
+13. Future behavioral patterns
    - Cross-case patterns such as risk attitude, changing views, and uncertainty handling.
    - Should remain auditable to source cases.
 
-11. Future speaker model
+14. Future speaker model
    - Higher-level representation used by the mentor system.
    - Should not erase uncertainty or source evidence.
 
@@ -61,7 +76,15 @@ The long-term project should preserve evidence and derivation boundaries. Each l
 - Prefer project-relative paths for artifacts inside the repository.
 - If an absolute path is useful, store it separately from the project-relative path.
 - Text normalization must retain original text and store normalized text separately.
-- If LLM extraction is introduced later, store prompts, model, version, and confidence/uncertainty notes.
+- LLM extraction must store prompts, model, provider, version, schema version, token/cost metadata when available, and confidence/uncertainty notes.
+- Terminology corrections must be annotations or parallel fields, not destructive transcript rewrites.
+- Level 1 must record episode structure and route evidence to Level 2 extraction.
+- Level 3 principles must be marked provisional and scoped to their episode.
+- Level 4 principles must preserve source case coverage and counterexamples.
+- A principle is an abstraction derived from records. It must not be counted as an additional independent piece of evidence.
+- Principle confidence is multi-dimensional and deterministically constrained from provenance where possible.
+- Level 3 `overall` confidence is limited to low/medium because it is episode-local.
+- Runtime eligibility and runtime mode are separate from extraction confidence.
 - Do not treat transcript text as verified until manual review is complete.
 
 ## Project-Wide Path Rule
@@ -78,11 +101,22 @@ Verified:
 - EP674 raw `large-v3-turbo` transcript exists.
 - EP674 deterministic merged transcript exists and has passed raw-to-merged integrity validation.
 - EP674 Traditional Chinese normalized raw and merged transcript layers exist.
-- EP674 minimal deterministic topic segmentation, classification, and routing POC exists.
+- EP674 minimal deterministic topic segmentation, classification, and routing POC exists as legacy review/reference only.
 - EP674 segment audit and manual review package exist.
 
-Pending:
+Current higher-level status:
 
-- Manual quality judgments.
-- Reasoning-case extraction.
-- Behavioral pattern extraction.
+- Phase 2 Level 1/Level 2 extraction has pilot outputs for EP674, EP670, EP450, and EP57.
+- Offline Level 3/Level 4 principle extraction POC has generated local outputs from those Level 2 records.
+- `legacy_mentor_rag_poc/` can retrieve Level 2 records and generate case-grounded answers.
+- `reasoning_mentor_poc/` has only contracts/skeleton for consuming principles later; no online reasoning path is implemented yet.
+
+## Phase 2 Input Copy
+
+The active Phase 2 POC keeps a small self-contained input copy under:
+
+```text
+semantic_analysis_poc/data/phase1_inputs/EP674/
+```
+
+It intentionally does not copy MP3 files, benchmark artifacts, old deterministic topic outputs, or cloud/runtime scratch data.

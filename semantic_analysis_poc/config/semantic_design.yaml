@@ -1,0 +1,231 @@
+# Phase 2 semantic extraction design contract.
+# This is a compact planning/config document, not an implemented schema validator.
+
+version: 0.1
+
+levels:
+  level1_episode_semantic_map:
+    purpose: "Identify what topics appear in the episode and how transcript regions relate."
+    semantic_role: "map_not_fixed_segmentation"
+    required_fields:
+      - episode_id
+      - episode_structure_type
+      - episode_structure_confidence
+      - main_topic_threads
+      - transcript_region_relationships
+      - non_contiguous_topic_regions
+      - important_reasoning_regions
+      - recommended_level3_strategy
+      - level3_strategy_reason
+      - source_evidence
+    episode_structure_type_values:
+      - single_theme
+      - multi_theme
+      - conversational
+      - qa_heavy
+      - mixed
+    recommended_level3_strategy_values:
+      - full_synthesis
+      - light_consolidation
+      - bypass
+
+  level2_reasoning_records:
+    purpose: "Extract complete reasoning inside important topic threads."
+    semantic_role: "primary_knowledge_layer"
+    required_fields:
+      - reasoning_record_id
+      - episode_id
+      - topic_thread_id
+      - claims
+      - observations
+      - reasoning_steps
+      - assumptions
+      - conditions
+      - risks
+      - exceptions
+      - uncertainty
+      - decisions_or_preferences
+      - actions_or_avoided_actions
+      - view_change_conditions
+      - speaker_behavior
+      - teaching_or_explanation_style
+      - tags
+      - source_evidence
+    notes:
+      - "A record may come from one continuous region or multiple non-contiguous transcript regions."
+      - "Level 2 may be the final useful semantic output for conversational or multi-topic episodes."
+
+  level3_optional_episode_consolidation:
+    purpose: "Decide whether to consolidate Level 2 outputs and how much."
+    semantic_role: "optional_strategy_dependent_layer"
+    strategy_values:
+      - full_synthesis
+      - light_consolidation
+      - bypass
+    required_for_all_strategies:
+      - episode_id
+      - selected_strategy
+      - strategy_reason
+      - source_level1_map_id
+      - source_reasoning_record_ids
+    strategy_specific_fields:
+      full_synthesis:
+        required_fields:
+          - major_views
+          - important_cases
+          - decision_principles
+          - risks_and_exceptions
+          - repeated_arguments
+          - corrections_or_contradictions
+          - opinion_changes
+          - overall_speaker_stance
+          - source_evidence
+      light_consolidation:
+        required_fields:
+          - topic_inventory
+          - merged_duplicate_or_overlapping_records
+          - cross_topic_links
+          - corrections_or_contradictions
+          - cross_episode_candidate_records
+        forbidden_behavior:
+          - "Do not invent an episode-level central message."
+          - "Do not over-compress independent topic threads."
+      bypass:
+        required_fields:
+          - bypass_reason
+          - canonical_output
+        canonical_output_value: "level2_reasoning_records"
+        forbidden_behavior:
+          - "Do not generate an artificial synthesis."
+          - "Do not force unrelated records into one narrative."
+
+  level3_episode_provisional_principles:
+    purpose: "Extract episode-local provisional decision principles from Level 2 records."
+    semantic_role: "provisional_episode_local_principles"
+    strategy_values:
+      - principle_extraction
+      - light_principle_grouping
+      - bypass
+    required_fields:
+      - principle_id
+      - episode_id
+      - name
+      - domains
+      - decision_context
+      - core_preference
+      - reasoning_steps
+      - preferred_actions
+      - conditions
+      - exceptions
+      - supporting_records
+      - counterexamples
+      - contradictions
+      - confidence
+      - principle_type
+      - decision_tradeoff
+      - generalization_scope
+      - genericness_status
+      - distinctive_behavior
+      - eligible_for_level4
+      - eligible_for_online_reasoning
+      - runtime_mode_recommendation
+      - provenance_stats
+      - provisional
+      - extraction_strategy
+      - evidence_summary
+    notes:
+      - "provisional must always be true."
+      - "supporting_records must reference same-episode Level 2 record IDs."
+      - "Do not upgrade one-off comments into stable speaker principles."
+      - "Level 3 generalization_scope is always episode_local."
+      - "Level 3 overall confidence is constrained to low or medium."
+      - "Single-record outputs are case_derived_hypothesis and are not eligible for Level 4."
+
+  level4_cross_episode_decision_principles:
+    purpose: "Identify revisable cross-episode decision principles from Level 3 principles and Level 2 cases."
+    semantic_role: "cross_episode_revisable_principles"
+    required_fields:
+      - principle_id
+      - name
+      - domains
+      - decision_context
+      - core_preference
+      - reasoning_steps
+      - preferred_actions
+      - conditions
+      - exceptions
+      - supporting_records
+      - supporting_episode_ids
+      - supporting_episode_count
+      - counterexamples
+      - contradictions
+      - principle_evolution
+      - confidence
+      - principle_type
+      - decision_tradeoff
+      - generalization_scope
+      - genericness_status
+      - distinctive_behavior
+      - eligible_for_online_reasoning
+      - runtime_mode_recommendation
+      - provenance_stats
+      - derived_from
+      - evidence_summary
+    notes:
+      - "supporting_records are the evidence; Level 3/4 principles are abstractions, not independent evidence."
+      - "Output Level 4 principles only when support spans at least two episodes."
+      - "Confidence must consider independent episode coverage, semantic consistency, conditions, exceptions, and contradictions."
+      - "runtime_mode_recommendation may be principle_guided, principle_assisted, case_only_fallback, or not_eligible."
+
+prompt_rules:
+  - "Many episodes may have no central theme."
+  - "The speaker may move between unrelated topics."
+  - "Do not invent coherence."
+  - "Do not force a narrative."
+  - "Do not force fixed-duration topic segments."
+  - "Do not use fixed episode-position weighting."
+  - "Do not force single-label classification."
+  - "Topic threads may be long, overlapping, or non-contiguous."
+  - "Level 2 is allowed to be the final useful episode-level output."
+  - "Every high-level statement must preserve source evidence."
+
+validation_rules:
+  evidence:
+    - "Use merged_ids for merged transcript references."
+    - "Use source_segment_id_ranges for continuous raw segment IDs."
+    - "Use source_segment_ids only for isolated raw segment IDs."
+    - "Do not ask the LLM to enumerate every raw segment ID for long regions."
+    - "Complete raw mapping must be reconstructable from Phase 1 merged transcript data."
+  level1:
+    - "episode_structure_type must be one of the configured values."
+    - "recommended_level3_strategy must be one of the configured values."
+    - "level3_strategy_reason is required."
+  level2:
+    - "Every reasoning record must include source evidence with timestamps and source segment IDs."
+    - "Non-contiguous records must list each contributing transcript region."
+  level3:
+    - "Validate required fields based on selected_strategy."
+    - "Do not require full_synthesis fields when selected_strategy is light_consolidation or bypass."
+    - "For bypass, canonical_output must be level2_reasoning_records."
+    - "For light_consolidation, reject artificial central-message fields unless supported by evidence."
+  level3_principles:
+    - "Every principle must be provisional."
+    - "Every supporting record must exist in the same episode's Level 2 output."
+    - "Single-record principles should remain low confidence or be flagged."
+    - "Level 3 overall confidence cannot be high."
+    - "Single-record Level 3 principles must be case_derived_hypothesis."
+    - "Single-record hypotheses cannot be eligible_for_level4."
+  level4_principles:
+    - "Every supporting record must exist in Level 2 outputs."
+    - "supporting_episode_count must match unique supporting episodes."
+    - "One-episode candidates should remain Level 3 and should not be emitted as Level 4."
+    - "Do not hide contradictions or counterexamples."
+    - "High overall confidence requires at least three supporting episodes."
+    - "too_generic principles must not be eligible for online reasoning."
+
+human_review_fields:
+  - detected_episode_structure
+  - recommended_level3_strategy
+  - level3_strategy_reason
+  - whether_level3_added_useful_information
+  - whether_level3_over_compressed_the_episode

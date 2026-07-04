@@ -1,0 +1,56 @@
+# Minimal planned data contracts for the Reasoning Mentor POC.
+# These are design contracts, not active extraction schemas yet.
+
+level3_provisional_principle:
+  required:
+    - principle_id
+    - episode_id
+    - name
+    - decision_context
+    - core_preference
+    - reasoning_steps
+    - preferred_actions
+    - conditions
+    - exceptions
+    - supporting_records
+    - counterexamples
+    - confidence
+    - provisional
+  strategies:
+    - principle_extraction
+    - light_principle_grouping
+    - bypass
+
+level4_cross_episode_principle:
+  required:
+    - principle_id
+    - name
+    - domains
+    - decision_context
+    - core_preference
+    - reasoning_steps
+    - preferred_actions
+    - conditions
+    - exceptions
+    - supporting_records
+    - supporting_episode_count
+    - counterexamples
+    - contradictions
+    - principle_evolution
+    - confidence
+    - derived_from
+
+online_applicability_assessment:
+  required:
+    - query_type
+    - scenario_facts
+    - candidate_principles
+    - applicable_principles
+    - matched_conditions
+    - missing_information
+    - exceptions_triggered
+    - conflicting_evidence
+    - supporting_cases
+    - need_external_tools
+    - provisional_conclusion
+    - confidence

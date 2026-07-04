@@ -1,6 +1,13 @@
 # Project Agent Guide
 
-This repository is the full Podcast Speaker AI Investment Mentor project. The active implementation today is the Local POC in `gooaye_mentor_poc/`.
+This repository is the full Podcast Speaker AI Investment Mentor project.
+
+Current workspace layout:
+
+- `legacy_segment_poc/`: completed Phase 1 transcription POC. Treat as frozen reference except for explicitly requested bug fixes.
+- `semantic_analysis_poc/`: Phase 2 offline semantic extraction POC workspace.
+- `legacy_mentor_rag_poc/`: legacy deterministic case-only Mentor RAG baseline. Keep working for regression and comparison, but do not add new reasoning architecture here.
+- `reasoning_mentor_poc/`: active skeleton for the next principle-plus-case Reasoning Mentor POC.
 
 ## Project Purpose
 
@@ -20,20 +27,20 @@ The goal is not automated trading and not direct order placement.
 ## Project Phases
 
 ```text
-Data acquisition
-→ transcription
-→ transcript quality validation
-→ topic segmentation
-→ reasoning-case extraction
-→ behavioral pattern modeling
-→ hierarchical retrieval
-→ Mentor Agent
+Phase 1 — Transcription POC
+→ Phase 2 — Semantic Extraction POC
+→ Phase 3 — Model/API Selection
+→ Phase 4 — 3 to 20 Episode Pilot
+→ Phase 5 — Full Corpus Processing
+→ Phase 6 — Cross-Episode Knowledge
+→ Phase 7 — Mentor MVP
+→ Phase 8 — Advanced Version
 ```
 
 Current phase:
 
 ```text
-Local transcription POC / transcript validation
+Reasoning Mentor POC preparation
 ```
 
 ## Global Invariants
@@ -46,13 +53,19 @@ Local transcription POC / transcript validation
 - Do not build a full Agent, fine-tuning workflow, RAG, embeddings, or vector database unless explicitly requested.
 - Separate planning estimates from measured results.
 - Prefer project-relative paths for repository artifacts.
+- Phase 2 semantic extraction should be LLM-based, whole-episode-aware, evidence-grounded, hierarchical, and multi-tag.
+- Do not use deterministic keyword segmentation, fixed episode-position weighting, fixed-duration windows, or single-label classification as the main semantic method.
+- Future Level 3 principles are episode-local and provisional. Do not treat them as confirmed long-term speaker rules.
+- Future Level 4 principles must preserve supporting cases, counterexamples, conflicts, evolution, and confidence.
+- A principle is an abstraction from evidence. Do not count it as an additional independent evidence item.
+- Terminology corrections are annotations/context and must not destructively rewrite raw transcript evidence.
 
 ## Simplicity And Organization Rules
 
 - Keep the repository easy to read before making it more complete.
 - Start from `README.md`; split details into separate docs only when the README becomes too long or the topic is independently useful.
 - Prefer fewer, clearer modules over many tiny modules. Split a module only when a step has a distinct responsibility, reusable implementation, or likely replacement path.
-- The Local POC is a sandbox/playground. Do not couple future production architecture to POC internals unless the user explicitly promotes a component.
+- POC folders are sandbox/playground areas. Do not couple future production architecture to POC internals unless the user explicitly promotes a component.
 - Prefer one canonical artifact per stage. Avoid producing JSON, JSONL, CSV, and Markdown versions of the same result unless each has a real consumer.
 - Merge small configuration or terminology files when one shared source of truth is clearer. Split them later if maintenance pressure appears.
 - Temporary experiments may be created while investigating. Once they are no longer useful, either remove them or move useful references into `legacy`/`tmp` rather than leaving them in the active path.
@@ -62,12 +75,16 @@ Local transcription POC / transcript validation
 ## Documentation Index
 
 - `docs/architecture.md`: full long-term architecture.
+- `docs/reasoning_mentor_architecture.md`: planned four-level principle-plus-case Mentor architecture.
 - `docs/data-model.md`: project data layers and invariants.
 - `docs/cloud-processing-plan.md`: future cloud transcription plan.
 - `docs/future-improvements.md`: deferred optimization ideas.
 - `docs/terminology.tsv`: shared terminology table for preserved terms, aliases, and corrections.
-- `gooaye_mentor_poc/poc_docs/local-transcription-poc.md`: Local POC transcription results.
-- `gooaye_mentor_poc/poc_docs/data-source-notes.md`: RSS, SoundOn, Apple lookup, and manifest notes.
-- `gooaye_mentor_poc/poc_docs/troubleshooting.md`: POC troubleshooting and known failure modes.
+- `legacy_segment_poc/poc_docs/local-transcription-poc.md`: Phase 1 transcription POC results.
+- `legacy_segment_poc/poc_docs/data-source-notes.md`: RSS, SoundOn, Apple lookup, and manifest notes.
+- `legacy_segment_poc/poc_docs/troubleshooting.md`: Phase 1 troubleshooting and known failure modes.
+- `semantic_analysis_poc/README.md`: Phase 2 offline semantic extraction workspace overview.
+- `legacy_mentor_rag_poc/README.md`: legacy case-only RAG baseline usage.
+- `reasoning_mentor_poc/README.md`: active skeleton for the new Reasoning Mentor POC.
 
-For Local POC operation rules, also read `gooaye_mentor_poc/AGENTS.md`.
+For Phase 2 operation rules, also read `semantic_analysis_poc/AGENTS.md`. For Phase 1 reference rules, read `legacy_segment_poc/AGENTS.md`.
