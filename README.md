@@ -51,8 +51,10 @@ Current semantic design direction:
 - Use the whole normalized episode transcript as LLM input.
 - Supply terminology corrections as annotations, not destructive transcript rewrites.
 - Produce Level 1 Episode Semantic Maps and Level 2 Reasoning Records / Cases.
-- Future Level 3 should extract episode-local provisional principles from Level 2 records.
-- Future Level 4 should compare principles and cases across episodes.
+- Level 3 extracts episode-local provisional principles from Level 2 records.
+- Level 4 compares principles and cases across episodes.
+- Principle confidence is multi-dimensional and deterministically constrained; Level 3 high overall confidence is not allowed.
+- Future online routing must use runtime eligibility and cite Level 2 source records, not principles alone.
 - Preserve uncertainty, assumptions, risks, exceptions, counterexamples, opinion changes, decisions, and speaker behavior.
 - Do not use deterministic keyword segmentation/classification as the primary semantic method.
 - Do not invent long-term speaker principles without cross-episode evidence.

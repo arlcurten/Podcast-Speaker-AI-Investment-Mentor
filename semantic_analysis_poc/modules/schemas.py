@@ -40,11 +40,60 @@ EVIDENCE_SCHEMA: dict[str, Any] = {
 }
 
 
+CONFIDENCE_SCHEMA: dict[str, Any] = {
+    "type": "object",
+    "properties": {
+        "evidence_strength": {"type": "string", "enum": ["low", "medium", "high"]},
+        "evidence_independence": {"type": "string", "enum": ["low", "medium", "high"]},
+        "speaker_specificity": {"type": "string", "enum": ["low", "medium", "high"]},
+        "condition_clarity": {"type": "string", "enum": ["low", "medium", "high"]},
+        "contradiction_severity": {"type": "string", "enum": ["none", "minor", "major"]},
+        "cross_episode_consistency": {"type": "string", "enum": ["not_applicable", "low", "medium", "high"]},
+        "time_period_diversity": {"type": "string", "enum": ["not_applicable", "low", "medium", "high"]},
+        "overall": {"type": "string", "enum": ["low", "medium", "high"]},
+    },
+    "required": [
+        "evidence_strength",
+        "evidence_independence",
+        "speaker_specificity",
+        "condition_clarity",
+        "contradiction_severity",
+        "cross_episode_consistency",
+        "time_period_diversity",
+        "overall",
+    ],
+    "additionalProperties": True,
+}
+
+
+DECISION_TRADEOFF_SCHEMA: dict[str, Any] = {
+    "type": "object",
+    "properties": {
+        "option_a": {"type": "string"},
+        "option_b": {"type": "string"},
+        "preferred_option": {"type": "string"},
+        "reason_for_preference": {"type": "string"},
+        "cost_of_preference": {"type": "string"},
+        "switch_conditions": {"type": "array", "items": {"type": "string"}},
+    },
+    "required": [
+        "option_a",
+        "option_b",
+        "preferred_option",
+        "reason_for_preference",
+        "cost_of_preference",
+        "switch_conditions",
+    ],
+    "additionalProperties": True,
+}
+
+
 LEVEL1_RESPONSE_FORMAT = json_schema_response(
     "level1_episode_semantic_map",
     {
         "type": "object",
-        "properties": {
+            "properties": {
+            "schema_version": {"type": "string"},
             "level": {"type": "integer"},
             "episode_id": {"type": "string"},
             "episode_structure_type": {
@@ -87,6 +136,7 @@ LEVEL2_RESPONSE_FORMAT = json_schema_response(
     {
         "type": "object",
         "properties": {
+            "schema_version": {"type": "string"},
             "level": {"type": "integer"},
             "episode_id": {"type": "string"},
             "reasoning_records": {
@@ -189,7 +239,25 @@ LEVEL3_PRINCIPLES_RESPONSE_FORMAT = json_schema_response(
                         "supporting_records": {"type": "array", "items": {"type": "string"}},
                         "counterexamples": {"type": "array", "items": {"type": "string"}},
                         "contradictions": {"type": "array", "items": {"type": "string"}},
-                        "confidence": {"type": "string", "enum": ["low", "medium", "high"]},
+                        "principle_type": {
+                            "type": "string",
+                            "enum": ["recurring_principle", "case_derived_hypothesis", "conditional_pattern", "exception_pattern"],
+                        },
+                        "decision_tradeoff": DECISION_TRADEOFF_SCHEMA,
+                        "confidence": CONFIDENCE_SCHEMA,
+                        "generalization_scope": {"type": "string", "enum": ["episode_local"]},
+                        "speaker_specificity": {"type": "string", "enum": ["specific", "partially_specific", "too_generic"]},
+                        "genericness_status": {"type": "string", "enum": ["specific", "partially_specific", "too_generic"]},
+                        "genericness_reasons": {"type": "array", "items": {"type": "string"}},
+                        "distinctive_behavior": {"type": "array", "items": {"type": "string"}},
+                        "eligible_for_level4": {"type": "boolean"},
+                        "eligible_for_online_reasoning": {"type": "string", "enum": ["false", "limited", "principle_assisted_only"]},
+                        "eligibility_reasons": {"type": "array", "items": {"type": "string"}},
+                        "runtime_mode_recommendation": {
+                            "type": "string",
+                            "enum": ["principle_guided", "principle_assisted", "case_only_fallback", "not_eligible"],
+                        },
+                        "provenance_stats": {"type": "object", "additionalProperties": True},
                         "provisional": {"type": "boolean"},
                         "extraction_strategy": {
                             "type": "string",
@@ -211,7 +279,19 @@ LEVEL3_PRINCIPLES_RESPONSE_FORMAT = json_schema_response(
                         "supporting_records",
                         "counterexamples",
                         "contradictions",
+                        "principle_type",
+                        "decision_tradeoff",
                         "confidence",
+                        "generalization_scope",
+                        "speaker_specificity",
+                        "genericness_status",
+                        "genericness_reasons",
+                        "distinctive_behavior",
+                        "eligible_for_level4",
+                        "eligible_for_online_reasoning",
+                        "eligibility_reasons",
+                        "runtime_mode_recommendation",
+                        "provenance_stats",
                         "provisional",
                         "extraction_strategy",
                         "evidence_summary",
@@ -220,7 +300,7 @@ LEVEL3_PRINCIPLES_RESPONSE_FORMAT = json_schema_response(
                 },
             },
         },
-        "required": ["level", "episode_id", "selected_strategy", "strategy_reason", "principles"],
+        "required": ["schema_version", "level", "episode_id", "selected_strategy", "strategy_reason", "principles"],
         "additionalProperties": True,
     },
 )
@@ -231,6 +311,7 @@ LEVEL4_PRINCIPLES_RESPONSE_FORMAT = json_schema_response(
     {
         "type": "object",
         "properties": {
+            "schema_version": {"type": "string"},
             "level": {"type": "integer"},
             "principles": {
                 "type": "array",
@@ -252,7 +333,25 @@ LEVEL4_PRINCIPLES_RESPONSE_FORMAT = json_schema_response(
                         "counterexamples": {"type": "array", "items": {"type": "string"}},
                         "contradictions": {"type": "array", "items": {"type": "string"}},
                         "principle_evolution": {"type": "array", "items": {"type": "string"}},
-                        "confidence": {"type": "string", "enum": ["low", "medium", "high"]},
+                        "principle_type": {
+                            "type": "string",
+                            "enum": ["recurring_principle", "case_derived_hypothesis", "conditional_pattern", "exception_pattern"],
+                        },
+                        "decision_tradeoff": DECISION_TRADEOFF_SCHEMA,
+                        "confidence": CONFIDENCE_SCHEMA,
+                        "generalization_scope": {"type": "string", "enum": ["cross_episode_candidate"]},
+                        "speaker_specificity": {"type": "string", "enum": ["specific", "partially_specific", "too_generic"]},
+                        "genericness_status": {"type": "string", "enum": ["specific", "partially_specific", "too_generic"]},
+                        "genericness_reasons": {"type": "array", "items": {"type": "string"}},
+                        "distinctive_behavior": {"type": "array", "items": {"type": "string"}},
+                        "eligible_for_level4": {"type": "boolean"},
+                        "eligible_for_online_reasoning": {"type": "string", "enum": ["false", "limited", "principle_assisted_only", "true"]},
+                        "eligibility_reasons": {"type": "array", "items": {"type": "string"}},
+                        "runtime_mode_recommendation": {
+                            "type": "string",
+                            "enum": ["principle_guided", "principle_assisted", "case_only_fallback", "not_eligible"],
+                        },
+                        "provenance_stats": {"type": "object", "additionalProperties": True},
                         "derived_from": {"type": "array", "items": {"type": "string"}},
                         "evidence_summary": {"type": "string"},
                     },
@@ -272,7 +371,19 @@ LEVEL4_PRINCIPLES_RESPONSE_FORMAT = json_schema_response(
                         "counterexamples",
                         "contradictions",
                         "principle_evolution",
+                        "principle_type",
+                        "decision_tradeoff",
                         "confidence",
+                        "generalization_scope",
+                        "speaker_specificity",
+                        "genericness_status",
+                        "genericness_reasons",
+                        "distinctive_behavior",
+                        "eligible_for_level4",
+                        "eligible_for_online_reasoning",
+                        "eligibility_reasons",
+                        "runtime_mode_recommendation",
+                        "provenance_stats",
                         "derived_from",
                         "evidence_summary",
                     ],
@@ -280,7 +391,7 @@ LEVEL4_PRINCIPLES_RESPONSE_FORMAT = json_schema_response(
                 },
             },
         },
-        "required": ["level", "principles"],
+        "required": ["schema_version", "level", "principles"],
         "additionalProperties": True,
     },
 )

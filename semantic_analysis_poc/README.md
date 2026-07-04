@@ -216,6 +216,21 @@ reports/cross_episode_level4_principles_review.md
 
 Level 2 records remain the source of truth. Principles are provisional abstractions, not independent evidence.
 
+Principle confidence is multi-dimensional. The LLM may propose confidence, but deterministic post-processing constrains:
+
+- evidence strength
+- evidence independence
+- speaker specificity
+- condition clarity
+- contradiction severity
+- cross-episode consistency
+- time-period diversity
+- overall confidence
+
+Level 3 scope is always `episode_local`, and Level 3 `overall` confidence is constrained to `low` or `medium`. Single-record Level 3 outputs are `case_derived_hypothesis`, not recurring principles, and are not eligible for Level 4.
+
+Level 4 requires at least two supporting episodes. Each Level 4 principle also carries runtime-facing fields such as `runtime_mode_recommendation`, `eligible_for_online_reasoning`, `decision_tradeoff`, `genericness_status`, and `provenance_stats`. These fields are for future online routing only; no online Reasoning Mentor runtime exists here.
+
 ## Current Status
 
 Current available Phase 1 inputs include the pilot episodes that have already been processed. Add more normalized Phase 1 transcript inputs under `data/phase1_inputs/<EPXXX>/` before running a broader pilot.

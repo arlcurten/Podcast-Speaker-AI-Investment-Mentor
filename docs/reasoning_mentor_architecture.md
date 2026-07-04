@@ -88,6 +88,32 @@ The online LLM performs the applicability check and synthesis.
 
 A principle is an abstraction derived from its source records. It must not be counted as an additional independent piece of evidence.
 
+## Confidence And Eligibility
+
+Principle confidence is multi-dimensional:
+
+- evidence strength
+- evidence independence
+- speaker specificity
+- condition clarity
+- contradiction severity
+- cross-episode consistency
+- time-period diversity
+- overall confidence
+
+Level 3 principles are `episode_local`. Their `overall` confidence is intentionally limited to `low` or `medium`; a single episode should not create a high-confidence speaker policy. Single-record Level 3 items are `case_derived_hypothesis` and are not eligible for Level 4 promotion.
+
+Level 4 principles are `cross_episode_candidate` abstractions. They require at least two supporting episodes and must retain source Level 2 records as the evidence authority.
+
+Runtime eligibility is separate from extraction confidence. Future online routing should use:
+
+- `principle_guided`
+- `principle_assisted`
+- `case_only_fallback`
+- `not_eligible`
+
+Most early principles should be `principle_assisted`, meaning the principle can frame the analysis but direct Level 2 cases must dominate the final reasoning.
+
 ## Planned Mentor Comparison
 
 Legacy baseline:

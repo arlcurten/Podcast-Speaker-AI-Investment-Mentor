@@ -34,6 +34,20 @@ query -> retrieve principles -> retrieve cases -> check applicability -> conditi
 
 The new path should avoid treating historical commentary as current advice. It should cite source cases and clearly state missing information, exceptions, and conflicts.
 
+Future online routing should consume the Level 4 fields produced by `../semantic_analysis_poc/`, especially:
+
+- multi-dimensional `confidence`
+- `principle_type`
+- `generalization_scope`
+- `decision_tradeoff`
+- `distinctive_behavior`
+- `genericness_status`
+- `provenance_stats`
+- `eligible_for_online_reasoning`
+- `runtime_mode_recommendation`
+
+Do not treat a principle as evidence by itself. The online system must still retrieve and cite the underlying Level 2 records.
+
 ## Current Contents
 
 ```text

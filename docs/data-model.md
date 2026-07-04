@@ -82,6 +82,9 @@ The long-term project should preserve evidence and derivation boundaries. Each l
 - Level 3 principles must be marked provisional and scoped to their episode.
 - Level 4 principles must preserve source case coverage and counterexamples.
 - A principle is an abstraction derived from records. It must not be counted as an additional independent piece of evidence.
+- Principle confidence is multi-dimensional and deterministically constrained from provenance where possible.
+- Level 3 `overall` confidence is limited to low/medium because it is episode-local.
+- Runtime eligibility and runtime mode are separate from extraction confidence.
 - Do not treat transcript text as verified until manual review is complete.
 
 ## Project-Wide Path Rule

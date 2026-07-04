@@ -121,6 +121,15 @@ levels:
       - counterexamples
       - contradictions
       - confidence
+      - principle_type
+      - decision_tradeoff
+      - generalization_scope
+      - genericness_status
+      - distinctive_behavior
+      - eligible_for_level4
+      - eligible_for_online_reasoning
+      - runtime_mode_recommendation
+      - provenance_stats
       - provisional
       - extraction_strategy
       - evidence_summary
@@ -128,6 +137,9 @@ levels:
       - "provisional must always be true."
       - "supporting_records must reference same-episode Level 2 record IDs."
       - "Do not upgrade one-off comments into stable speaker principles."
+      - "Level 3 generalization_scope is always episode_local."
+      - "Level 3 overall confidence is constrained to low or medium."
+      - "Single-record outputs are case_derived_hypothesis and are not eligible for Level 4."
 
   level4_cross_episode_decision_principles:
     purpose: "Identify revisable cross-episode decision principles from Level 3 principles and Level 2 cases."
@@ -149,12 +161,21 @@ levels:
       - contradictions
       - principle_evolution
       - confidence
+      - principle_type
+      - decision_tradeoff
+      - generalization_scope
+      - genericness_status
+      - distinctive_behavior
+      - eligible_for_online_reasoning
+      - runtime_mode_recommendation
+      - provenance_stats
       - derived_from
       - evidence_summary
     notes:
       - "supporting_records are the evidence; Level 3/4 principles are abstractions, not independent evidence."
       - "Output Level 4 principles only when support spans at least two episodes."
       - "Confidence must consider independent episode coverage, semantic consistency, conditions, exceptions, and contradictions."
+      - "runtime_mode_recommendation may be principle_guided, principle_assisted, case_only_fallback, or not_eligible."
 
 prompt_rules:
   - "Many episodes may have no central theme."
@@ -191,11 +212,16 @@ validation_rules:
     - "Every principle must be provisional."
     - "Every supporting record must exist in the same episode's Level 2 output."
     - "Single-record principles should remain low confidence or be flagged."
+    - "Level 3 overall confidence cannot be high."
+    - "Single-record Level 3 principles must be case_derived_hypothesis."
+    - "Single-record hypotheses cannot be eligible_for_level4."
   level4_principles:
     - "Every supporting record must exist in Level 2 outputs."
     - "supporting_episode_count must match unique supporting episodes."
     - "One-episode candidates should remain Level 3 and should not be emitted as Level 4."
     - "Do not hide contradictions or counterexamples."
+    - "High overall confidence requires at least three supporting episodes."
+    - "too_generic principles must not be eligible for online reasoning."
 
 human_review_fields:
   - detected_episode_structure

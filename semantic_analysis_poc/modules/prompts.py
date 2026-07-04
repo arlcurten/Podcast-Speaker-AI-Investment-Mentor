@@ -202,6 +202,10 @@ Rules:
 - Do not invent speaker preferences.
 - Do not hide conflicts.
 - Use only valid reasoning record IDs as evidence references.
+- Confidence is multi-dimensional. You may propose it, but deterministic code will constrain it from provenance.
+- A Level 3 item from one supporting record is normally a case_derived_hypothesis, not a recurring_principle.
+- Every reusable principle should express a decision trade-off: competing options, preferred option, accepted cost, and switch conditions.
+- Mark generic statements as too_generic instead of making them sound speaker-specific.
 - Return only valid JSON.
 """
 
@@ -237,11 +241,17 @@ Requirements:
 - Every principle must reference supporting_records from this episode's Level 2 IDs.
 - counterexamples and contradictions must reference valid Level 2 IDs when possible.
 - provisional must always be true.
-- Use high confidence sparingly.
+- Level 3 generalization_scope must be episode_local.
+- Level 3 overall confidence should normally be low or medium only; do not use high.
+- Add principle_type: recurring_principle, case_derived_hypothesis, conditional_pattern, or exception_pattern.
+- Add decision_tradeoff. If trade-off evidence is incomplete, leave precise gaps visible rather than inventing.
+- Add genericness_status and distinctive_behavior. Do not call generic advice speaker-specific.
+- Add runtime eligibility fields for future online use.
 - Explain why each principle is provisional in evidence_summary.
 
 Return JSON with this shape:
 {{
+  "schema_version": "principles.v2",
   "level": 3,
   "episode_id": "{episode_id}",
   "selected_strategy": "principle_extraction|light_principle_grouping|bypass",
@@ -261,7 +271,35 @@ Return JSON with this shape:
       "supporting_records": ["{episode_id}-reasoning-001"],
       "counterexamples": [],
       "contradictions": [],
-      "confidence": "low|medium|high",
+      "principle_type": "recurring_principle|case_derived_hypothesis|conditional_pattern|exception_pattern",
+      "decision_tradeoff": {{
+        "option_a": "...",
+        "option_b": "...",
+        "preferred_option": "...",
+        "reason_for_preference": "...",
+        "cost_of_preference": "...",
+        "switch_conditions": []
+      }},
+      "confidence": {{
+        "evidence_strength": "low|medium|high",
+        "evidence_independence": "low|medium|high",
+        "speaker_specificity": "low|medium|high",
+        "condition_clarity": "low|medium|high",
+        "contradiction_severity": "none|minor|major",
+        "cross_episode_consistency": "not_applicable",
+        "time_period_diversity": "not_applicable",
+        "overall": "low|medium"
+      }},
+      "generalization_scope": "episode_local",
+      "speaker_specificity": "specific|partially_specific|too_generic",
+      "genericness_status": "specific|partially_specific|too_generic",
+      "genericness_reasons": [],
+      "distinctive_behavior": [],
+      "eligible_for_level4": false,
+      "eligible_for_online_reasoning": "false|limited|principle_assisted_only",
+      "eligibility_reasons": [],
+      "runtime_mode_recommendation": "principle_assisted|case_only_fallback|not_eligible",
+      "provenance_stats": {{}},
       "provisional": true,
       "extraction_strategy": "principle_extraction|light_principle_grouping|bypass",
       "evidence_summary": "..."
@@ -322,6 +360,10 @@ Requirements:
 - Output a Level 4 principle only when it has support from at least two different episodes.
 - If a pattern is strong within one episode only, do not output it as Level 4; it remains a Level 3 provisional principle.
 - Preserve conditions, exceptions, conflicts, counterexamples, changes over time, and confidence.
+- Explicitly distinguish same topic from same decision principle.
+- Require comparable decision context, shared trade-off, shared preferred reasoning sequence, shared action tendency, compatible conditions, and explicit differences.
+- Ask whether the pattern is a recurring speaker-specific decision pattern or merely broadly sensible investment advice.
+- State what makes the principle distinctive to the speaker, what cost the speaker repeatedly accepts, and what evidence would weaken it.
 - Confidence should consider independent episode coverage, time/context diversity, semantic consistency, condition consistency, directness of evidence, contradictions, and abstraction distance.
 - Use high confidence very sparingly because this POC only has four episodes.
 - If no cross-episode pattern is sufficiently supported, return an empty principles array.
@@ -329,6 +371,7 @@ Requirements:
 
 Return JSON with this shape:
 {{
+  "schema_version": "principles.v2",
   "level": 4,
   "principles": [
     {{
@@ -347,7 +390,35 @@ Return JSON with this shape:
       "counterexamples": [],
       "contradictions": [],
       "principle_evolution": [],
-      "confidence": "low|medium|high",
+      "principle_type": "recurring_principle|conditional_pattern|exception_pattern|case_derived_hypothesis",
+      "decision_tradeoff": {{
+        "option_a": "...",
+        "option_b": "...",
+        "preferred_option": "...",
+        "reason_for_preference": "...",
+        "cost_of_preference": "...",
+        "switch_conditions": []
+      }},
+      "confidence": {{
+        "evidence_strength": "low|medium|high",
+        "evidence_independence": "low|medium|high",
+        "speaker_specificity": "low|medium|high",
+        "condition_clarity": "low|medium|high",
+        "contradiction_severity": "none|minor|major",
+        "cross_episode_consistency": "low|medium|high",
+        "time_period_diversity": "low|medium|high",
+        "overall": "low|medium|high"
+      }},
+      "generalization_scope": "cross_episode_candidate",
+      "speaker_specificity": "specific|partially_specific|too_generic",
+      "genericness_status": "specific|partially_specific|too_generic",
+      "genericness_reasons": [],
+      "distinctive_behavior": [],
+      "eligible_for_level4": true,
+      "eligible_for_online_reasoning": "false|limited|principle_assisted_only|true",
+      "eligibility_reasons": [],
+      "runtime_mode_recommendation": "principle_guided|principle_assisted|case_only_fallback|not_eligible",
+      "provenance_stats": {{}},
       "derived_from": [],
       "evidence_summary": "..."
     }}
