@@ -1,0 +1,8 @@
+{
+  "episode_id": "EP57",
+  "level": 3,
+  "principles": [],
+  "selected_strategy": "bypass",
+  "strategy_reason": "Although multiple Level 2 reasoning records exist, they are topically and contextually distinct with no recurring decision logic across domains. The episode covers TSMC valuation, FX intervention, dividend strategy, ETF selection, travel sector resilience, financial education, media critique, and communication philosophy—each addressed in isolation. No cross-cutting investment framework or consistent decision pattern emerges beyond isolated preferences (e.g., favoring low-cost ETFs, cautioning against market timing). The reasoning records lack repetition of structure or trade-off logic required for provisional principle extraction. Therefore, no reusable, episode-level principles can be reliably generalized from this episode’s Level 2 records.",
+  "schema_version": "principles.v2"
+}

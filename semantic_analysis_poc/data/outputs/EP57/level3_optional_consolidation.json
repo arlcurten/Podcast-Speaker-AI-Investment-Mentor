@@ -1,0 +1,26 @@
+{
+  "level": 3,
+  "episode_id": "EP57",
+  "selected_strategy": "bypass",
+  "strategy_reason": "Episode is QA-heavy with fragmented topics; no single narrative thread dominates. Level 2 reasoning records already capture distinct investment-reasoning semantics. Consolidation would not add meaningful value.",
+  "source_level1_map_id": "level1",
+  "source_reasoning_record_ids": [
+    "EP57-reasoning-001",
+    "EP57-reasoning-002",
+    "EP57-reasoning-003",
+    "EP57-reasoning-004",
+    "EP57-reasoning-005",
+    "EP57-reasoning-006",
+    "EP57-reasoning-007",
+    "EP57-reasoning-008",
+    "EP57-reasoning-009",
+    "EP57-reasoning-010",
+    "EP57-reasoning-011",
+    "EP57-reasoning-012"
+  ],
+  "full_synthesis": null,
+  "light_consolidation": null,
+  "bypass": {
+    "note": "Level 2 reasoning records are preserved as final semantic output. No further consolidation is performed due to lack of central theme and highly segmented topic structure."
+  }
+}

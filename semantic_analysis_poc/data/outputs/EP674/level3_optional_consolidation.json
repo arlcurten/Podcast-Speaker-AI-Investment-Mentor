@@ -1,0 +1,132 @@
+{
+  "level": 3,
+  "episode_id": "EP674",
+  "selected_strategy": "light_consolidation",
+  "strategy_reason": "The episode is conversational with multiple distinct threads and no single unifying theme. A full synthesis is not warranted, but a light consolidation helps organize overlapping ideas, identify cross-topic links, and surface candidate insights for broader application.",
+  "source_level1_map_id": "level1",
+  "source_reasoning_record_ids": [
+    "EP674-reasoning-001",
+    "EP674-reasoning-002",
+    "EP674-reasoning-003",
+    "EP674-reasoning-004",
+    "EP674-reasoning-005",
+    "EP674-reasoning-006",
+    "EP674-reasoning-007",
+    "EP674-reasoning-008"
+  ],
+  "full_synthesis": null,
+  "light_consolidation": {
+    "topic_inventory": [
+      {
+        "topic": "market_performance_and_beta_exposure",
+        "related_reasoning_records": [
+          "EP674-reasoning-001"
+        ],
+        "summary": "Strong portfolio gains attributed to broad market beta, especially in tech, with passive holding of '處置股' that turned into '飆股' due to lockup rules preventing premature exits."
+      },
+      {
+        "topic": "market_correction_causes",
+        "related_reasoning_records": [
+          "EP674-reasoning-002"
+        ],
+        "summary": "Recent downturn likely driven by institutional rebalancing rather than war or inflation fears, supported by stable oil prices and lack of broad CPI pressure."
+      },
+      {
+        "topic": "technical_risk_signals",
+        "related_reasoning_records": [
+          "EP674-reasoning-003"
+        ],
+        "summary": "Break below 60-day moving average ('季線') indicates weakening momentum and increased structural selling pressure; used as a rule-based risk management filter."
+      },
+      {
+        "topic": "ai_investment_disparity",
+        "related_reasoning_records": [
+          "EP674-reasoning-004"
+        ],
+        "summary": "Tension between highly profitable AI component suppliers (e.g., 美光) and cash-burning tech giants (e.g., Apple, Google) raises questions about future shareholder patience with AI spending."
+      },
+      {
+        "topic": "pricing_power_and_consumer_behavior",
+        "related_reasoning_records": [
+          "EP674-reasoning-005"
+        ],
+        "summary": "Apple's price hike may not hurt sales due to strong brand loyalty among '果粉'; actual sales data, not online sentiment, should be used to assess impact."
+      },
+      {
+        "topic": "investor_psychology_in_bull_markets",
+        "related_reasoning_records": [
+          "EP674-reasoning-006"
+        ],
+        "summary": "In strong markets, investors reinvest rather than spend due to high opportunity cost; spending may only increase after a correction reduces perceived market upside."
+      },
+      {
+        "topic": "early_career_financial_strategy",
+        "related_reasoning_records": [
+          "EP674-reasoning-007"
+        ],
+        "summary": "Early career should prioritize high income and career capital (e.g., MTK role) over job satisfaction, unless mental health is at risk."
+      },
+      {
+        "topic": "business_ownership_and_control",
+        "related_reasoning_records": [
+          "EP674-reasoning-008"
+        ],
+        "summary": "Simple, founder-led ownership structures prevent decision paralysis and conflict; founder skin-in-the-game ensures commitment and alignment."
+      }
+    ],
+    "merged_reasoning_records": [],
+    "cross_topic_links": [
+      {
+        "link_type": "causal_influence",
+        "topics": [
+          "market_correction_causes",
+          "technical_risk_signals"
+        ],
+        "description": "Institutional rebalancing (EP674-reasoning-002) likely contributed to the breakdown below the 60-day MA (EP674-reasoning-003), making the technical signal a reflection of structural selling."
+      },
+      {
+        "link_type": "thematic_contrast",
+        "topics": [
+          "ai_investment_disparity",
+          "market_performance_and_beta_exposure"
+        ],
+        "description": "While broad tech beta drove gains (EP674-reasoning-001), the underlying AI spending model (EP674-reasoning-004) may be unsustainable, creating a tension between current performance and future risk."
+      },
+      {
+        "link_type": "behavioral_consistency",
+        "topics": [
+          "investor_psychology_in_bull_markets",
+          "early_career_financial_strategy"
+        ],
+        "description": "The preference for reinvesting over spending (EP674-reasoning-006) mirrors the early-career focus on earning over enjoyment (EP674-reasoning-007), both reflecting a long-term, opportunity-cost-aware mindset."
+      },
+      {
+        "link_type": "principled_alignment",
+        "topics": [
+          "business_ownership_and_control",
+          "pricing_power_and_consumer_behavior"
+        ],
+        "description": "The emphasis on simplicity and control in business (EP674-reasoning-008) parallels the focus on core loyal customers in pricing strategy (EP674-reasoning-005), both valuing focused, predictable systems over complexity."
+      }
+    ],
+    "corrections_or_contradictions": [],
+    "candidate_records_for_cross_episode_use": [
+      {
+        "reasoning_record_id": "EP674-reasoning-002",
+        "candidate_for": "narrative_vs_data_driven_analysis",
+        "rationale": "Demonstrates a generalizable method: using oil prices as a reality check to test geopolitical fear narratives, applicable across episodes."
+      },
+      {
+        "reasoning_record_id": "EP674-reasoning-006",
+        "candidate_for": "behavioral_finance_insights",
+        "rationale": "Challenges the standard wealth effect model with a more nuanced view of investor behavior, useful for future discussions on market psychology."
+      },
+      {
+        "reasoning_record_id": "EP674-reasoning-008",
+        "candidate_for": "founder_centric_investment_criteria",
+        "rationale": "Clear articulation of founder control and simple ownership as a business filter, potentially reusable in venture or small-cap analysis contexts."
+      }
+    ]
+  },
+  "bypass": null
+}

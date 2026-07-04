@@ -1,0 +1,127 @@
+{
+  "episode_id": "EP674",
+  "provider": "openai_compatible",
+  "base_url": "https://openrouter.ai/api/v1",
+  "model": "qwen/qwen3-235b-a22b-2507",
+  "temperature": 0,
+  "max_output_tokens": 12000,
+  "phase1_raw_transcript_sha256_before": "9e1f38725e95ee78f569095e789586349928294c82150a67f589107fc4ab2039",
+  "stages": [
+    {
+      "stage": "level1",
+      "output_path": "data/outputs/EP674/level1_episode_semantic_map.json",
+      "usage": {
+        "prompt_tokens": 38330,
+        "completion_tokens": 9267,
+        "total_tokens": 47597,
+        "cost": 0.0127798,
+        "is_byok": false,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "cache_write_tokens": 0,
+          "audio_tokens": 0,
+          "video_tokens": 0
+        },
+        "cost_details": {
+          "upstream_inference_cost": 0.0127798,
+          "upstream_inference_prompt_cost": 0.0053662,
+          "upstream_inference_completions_cost": 0.0074136
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "image_tokens": 0,
+          "audio_tokens": 0
+        }
+      },
+      "latency_seconds": 320.744963483,
+      "retries": 0,
+      "validation": {
+        "ok": true,
+        "errors": [],
+        "warnings": []
+      }
+    },
+    {
+      "stage": "level2",
+      "output_path": "data/outputs/EP674/level2_reasoning_records.json",
+      "usage": {
+        "prompt_tokens": 47236,
+        "completion_tokens": 4968,
+        "total_tokens": 52204,
+        "cost": 0.01046792,
+        "is_byok": false,
+        "prompt_tokens_details": {
+          "cached_tokens": 1328,
+          "cache_write_tokens": 0,
+          "audio_tokens": 0,
+          "video_tokens": 0
+        },
+        "cost_details": {
+          "upstream_inference_cost": 0.01046792,
+          "upstream_inference_prompt_cost": 0.00649352,
+          "upstream_inference_completions_cost": 0.0039744
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "image_tokens": 0,
+          "audio_tokens": 0
+        }
+      },
+      "latency_seconds": 145.86238919400012,
+      "retries": 0,
+      "validation": {
+        "ok": true,
+        "errors": [],
+        "warnings": [],
+        "record_count": 8
+      }
+    },
+    {
+      "stage": "level3",
+      "output_path": "data/outputs/EP674/level3_optional_consolidation.json",
+      "usage": {
+        "prompt_tokens": 13968,
+        "completion_tokens": 267,
+        "total_tokens": 14235,
+        "cost": 0.00229545,
+        "is_byok": false,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "cache_write_tokens": 0,
+          "audio_tokens": 0,
+          "video_tokens": 0
+        },
+        "cost_details": {
+          "upstream_inference_cost": 0.00229545,
+          "upstream_inference_prompt_cost": 0.0020952,
+          "upstream_inference_completions_cost": 0.00020025
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "image_tokens": 0,
+          "audio_tokens": 0
+        }
+      },
+      "latency_seconds": 14.835122382000009,
+      "retries": 0,
+      "validation": {
+        "ok": true,
+        "errors": [],
+        "warnings": [
+          "bypass.canonical_output should be level2_reasoning_records"
+        ]
+      }
+    }
+  ],
+  "phase1_raw_transcript_sha256_after": "9e1f38725e95ee78f569095e789586349928294c82150a67f589107fc4ab2039",
+  "phase1_raw_transcript_unchanged": true,
+  "total_latency_seconds": 481.4424750590001,
+  "total_retries": 0,
+  "usage": {
+    "prompt_tokens": 99534,
+    "completion_tokens": 14502,
+    "total_tokens": 114036
+  },
+  "estimated_cost_usd": null,
+  "reason": "pricing_per_1m_tokens is not configured"
+}

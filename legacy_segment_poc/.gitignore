@@ -54,6 +54,10 @@ data/rss_sources/*.jsonl
 
 # Downloaded and generated audio
 data/audio/
+!data/audio/
+!data/audio/*/
+!data/audio/*/audio_metadata.json
+!data/audio/*/download_metadata.json
 data/legacy/benchmarks/**/*.mp3
 data/review_clips/
 *.mp3

@@ -1,0 +1,14 @@
+{
+  "project_relative_path": "data/audio/EP57/episode.mp3",
+  "runtime_absolute_path": "/home/g9161/projects/Podcast-Speaker-AI-Investment-Mentor/legacy_segment_poc/data/audio/EP57/episode.mp3",
+  "audio_path": "data/audio/EP57/episode.mp3",
+  "duration_seconds": 2368.862125,
+  "format": "mp3",
+  "codec": "mp3",
+  "bitrate": 256013,
+  "stream_bitrate": 256000,
+  "sample_rate": 44100,
+  "channels": 2,
+  "decodable": true,
+  "decode_error": null
+}

@@ -1,0 +1,15 @@
+{
+  "ok": true,
+  "errors": [],
+  "warnings": [],
+  "principle_count": 1,
+  "confidence_distribution": {
+    "medium": 1
+  },
+  "runtime_mode_distribution": {
+    "principle_assisted": 1
+  },
+  "genericness_distribution": {
+    "specific": 1
+  }
+}

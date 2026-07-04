@@ -1,0 +1,903 @@
+{
+  "level": 2,
+  "episode_id": "EP57",
+  "reasoning_records": [
+    {
+      "reasoning_record_id": "EP57-reasoning-001",
+      "topic_thread_id": "EP57-thread-002",
+      "title": "TSMC Valuation Based on P/E Range, Not Fixed Multiple",
+      "claims": [
+        "TSMC's intrinsic value hasn't changed significantly over time",
+        "Market sentiment drives P/E multiple fluctuations, not fundamentals"
+      ],
+      "observations": [
+        "TSMC's stock price can vary widely even if earnings remain stable",
+        "Current P/E for TSMC is estimated between 20x and 30x due to market optimism"
+      ],
+      "reasoning_steps": [
+        "P/E ratio = Stock Price / EPS",
+        "EPS provides a consistent measure of profitability",
+        "Market assigns higher P/E during bullish sentiment (e.g., post-QE)",
+        "Thus, same EPS can justify different prices based on sentiment"
+      ],
+      "assumptions": [
+        "TSMC continues to execute on its long-term technology roadmap",
+        "Global semiconductor demand remains structurally strong"
+      ],
+      "conditions": [
+        "If market sentiment shifts from 'strong buy' to neutral, P/E could revert to 15x–20x range"
+      ],
+      "risks": [
+        "Buying at peak P/E (e.g., 30x) risks multi-year stagnation even if fundamentals hold"
+      ],
+      "exceptions": [
+        "Long-term holders may tolerate stagnation; risk mainly affects new buyers"
+      ],
+      "decisions_or_preferences": [
+        "Prefer holding existing TSMC positions",
+        "Caution against new entries at current high valuations"
+      ],
+      "actions_or_avoided_actions": [
+        "Avoid chasing TSMC at market highs",
+        "Do not assume high P/E justifies infinite upside"
+      ],
+      "tags": [
+        "valuation",
+        "P/E ratio",
+        "market sentiment",
+        "TSMC"
+      ],
+      "source_evidence": [
+        {
+          "start": 461.91,
+          "end": 486.73,
+          "merged_ids": [
+            18
+          ],
+          "source_segment_id_ranges": [
+            {
+              "start_id": 281,
+              "end_id": 293
+            }
+          ],
+          "source_segment_ids": [],
+          "quote": "我給他的本益比評價其實不會太高 差不多就是落在比方說這種15倍 最多最多到25倍 上限就是這樣"
+        },
+        {
+          "start": 511.03,
+          "end": 535.25,
+          "merged_ids": [
+            20
+          ],
+          "source_segment_id_ranges": [
+            {
+              "start_id": 309,
+              "end_id": 325
+            }
+          ],
+          "source_segment_ids": [],
+          "quote": "本益比的評價 它是可以隨時去調整的 就是它的獲利其實是一樣的"
+        },
+        {
+          "start": 559.93,
+          "end": 584.93,
+          "merged_ids": [
+            22
+          ],
+          "source_segment_id_ranges": [
+            {
+              "start_id": 344,
+              "end_id": 360
+            }
+          ],
+          "source_segment_ids": [],
+          "quote": "臺積電現在的本益比評價 推算起來大概是20幾到30"
+        },
+        {
+          "start": 633.53,
+          "end": 657.53,
+          "merged_ids": [
+            25
+          ],
+          "source_segment_id_ranges": [
+            {
+              "start_id": 392,
+              "end_id": 409
+            }
+          ],
+          "source_segment_ids": [],
+          "quote": "如果你現在是空手的 然後聽到種種好訊息 你才要衝進去的 我真的只能講說 你要小心"
+        }
+      ],
+      "confidence": 0.95
+    },
+    {
+      "reasoning_record_id": "EP57-reasoning-002",
+      "topic_thread_id": "EP57-thread-003",
+      "title": "Central Bank Intervenes to Weaken TWD Despite Natural Strengthening",
+      "claims": [
+        "TWD strengthens due to global capital inflows seeking yield",
+        "Central bank actively sells USD daily in afternoon to weaken TWD"
+      ],
+      "observations": [
+        "TWD fell from 30 to 29.2 despite strong fundamentals",
+        "Daily long lower shadows on TWD chart indicate intervention"
+      ],
+      "reasoning_steps": [
+        "Global QE → excess liquidity → capital seeks higher-yielding markets",
+        "Taiwan offers high dividend yields → attracts inflows → increases TWD demand",
+        "Strong TWD hurts exporters → central bank intervenes to weaken currency",
+        "Intervention creates 'willow tree' chart pattern with long lower wicks"
+      ],
+      "assumptions": [
+        "Export competitiveness is a primary policy goal",
+        "Capital inflows will continue under global low-rate environment"
+      ],
+      "risks": [
+        "U.S. may designate Taiwan as currency manipulator",
+        "U.S. could impose penalties or force negotiations"
+      ],
+      "conditions": [
+        "If U.S. political pressure increases, intervention may stop"
+      ],
+      "decisions_or_preferences": [
+        "Expect continued intervention unless external pressure mounts"
+      ],
+      "tags": [
+        "FX intervention",
+        "TWD",
+        "central bank",
+        "currency manipulator"
+      ],
+      "source_evidence": [
+        {
+          "start": 729.11,
+          "end": 754.03,
+          "merged_ids": [
+            29
+          ],
+          "source_segment_id_ranges": [
+            {
+              "start_id": 455,
+              "end_id": 467
+            }
+          ],
+          "source_segment_ids": [],
+          "quote": "因為全世界現在很多地方都在QE 那因為QE就有大量的熱錢會跑出來"
+        },
+        {
+          "start": 827.39,
+          "end": 851.91,
+          "merged_ids": [
+            33
+          ],
+          "source_segment_id_ranges": [
+            {
+              "start_id": 510,
+              "end_id": 524
+            }
+          ],
+          "source_segment_ids": [],
+          "quote": "每一天的尾盤 都會有一個升龍權 那為什麼會有升龍權 其實就是央行在裡面作動"
+        },
+        {
+          "start": 875.29,
+          "end": 923.15,
+          "merged_ids": [
+            35,
+            36
+          ],
+          "source_segment_id_ranges": [
+            {
+              "start_id": 539,
+              "end_id": 569
+            }
+          ],
+          "source_segment_ids": [],
+          "quote": "每天在尾盤的時候 都會去拉這個匯率...看起來就是很多長長的下引線"
+        },
+        {
+          "start": 947.81,
+          "end": 971.69,
+          "merged_ids": [
+            38
+          ],
+          "source_segment_id_ranges": [
+            {
+              "start_id": 585,
+              "end_id": 600
+            }
+          ],
+          "source_segment_ids": [],
+          "quote": "臺灣達成了 臺灣達成了 那只是哪時候他們要來動刀而已"
+        }
+      ],
+      "confidence": 0.9
+    },
+    {
+      "reasoning_record_id": "EP57-reasoning-003",
+      "topic_thread_id": "EP57-thread-004",
+      "title": "High Dividend Yield Attracts Capital in Low-Interest Environment",
+      "claims": [
+        "High-dividend stocks become relative value plays when rates fall",
+        "Capital inflows can push up prices even if fundamentals don't change"
+      ],
+      "observations": [
+        "5% dividend yield is attractive when bank rates are near zero",
+        "Price appreciation can compress yield but rewards early investors"
+      ],
+      "reasoning_steps": [
+        "Investor requires 5% return",
+        "Bank deposits offer <1%",
+        "Stock with 5% yield becomes attractive",
+        "Demand increases → price rises → yield compresses (e.g., from 5% to 2.5%)",
+        "But original investor locks in high yield"
+      ],
+      "assumptions": [
+        "Company maintains stable dividend payout",
+        "Low-rate environment persists"
+      ],
+      "conditions": [
+        "If rates rise, dividend appeal diminishes"
+      ],
+      "decisions_or_preferences": [
+        "Favor high-dividend stocks in Taiwan over U.S. growth stocks in current environment"
+      ],
+      "tags": [
+        "dividend yield",
+        "capital flow",
+        "low interest rates",
+        "total return"
+      ],
+      "source_evidence": [
+        {
+          "start": 1069.53,
+          "end": 1094.03,
+          "merged_ids": [
+            43
+          ],
+          "source_segment_id_ranges": [
+            {
+              "start_id": 673,
+              "end_id": 690
+            }
+          ],
+          "source_segment_ids": [],
+          "quote": "這些有高殖利率的標的 就會是一個 很好的放錢的地方"
+        },
+        {
+          "start": 1118.95,
+          "end": 1143.71,
+          "merged_ids": [
+            45
+          ],
+          "source_segment_id_ranges": [
+            {
+              "start_id": 709,
+              "end_id": 729
+            }
+          ],
+          "source_segment_ids": [],
+          "quote": "大家覺得 其實3%我也可以接受 2%我也可以接受 可是這家公司 它就是固定配5% 那會怎樣 那當然我就拉股價嘛"
+        },
+        {
+          "start": 1192.23,
+          "end": 1216.05,
+          "merged_ids": [
+            48
+          ],
+          "source_segment_id_ranges": [
+            {
+              "start_id": 765,
+              "end_id": 779
+            }
+          ],
+          "source_segment_ids": [],
+          "quote": "在臺灣的這些標的 都會是受惠的 它可能就有被推升的效果"
+        }
+      ],
+      "confidence": 0.95
+    },
+    {
+      "reasoning_record_id": "EP57-reasoning-004",
+      "topic_thread_id": "EP57-thread-006",
+      "title": "Prefer Low-Cost Index ETFs Over Actively Managed or Strategy-Based ETFs",
+      "claims": [
+        "ETF fees are the most important selection criterion",
+        "Strategy-based ETFs (e.g., 00850) embed active management despite appearing passive"
+      ],
+      "observations": [
+        "Many investors choose ETFs to avoid stock-picking risk",
+        "Yet they select actively managed ETFs that contradict this rationale"
+      ],
+      "reasoning_steps": [
+        "Index ETFs (e.g., 0050, 006208) passively track market",
+        "Strategy ETFs (e.g., 00850, 0056) involve human stock selection",
+        "If you believe individuals can't beat the market, why choose an ETF with active selection?",
+        "Therefore, prioritize low-cost index ETFs"
+      ],
+      "assumptions": [
+        "Market is generally efficient",
+        "Active management adds cost without reliable outperformance"
+      ],
+      "decisions_or_preferences": [
+        "Prefer index-tracking ETFs",
+        "Tolerate holding both index and strategy ETFs for experimentation"
+      ],
+      "actions_or_avoided_actions": [
+        "Avoid justifying strategy ETFs solely by past performance"
+      ],
+      "tags": [
+        "ETF selection",
+        "expense ratio",
+        "passive investing",
+        "active management"
+      ],
+      "source_evidence": [
+        {
+          "start": 1578.29,
+          "end": 1603.19,
+          "merged_ids": [
+            64
+          ],
+          "source_segment_id_ranges": [
+            {
+              "start_id": 1043,
+              "end_id": 1065
+            }
+          ],
+          "source_segment_ids": [],
+          "quote": "ETF的費用 非常重要 非常重要"
+        },
+        {
+          "start": 1627.09,
+          "end": 1675.49,
+          "merged_ids": [
+            66,
+            67
+          ],
+          "source_segment_id_ranges": [
+            {
+              "start_id": 1084,
+              "end_id": 1118
+            }
+          ],
+          "source_segment_ids": [],
+          "quote": "這些ETF 他有人為的選股在裡面 那人為的選股是好是壞 先問你自己"
+        },
+        {
+          "start": 1675.49,
+          "end": 1700.35,
+          "merged_ids": [
+            68
+          ],
+          "source_segment_id_ranges": [
+            {
+              "start_id": 1119,
+              "end_id": 1135
+            }
+          ],
+          "source_segment_ids": [],
+          "quote": "ETF最重要的是費用 如果你發現有幾檔ETF 他們追的表弟都差不多的話 選便宜的"
+        }
+      ],
+      "confidence": 0.9
+    },
+    {
+      "reasoning_record_id": "EP57-reasoning-005",
+      "topic_thread_id": "EP57-thread-007",
+      "title": "OTA Platforms More Resilient Than Hotel Operators During Travel Downturn",
+      "claims": [
+        "Asset-light business models (e.g., Booking.com) outperform asset-heavy ones (e.g., hotels) in crises",
+        "Stock prices reflect real business risk over time"
+      ],
+      "observations": [
+        "Hotel stocks remain depressed post-crisis",
+        "OTA platforms like BKNG show meaningful recovery"
+      ],
+      "reasoning_steps": [
+        "Hotels have high fixed costs (real estate, staff)",
+        "OTAs are software platforms with lower fixed costs",
+        "During downturn, high fixed costs → cash burn → bankruptcy risk",
+        "Thus, market prices hotels lower due to structural risk"
+      ],
+      "assumptions": [
+        "Travel recovery will be slow and uncertain",
+        "Investors price in long-term survival risk"
+      ],
+      "risks": [
+        "Overestimating recovery speed of physical travel assets"
+      ],
+      "exceptions": [
+        "Taiwan hotels less affected due to domestic tourism rebound"
+      ],
+      "decisions_or_preferences": [
+        "Prefer OTAs over direct hotel investments in uncertain recovery"
+      ],
+      "tags": [
+        "business model",
+        "resilience",
+        "travel sector",
+        "fixed costs"
+      ],
+      "source_evidence": [
+        {
+          "start": 1724.73,
+          "end": 1774.07,
+          "merged_ids": [
+            70,
+            71
+          ],
+          "source_segment_id_ranges": [
+            {
+              "start_id": 1151,
+              "end_id": 1187
+            }
+          ],
+          "source_segment_ids": [],
+          "quote": "臺灣的五星飯店...邊境是持續關閉的話 他們的營收衝擊是非常大的"
+        },
+        {
+          "start": 1846.87,
+          "end": 1894.97,
+          "merged_ids": [
+            75,
+            76
+          ],
+          "source_segment_id_ranges": [
+            {
+              "start_id": 1238,
+              "end_id": 1277
+            }
+          ],
+          "source_segment_ids": [],
+          "quote": "做OTA的 比方說這個Booking BKNG呢 它至少還有反彈...它沒有持有大量的土地 大量的飯店"
+        },
+        {
+          "start": 1919.59,
+          "end": 1944.17,
+          "merged_ids": [
+            78
+          ],
+          "source_segment_id_ranges": [
+            {
+              "start_id": 1298,
+              "end_id": 1314
+            }
+          ],
+          "source_segment_ids": [],
+          "quote": "在維持這樣的住房率 一年 或甚至不用到一年 它可能就直接破產"
+        }
+      ],
+      "confidence": 0.95
+    },
+    {
+      "reasoning_record_id": "EP57-reasoning-006",
+      "topic_thread_id": "EP57-thread-005",
+      "title": "Learn Stock Analysis via Annual Reports and Broker Research",
+      "claims": [
+        "Practical learning beats formal courses for stock analysis",
+        "Company annual reports and broker research are best starting points"
+      ],
+      "observations": [
+        "Many investors know concepts (e.g., anti-fragility) but lack practical skills",
+        "Real-world financial analysis requires exposure to real filings"
+      ],
+      "reasoning_steps": [
+        "Start with company annual reports → understand business model and risks",
+        "Read broker research → learn industry dynamics and valuation methods",
+        "Use beginner guides (e.g., Fubon) to build foundational knowledge",
+        "Learning requires time and repeated exposure"
+      ],
+      "assumptions": [
+        "Investor is willing to spend time reading technical materials"
+      ],
+      "decisions_or_preferences": [
+        "Prefer self-directed learning over paid courses"
+      ],
+      "actions_or_avoided_actions": [
+        "Avoid waiting for perfect educational resource"
+      ],
+      "teaching_or_explanation_style": [
+        "Pragmatic",
+        "Experience-based"
+      ],
+      "tags": [
+        "financial literacy",
+        "learning path",
+        "annual report",
+        "research"
+      ],
+      "source_evidence": [
+        {
+          "start": 1384.95,
+          "end": 1432.68,
+          "merged_ids": [
+            56,
+            57
+          ],
+          "source_segment_id_ranges": [
+            {
+              "start_id": 898,
+              "end_id": 930
+            }
+          ],
+          "source_segment_ids": [],
+          "quote": "上市會公司 他們在網站公佈的年報都還不錯...券商研究報告 然後或者是 最近跟我們合作這個復國"
+        }
+      ],
+      "confidence": 0.9
+    },
+    {
+      "reasoning_record_id": "EP57-reasoning-007",
+      "topic_thread_id": "EP57-thread-001",
+      "title": "Critique of Established Media Figures Resisting New Creators",
+      "claims": [
+        "Older media figures use 'social responsibility' to justify gatekeeping",
+        "Institutional hypocrisy is common in traditional media"
+      ],
+      "observations": [
+        "Host was unfairly dismissed from prior job using false performance claims",
+        "Same individuals now claim moral high ground in media"
+      ],
+      "reasoning_steps": [
+        "Old guard resists new entrants",
+        "Uses vague principles (e.g., 'social responsibility') to exclude",
+        "But their own behavior lacks accountability",
+        "Thus, criticism is justified"
+      ],
+      "assumptions": [
+        "New voices should be judged on content, not credentials"
+      ],
+      "risks": [
+        "Alienating older audience or media institutions"
+      ],
+      "speaker_behavior": [
+        "Defiant",
+        "Personal storytelling"
+      ],
+      "tags": [
+        "generational conflict",
+        "media critique",
+        "gatekeeping"
+      ],
+      "source_evidence": [
+        {
+          "start": 149.81,
+          "end": 173.83,
+          "merged_ids": [
+            5
+          ],
+          "source_segment_id_ranges": [
+            {
+              "start_id": 62,
+              "end_id": 75
+            }
+          ],
+          "source_segment_ids": [],
+          "quote": "他們可以拒絕 所謂的這種當紅播客 根本沒有人想鳥你們"
+        },
+        {
+          "start": 219.69,
+          "end": 243.75,
+          "merged_ids": [
+            8
+          ],
+          "source_segment_id_ranges": [
+            {
+              "start_id": 104,
+              "end_id": 118
+            }
+          ],
+          "source_segment_ids": [],
+          "quote": "公司決定要把你們開除掉 那但是你們要籤志願離職書"
+        },
+        {
+          "start": 339.77,
+          "end": 363.79,
+          "merged_ids": [
+            13
+          ],
+          "source_segment_id_ranges": [
+            {
+              "start_id": 195,
+              "end_id": 209
+            }
+          ],
+          "source_segment_ids": [],
+          "quote": "他們節目就是所謂的時間小偷啦 就跟他們本職 薪水小偷是差不多的"
+        }
+      ],
+      "confidence": 0.85
+    },
+    {
+      "reasoning_record_id": "EP57-reasoning-008",
+      "topic_thread_id": "EP57-thread-008",
+      "title": "Defends Authentic Communication Style Against Calls for Censorship",
+      "claims": [
+        "Authentic expression should not be sanitized for institutional use",
+        "Listeners should choose content that fits their preferences"
+      ],
+      "observations": [
+        "Some educators want to edit out profanity for classroom use",
+        "Host compares his style to 'cilantro' — polarizing but authentic"
+      ],
+      "reasoning_steps": [
+        "Communication style is personal",
+        "Editing removes authenticity",
+        "If you prefer formal content, choose formal sources",
+        "Diversity of expression should be respected"
+      ],
+      "assumptions": [
+        "Audience can self-select appropriate content"
+      ],
+      "decisions_or_preferences": [
+        "Maintain current speaking style",
+        "Do not alter content for external expectations"
+      ],
+      "speaker_behavior": [
+        "Defensive of personal style",
+        "Rejects conformity"
+      ],
+      "teaching_or_explanation_style": [
+        "Authentic",
+        "Anti-conformist"
+      ],
+      "tags": [
+        "communication style",
+        "authenticity",
+        "content philosophy"
+      ],
+      "source_evidence": [
+        {
+          "start": 2164.13,
+          "end": 2189.01,
+          "merged_ids": [
+            88
+          ],
+          "source_segment_id_ranges": [
+            {
+              "start_id": 1496,
+              "end_id": 1514
+            }
+          ],
+          "source_segment_ids": [],
+          "quote": "我沒有因為任何人調整我講話的方式"
+        },
+        {
+          "start": 2213.35,
+          "end": 2238.17,
+          "merged_ids": [
+            90
+          ],
+          "source_segment_id_ranges": [
+            {
+              "start_id": 1535,
+              "end_id": 1555
+            }
+          ],
+          "source_segment_ids": [],
+          "quote": "他可不可以把我的節目的 語助詞跟髒話的部分剪掉 他要給學生聽"
+        },
+        {
+          "start": 2261.91,
+          "end": 2311.21,
+          "merged_ids": [
+            92,
+            93
+          ],
+          "source_segment_id_ranges": [
+            {
+              "start_id": 1575,
+              "end_id": 1613
+            }
+          ],
+          "source_segment_ids": [],
+          "quote": "我從來都不會想去改變 別人的說話的方式 所以我也不希望 別人來改變我說話的方式"
+        }
+      ],
+      "confidence": 0.9
+    },
+    {
+      "reasoning_record_id": "EP57-reasoning-009",
+      "topic_thread_id": "EP57-thread-002",
+      "title": "Market Timing Risk in Popular Stocks Despite Strong Fundamentals",
+      "claims": [
+        "Even high-quality stocks carry timing risk",
+        "Buying at peak enthusiasm may lead to years of stagnation"
+      ],
+      "observations": [
+        "TSMC may be fairly valued at 450–500 or 300 depending on sentiment",
+        "Past episodes show listeners suffered from buying at tops"
+      ],
+      "reasoning_steps": [
+        "Fundamentals determine long-term value",
+        "Sentiment determines short-to-medium term price",
+        "Thus, entry point matters even for great companies",
+        "Avoid anchoring to recent performance"
+      ],
+      "risks": [
+        "Opportunity cost of being stuck in sideways market"
+      ],
+      "exceptions": [
+        "Dollar-cost averaging reduces timing risk"
+      ],
+      "decisions_or_preferences": [
+        "Prefer gradual accumulation over lump-sum entry"
+      ],
+      "tags": [
+        "market timing",
+        "sentiment",
+        "opportunity cost"
+      ],
+      "source_evidence": [
+        {
+          "start": 633.53,
+          "end": 657.53,
+          "merged_ids": [
+            25
+          ],
+          "source_segment_id_ranges": [
+            {
+              "start_id": 392,
+              "end_id": 409
+            }
+          ],
+          "source_segment_ids": [],
+          "quote": "如果你是本來就有建倉的 你現在要持續加碼 我都是覺得正向肯定 沒問題的"
+        },
+        {
+          "start": 681.43,
+          "end": 705.59,
+          "merged_ids": [
+            27
+          ],
+          "source_segment_id_ranges": [
+            {
+              "start_id": 426,
+              "end_id": 441
+            }
+          ],
+          "source_segment_ids": [],
+          "quote": "你就只能買一張而已 然後你買了一張之後 如果接下來你套兩年 那也是一個很難過的事情"
+        }
+      ],
+      "confidence": 0.9
+    },
+    {
+      "reasoning_record_id": "EP57-reasoning-010",
+      "topic_thread_id": "EP57-thread-007",
+      "title": "Avoid Anchoring to Past Prices When Evaluating Stocks",
+      "claims": [
+        "Past price levels (e.g., 100) don't determine current value",
+        "A stock at 20 may reflect structural decline, not bargain"
+      ],
+      "reasoning_steps": [
+        "Price reflects current expectations",
+        "If business model is broken, low price is justified",
+        "Thus, 'cheap' based on past price is a fallacy"
+      ],
+      "risks": [
+        "Value trap: buying declining business because it looks cheap"
+      ],
+      "actions_or_avoided_actions": [
+        "Avoid buying solely because 'it used to be 100'"
+      ],
+      "tags": [
+        "anchoring bias",
+        "value trap",
+        "price perception"
+      ],
+      "source_evidence": [
+        {
+          "start": 1944.17,
+          "end": 1968.43,
+          "merged_ids": [
+            79
+          ],
+          "source_segment_id_ranges": [
+            {
+              "start_id": 1315,
+              "end_id": 1333
+            }
+          ],
+          "source_segment_ids": [],
+          "quote": "它變20塊是不是 它變成一個時代的眼淚了"
+        }
+      ],
+      "confidence": 0.9
+    },
+    {
+      "reasoning_record_id": "EP57-reasoning-011",
+      "topic_thread_id": "EP57-thread-006",
+      "title": "ESG ETFs May Just Capture Large, Profitable Companies",
+      "claims": [
+        "ESG criteria may select large, profitable firms rather than inherently sustainable ones",
+        "ESG becomes a proxy for size and profitability"
+      ],
+      "reasoning_steps": [
+        "Only profitable companies can afford ESG initiatives",
+        "Thus, ESG funds favor large, cash-rich firms",
+        "This may not reflect true sustainability leadership"
+      ],
+      "assumptions": [
+        "ESG spending is a luxury, not a driver of outperformance"
+      ],
+      "tags": [
+        "ESG",
+        "factor investing",
+        "selection bias"
+      ],
+      "source_evidence": [
+        {
+          "start": 1603.19,
+          "end": 1627.09,
+          "merged_ids": [
+            65
+          ],
+          "source_segment_id_ranges": [
+            {
+              "start_id": 1066,
+              "end_id": 1083
+            }
+          ],
+          "source_segment_ids": [],
+          "quote": "到底是因為 這些企業對社會負責 所以他做的很大價 還是就是因為 這些企業已經做到很大價 所以他有錢了"
+        }
+      ],
+      "confidence": 0.85
+    },
+    {
+      "reasoning_record_id": "EP57-reasoning-012",
+      "topic_thread_id": "EP57-thread-002",
+      "title": "P/E Ratio as a Dynamic Range, Not Fixed Value",
+      "claims": [
+        "P/E ratio is a flexible range influenced by market mood",
+        "Same company can have different 'fair' valuations over time"
+      ],
+      "reasoning_steps": [
+        "Neutral sentiment → 15–20x P/E",
+        "Bullish sentiment → 20–30x P/E",
+        "Thus, fair value is context-dependent"
+      ],
+      "tags": [
+        "valuation",
+        "P/E range",
+        "market psychology"
+      ],
+      "source_evidence": [
+        {
+          "start": 511.03,
+          "end": 535.25,
+          "merged_ids": [
+            20
+          ],
+          "source_segment_id_ranges": [
+            {
+              "start_id": 309,
+              "end_id": 325
+            }
+          ],
+          "source_segment_ids": [],
+          "quote": "本益比的評價 它是可以隨時去調整的"
+        },
+        {
+          "start": 535.25,
+          "end": 559.93,
+          "merged_ids": [
+            21
+          ],
+          "source_segment_id_ranges": [
+            {
+              "start_id": 326,
+              "end_id": 343
+            }
+          ],
+          "source_segment_ids": [],
+          "quote": "公司的本質有沒有改變 沒有"
+        }
+      ],
+      "confidence": 0.95
+    }
+  ]
+}

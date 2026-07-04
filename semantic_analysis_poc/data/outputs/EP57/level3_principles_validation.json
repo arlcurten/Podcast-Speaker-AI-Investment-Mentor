@@ -1,0 +1,10 @@
+{
+  "ok": true,
+  "errors": [],
+  "warnings": [],
+  "principle_count": 0,
+  "strategy": "bypass",
+  "confidence_distribution": {},
+  "principle_type_distribution": {},
+  "runtime_mode_distribution": {}
+}

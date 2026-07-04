@@ -1,0 +1,793 @@
+{
+  "level": 2,
+  "episode_id": "EP674",
+  "reasoning_records": [
+    {
+      "reasoning_record_id": "EP674-reasoning-001",
+      "topic_thread_id": "EP674-thread-001",
+      "title": "Personal and Portfolio Success Driven by Market Beta and Disposition Stock Turnover",
+      "claims": [
+        "The host experienced exceptional personal and financial success in the first half of the year.",
+        "Portfolio outperformance was largely due to broad market beta, not stock-picking skill.",
+        "Many '處置股' (disposition stocks) unexpectedly became '飆股' (momentum stocks), locking in gains."
+      ],
+      "observations": [
+        "Host attributes success to being 'locked in' disposition stocks that continued to rise.",
+        "This reduced active trading, preventing premature profit-taking on strong trends."
+      ],
+      "reasoning_steps": [
+        "Strong market momentum (especially April–May) lifted most tech stocks.",
+        "Disposition rules prevented selling, which accidentally preserved exposure to continued upside.",
+        "Result: 'passive' holding during a beta surge led to outsized returns."
+      ],
+      "assumptions": [
+        "Market beta will eventually normalize, reducing such passive gains.",
+        "Disposition stocks typically underperform post-lockup, but this period was anomalous."
+      ],
+      "conditions": [
+        "This outcome depends on sustained market-wide bullishness."
+      ],
+      "risks": [
+        "Overconfidence from luck-based performance could lead to riskier future bets."
+      ],
+      "exceptions": [
+        "The transformation of '處置股' into '飆股' is rare and not a repeatable strategy."
+      ],
+      "uncertainty": [
+        "Unclear how much of the gain was due to skill vs. market conditions."
+      ],
+      "decisions_or_preferences": [
+        "Prefers full-position ('滿倉') investing to maximize exposure to trends."
+      ],
+      "actions_or_avoided_actions": [
+        "Avoided active profit-taking due to regulatory lockup, which worked favorably."
+      ],
+      "view_change_conditions": [],
+      "speaker_behavior": [
+        "Reflective and grateful tone; acknowledges role of luck."
+      ],
+      "teaching_or_explanation_style": [
+        "Uses personal experience to illustrate market dynamics and behavioral effects."
+      ],
+      "tags": [
+        "personal_performance",
+        "market_beta",
+        "disposition_effect",
+        "Taiwan_market"
+      ],
+      "source_evidence": [
+        {
+          "start": 102.8,
+          "end": 150.56,
+          "merged_ids": [
+            4,
+            5
+          ],
+          "source_segment_id_ranges": [
+            {
+              "start_id": 44,
+              "end_id": 69
+            }
+          ],
+          "source_segment_ids": [],
+          "quote": "我覺得可能算是我人生的高光時刻...不管是哪一個層面"
+        },
+        {
+          "start": 296.92,
+          "end": 321.88,
+          "merged_ids": [
+            12
+          ],
+          "source_segment_id_ranges": [
+            {
+              "start_id": 156,
+              "end_id": 172
+            }
+          ],
+          "source_segment_ids": [],
+          "quote": "手上的持股幾乎都漲到進去處置股...很多處置股它反而是變成飆股"
+        },
+        {
+          "start": 394.5,
+          "end": 418.88,
+          "merged_ids": [
+            16
+          ],
+          "source_segment_id_ranges": [
+            {
+              "start_id": 234,
+              "end_id": 252
+            }
+          ],
+          "source_segment_ids": [],
+          "quote": "自己的5月就算是打出一個非常暴利的報酬"
+        },
+        {
+          "start": 247.76,
+          "end": 272.54,
+          "merged_ids": [
+            10
+          ],
+          "source_segment_id_ranges": [
+            {
+              "start_id": 126,
+              "end_id": 141
+            }
+          ],
+          "source_segment_ids": [],
+          "quote": "絕大多數有去參與股票市場的人應該都比較難表現得不好"
+        }
+      ],
+      "confidence": 0.95
+    },
+    {
+      "reasoning_record_id": "EP674-reasoning-002",
+      "topic_thread_id": "EP674-thread-002",
+      "title": "Market Correction Likely Driven by Institutional Rebalancing, Not Geopolitical or Inflation Fears",
+      "claims": [
+        "The recent market downturn was not caused by war or inflation fears.",
+        "Institutional rebalancing (sovereign/pension funds) is the most plausible explanation."
+      ],
+      "observations": [
+        "Oil prices remained low despite Middle East tensions, indicating limited market impact.",
+        "Core CPI and Fed rate hike narratives lack supporting evidence."
+      ],
+      "reasoning_steps": [
+        "Check oil price as a proxy for war impact: price is ~$70–80, suggesting no supply shock.",
+        "Evaluate inflation narrative: AI-driven price increases are concentrated in data centers, not broad consumer goods.",
+        "Conclude: macro fears are overblown; rebalancing of overperforming tech stocks is a more mechanical, data-aligned cause."
+      ],
+      "assumptions": [
+        "Institutions follow strict quarterly rebalancing rules.",
+        "Markets efficiently price in geopolitical risks."
+      ],
+      "conditions": [
+        "This explanation holds if no major supply disruptions or policy shifts occur."
+      ],
+      "risks": [
+        "New geopolitical events could invalidate the oil-price-based assessment."
+      ],
+      "exceptions": [],
+      "uncertainty": [
+        "Cannot confirm actual rebalancing flows; inference based on price action and logic."
+      ],
+      "decisions_or_preferences": [
+        "Prefers data-driven explanations over speculative narratives."
+      ],
+      "actions_or_avoided_actions": [
+        "Avoids reacting to fear-based headlines without corroborating data."
+      ],
+      "view_change_conditions": [
+        "Would reconsider if oil prices spike or Fed signals aggressive hikes."
+      ],
+      "speaker_behavior": [
+        "Skeptical of popular media narratives; seeks structural explanations."
+      ],
+      "teaching_or_explanation_style": [
+        "Uses oil price as a 'reality check' to test war impact claims."
+      ],
+      "tags": [
+        "market_correction",
+        "rebalancing",
+        "oil_price",
+        "narrative_analysis"
+      ],
+      "source_evidence": [
+        {
+          "start": 935.02,
+          "end": 1007.08,
+          "merged_ids": [
+            39,
+            40,
+            41
+          ],
+          "source_segment_id_ranges": [
+            {
+              "start_id": 686,
+              "end_id": 747
+            }
+          ],
+          "source_segment_ids": [],
+          "quote": "現在可能是一些主權基金啊退休金...去執行rebalance...我覺得是蠻合理的一個說法"
+        },
+        {
+          "start": 1007.08,
+          "end": 1031.76,
+          "merged_ids": [
+            42
+          ],
+          "source_segment_id_ranges": [
+            {
+              "start_id": 748,
+              "end_id": 773
+            }
+          ],
+          "source_segment_ids": [],
+          "quote": "油價已經跌到七八十塊左右...市場的一個判斷"
+        },
+        {
+          "start": 1056.58,
+          "end": 1080.22,
+          "merged_ids": [
+            44
+          ],
+          "source_segment_id_ranges": [
+            {
+              "start_id": 797,
+              "end_id": 816
+            }
+          ],
+          "source_segment_ids": [],
+          "quote": "升息的可能性...我覺得也是屬於機率偏低"
+        },
+        {
+          "start": 1104.1,
+          "end": 1128.76,
+          "merged_ids": [
+            46
+          ],
+          "source_segment_id_ranges": [
+            {
+              "start_id": 833,
+              "end_id": 851
+            }
+          ],
+          "source_segment_ids": [],
+          "quote": "漲價狂潮...比較集中在Data Center這邊"
+        }
+      ],
+      "confidence": 0.9
+    },
+    {
+      "reasoning_record_id": "EP674-reasoning-003",
+      "topic_thread_id": "EP674-thread-005",
+      "title": "Break Below 60-Day Moving Average Signals Weakening Momentum and Higher Risk",
+      "claims": [
+        "Stocks breaking below the '季線' (60-day MA) face increased selling pressure.",
+        "Such breaks reduce market willingness to buy, even for AI-related or thematic stocks."
+      ],
+      "observations": [
+        "Many former momentum stocks broke below the 60-day MA during the correction.",
+        "These stocks showed weak rebounds, indicating poor buyer conviction."
+      ],
+      "reasoning_steps": [
+        "Identify technical breakdown: price below 60-day MA means all recent buyers are underwater.",
+        "This creates structural selling pressure as trapped longs seek to exit at breakeven.",
+        "Result: reduced upside potential and higher risk of further downside."
+      ],
+      "assumptions": [
+        "Technical levels reflect collective market psychology and positioning."
+      ],
+      "conditions": [
+        "This signal is stronger when accompanied by high volume and broad market weakness."
+      ],
+      "risks": [
+        "A major positive catalyst could override technical damage."
+      ],
+      "exceptions": [
+        "Stocks with strong fundamental news may recover despite technical damage."
+      ],
+      "uncertainty": [],
+      "decisions_or_preferences": [
+        "Prefers to avoid or reduce positions in stocks below the 60-day MA."
+      ],
+      "actions_or_avoided_actions": [
+        "Avoids buying broken stocks without a clear reversal signal."
+      ],
+      "view_change_conditions": [
+        "Would reconsider if price reclaims the 60-day MA with strong volume."
+      ],
+      "speaker_behavior": [
+        "Relies on clear, rule-based technical criteria for risk management."
+      ],
+      "teaching_or_explanation_style": [
+        "Explains technical levels in terms of market psychology and trapped capital."
+      ],
+      "tags": [
+        "technical_analysis",
+        "risk_management",
+        "moving_average",
+        "Taiwan_market"
+      ],
+      "source_evidence": [
+        {
+          "start": 784.44,
+          "end": 832.74,
+          "merged_ids": [
+            31,
+            32,
+            33
+          ],
+          "source_segment_id_ranges": [
+            {
+              "start_id": 554,
+              "end_id": 599
+            }
+          ],
+          "source_segment_ids": [],
+          "quote": "這些跑到季線下面的東西...市場上的做多意願就會偏低啦"
+        },
+        {
+          "start": 832.74,
+          "end": 835.86,
+          "merged_ids": [
+            34
+          ],
+          "source_segment_id_ranges": [
+            {
+              "start_id": 600,
+              "end_id": 602
+            }
+          ],
+          "source_segment_ids": [],
+          "quote": "這邊可能是要稍微比較小心的點了啦"
+        },
+        {
+          "start": 886.0,
+          "end": 910.9,
+          "merged_ids": [
+            37
+          ],
+          "source_segment_id_ranges": [
+            {
+              "start_id": 645,
+              "end_id": 666
+            }
+          ],
+          "source_segment_ids": [],
+          "quote": "過去的一些熱門族群...直接跑到季線下面去了"
+        },
+        {
+          "start": 1371.68,
+          "end": 1396.36,
+          "merged_ids": [
+            57
+          ],
+          "source_segment_id_ranges": [
+            {
+              "start_id": 1019,
+              "end_id": 1034
+            }
+          ],
+          "source_segment_ids": [],
+          "quote": "因為真的已經有一些東西開始出現它是跑到季線下面去的"
+        }
+      ],
+      "confidence": 0.95
+    },
+    {
+      "reasoning_record_id": "EP674-reasoning-004",
+      "topic_thread_id": "EP674-thread-008",
+      "title": "Tension Between AI Component Supplier Profits and Tech Giant Spending",
+      "claims": [
+        "Component suppliers (e.g., 美光) are earning record profits (80–90% gross margins).",
+        "Tech giants (e.g., Apple, Google) are spending heavily on AI with weak stock performance and negative cash flow."
+      ],
+      "observations": [
+        "Market is questioning shareholder patience with AI spending by tech giants.",
+        "No major backlash yet, but discussion is emerging."
+      ],
+      "reasoning_steps": [
+        "Observe disconnect: suppliers profit, giants spend without clear ROI.",
+        "Question: Will shareholders tolerate continued spending without returns?",
+        "Note: Past debates (e.g., Deep Seek) didn't gain traction, but current conditions may differ."
+      ],
+      "assumptions": [
+        "Investor tolerance has limits; sustained underperformance will trigger scrutiny."
+      ],
+      "conditions": [
+        "This tension could escalate if AI spending continues without visible results."
+      ],
+      "risks": [
+        "Tech giants may face pressure to cut AI budgets or show ROI."
+      ],
+      "exceptions": [
+        "Market may accept long-term bets if leadership and vision are credible."
+      ],
+      "uncertainty": [
+        "Unclear when or if shareholder backlash will materialize."
+      ],
+      "decisions_or_preferences": [
+        "Remains invested in tech giants but acknowledges rising risk."
+      ],
+      "actions_or_avoided_actions": [],
+      "view_change_conditions": [
+        "Would reduce exposure if shareholder criticism becomes widespread."
+      ],
+      "speaker_behavior": [
+        "Raises a structural market question without taking a definitive stance."
+      ],
+      "teaching_or_explanation_style": [
+        "Highlights a market anomaly to encourage critical thinking."
+      ],
+      "tags": [
+        "AI_investment",
+        "profit_disparity",
+        "shareholder_patience",
+        "tech_giants"
+      ],
+      "source_evidence": [
+        {
+          "start": 1250.64,
+          "end": 1347.16,
+          "merged_ids": [
+            51,
+            52,
+            53,
+            54,
+            55
+          ],
+          "source_segment_id_ranges": [
+            {
+              "start_id": 940,
+              "end_id": 1001
+            }
+          ],
+          "source_segment_ids": [],
+          "quote": "美光的毛利率80幾...科技巨頭...股價的表現非常不好...是不是會開始有一些檢討的聲音出現"
+        },
+        {
+          "start": 1347.16,
+          "end": 1371.68,
+          "merged_ids": [
+            56
+          ],
+          "source_segment_id_ranges": [
+            {
+              "start_id": 1002,
+              "end_id": 1018
+            }
+          ],
+          "source_segment_ids": [],
+          "quote": "目前看起來是沒有什麼太多的問題...但純舊產業層面來看...有蠻多事情都還在醞釀中"
+        }
+      ],
+      "confidence": 0.85
+    },
+    {
+      "reasoning_record_id": "EP674-reasoning-005",
+      "topic_thread_id": "EP674-thread-003",
+      "title": "Apple's Price Hike May Not Deter Core Customers Despite Online Backlash",
+      "claims": [
+        "Apple's price increase is driven by rising memory costs.",
+        "Core customers ('果粉') are likely to remain loyal despite higher prices."
+      ],
+      "observations": [
+        "Online sentiment is negative, but actual sales data is the true test.",
+        "Apple's pricing power is supported by brand loyalty and perceived value."
+      ],
+      "reasoning_steps": [
+        "Define the customer: '果粉' vs. price-sensitive users.",
+        "Argue that brand loyalty outweighs price sensitivity for core users.",
+        "Suggest monitoring sales data, not online chatter, to assess impact."
+      ],
+      "assumptions": [
+        "Brand loyalty is strong enough to absorb a 10–20% price increase."
+      ],
+      "conditions": [
+        "This holds if competitors do not offer compelling alternatives."
+      ],
+      "risks": [
+        "Prolonged economic weakness could erode even loyal customer demand."
+      ],
+      "exceptions": [
+        "New entrants or innovation from competitors could disrupt loyalty."
+      ],
+      "uncertainty": [
+        "Sales data not yet available; impact remains unconfirmed."
+      ],
+      "decisions_or_preferences": [
+        "Prefers empirical data (sales) over sentiment for investment decisions."
+      ],
+      "actions_or_avoided_actions": [
+        "Avoids overreacting to negative online sentiment."
+      ],
+      "view_change_conditions": [
+        "Would reassess if sales data shows a significant decline."
+      ],
+      "speaker_behavior": [
+        "Distinguishes between vocal online minority and actual customer behavior."
+      ],
+      "teaching_or_explanation_style": [
+        "Uses brand loyalty and customer segmentation to explain pricing resilience."
+      ],
+      "tags": [
+        "pricing_power",
+        "brand_loyalty",
+        "Apple",
+        "consumer_behavior"
+      ],
+      "source_evidence": [
+        {
+          "start": 1396.36,
+          "end": 1421.28,
+          "merged_ids": [
+            58
+          ],
+          "source_segment_id_ranges": [
+            {
+              "start_id": 1035,
+              "end_id": 1050
+            }
+          ],
+          "source_segment_ids": [],
+          "quote": "蘋果終於是撐不住了...MacBook...拉了大概十幾到二十%左右"
+        },
+        {
+          "start": 1469.24,
+          "end": 1518.54,
+          "merged_ids": [
+            60,
+            61,
+            62
+          ],
+          "source_segment_id_ranges": [
+            {
+              "start_id": 1083,
+              "end_id": 1115
+            }
+          ],
+          "source_segment_ids": [],
+          "quote": "果粉...其實老實講...不就是這樣子...還是會買"
+        },
+        {
+          "start": 1615.18,
+          "end": 1638.66,
+          "merged_ids": [
+            66,
+            67
+          ],
+          "source_segment_id_ranges": [
+            {
+              "start_id": 1187,
+              "end_id": 1203
+            }
+          ],
+          "source_segment_ids": [],
+          "quote": "最後面直接看銷量就好"
+        }
+      ],
+      "confidence": 0.9
+    },
+    {
+      "reasoning_record_id": "EP674-reasoning-006",
+      "topic_thread_id": "EP674-thread-004",
+      "title": "Wealth Effect Drives More Investing, Not Spending, in Bull Markets",
+      "claims": [
+        "In strong bull markets, investors prioritize reinvesting over spending.",
+        "Opportunity cost of spending is high when market returns are strong."
+      ],
+      "observations": [
+        "People are reluctant to pull money from the market to spend.",
+        "Spending increases only when market momentum slows and fear sets in."
+      ],
+      "reasoning_steps": [
+        "When market is rising, every dollar spent is seen as lost investment gain.",
+        "This leads to increased market participation, not consumption.",
+        "Spending surge likely only after market correction reduces opportunity cost."
+      ],
+      "assumptions": [
+        "Investors are rational and sensitive to opportunity cost."
+      ],
+      "conditions": [
+        "This behavior is more pronounced in high-return environments."
+      ],
+      "risks": [
+        "Behavior may differ for non-investors or those with limited market exposure."
+      ],
+      "exceptions": [],
+      "uncertainty": [],
+      "decisions_or_preferences": [
+        "Expects consumer spending to lag market performance."
+      ],
+      "actions_or_avoided_actions": [],
+      "view_change_conditions": [
+        "Would reconsider if spending data rises during market highs."
+      ],
+      "speaker_behavior": [
+        "Challenges conventional 'wealth effect' narrative."
+      ],
+      "teaching_or_explanation_style": [
+        "Uses opportunity cost logic to explain counterintuitive behavior."
+      ],
+      "tags": [
+        "wealth_effect",
+        "investor_psychology",
+        "behavioral_finance"
+      ],
+      "source_evidence": [
+        {
+          "start": 1153.76,
+          "end": 1202.46,
+          "merged_ids": [
+            48,
+            49
+          ],
+          "source_segment_id_ranges": [
+            {
+              "start_id": 872,
+              "end_id": 906
+            }
+          ],
+          "source_segment_ids": [],
+          "quote": "在盤很好的時候...機會成本太高了...大家都會持續往市場裡面丟"
+        },
+        {
+          "start": 2291.9,
+          "end": 2316.56,
+          "merged_ids": [
+            94,
+            95
+          ],
+          "source_segment_id_ranges": [
+            {
+              "start_id": 1729,
+              "end_id": 1750
+            }
+          ],
+          "source_segment_ids": [],
+          "quote": "總有種今天省下來的一塊錢未來會變成兩塊"
+        }
+      ],
+      "confidence": 0.9
+    },
+    {
+      "reasoning_record_id": "EP674-reasoning-007",
+      "topic_thread_id": "EP674-thread-006",
+      "title": "Prioritize Financial Stability Over Job Satisfaction in Early Career",
+      "claims": [
+        "In early career, earning more money is more important than job satisfaction.",
+        "High-paying roles (e.g., MTK) offer valuable experience and serve as career springboards."
+      ],
+      "observations": [
+        "Many professionals endure job dissatisfaction for financial gain.",
+        "Career mobility often depends on prior high-profile experience."
+      ],
+      "reasoning_steps": [
+        "Assume most work is not inherently enjoyable.",
+        "Prioritize roles that maximize income and career capital.",
+        "Accept short-term discomfort for long-term gain."
+      ],
+      "assumptions": [
+        "Financial success enables future flexibility and life choices."
+      ],
+      "conditions": [
+        "This advice applies unless job causes severe mental health issues."
+      ],
+      "risks": [
+        "Burnout from prolonged dissatisfaction."
+      ],
+      "exceptions": [
+        "If job causes significant psychological harm, leaving is justified."
+      ],
+      "uncertainty": [],
+      "decisions_or_preferences": [
+        "Prefers high-paying, high-prestige roles even if less enjoyable."
+      ],
+      "actions_or_avoided_actions": [
+        "Avoids romanticizing job satisfaction in early career."
+      ],
+      "view_change_conditions": [],
+      "speaker_behavior": [
+        "Pragmatic and experience-based advice; dismisses idealism."
+      ],
+      "teaching_or_explanation_style": [
+        "Uses personal and peer experiences to justify trade-offs."
+      ],
+      "tags": [
+        "career_advice",
+        "financial_priority",
+        "early_career"
+      ],
+      "source_evidence": [
+        {
+          "start": 2073.76,
+          "end": 2122.5,
+          "merged_ids": [
+            86,
+            87
+          ],
+          "source_segment_id_ranges": [
+            {
+              "start_id": 1549,
+              "end_id": 1585
+            }
+          ],
+          "source_segment_ids": [],
+          "quote": "賺錢是比較重要的啦...上班本身...不就是為了去賺點錢嗎"
+        },
+        {
+          "start": 2171.06,
+          "end": 2194.98,
+          "merged_ids": [
+            89,
+            90
+          ],
+          "source_segment_id_ranges": [
+            {
+              "start_id": 1625,
+              "end_id": 1646
+            }
+          ],
+          "source_segment_ids": [],
+          "quote": "MTK是很多人夢寐以求可以去的地方...算是某種程度上的跳板"
+        }
+      ],
+      "confidence": 0.9
+    },
+    {
+      "reasoning_record_id": "EP674-reasoning-008",
+      "topic_thread_id": "EP674-thread-007",
+      "title": "Simple Ownership Structures Prevent Business Complexity and Conflict",
+      "claims": [
+        "Businesses should have minimal, aligned stakeholders.",
+        "Founder skin-in-the-game is critical for commitment."
+      ],
+      "observations": [
+        "Complex partnerships lead to decision paralysis and conflict.",
+        "Solo or founder-led models are more efficient."
+      ],
+      "reasoning_steps": [
+        "More stakeholders → more opinions → slower decisions.",
+        "Founder with personal financial risk is more committed.",
+        "Prefer simple, founder-controlled ventures to avoid governance issues."
+      ],
+      "assumptions": [
+        "Operational speed and founder alignment outweigh benefits of shared ownership."
+      ],
+      "conditions": [
+        "This model works when founder has sufficient capital or access to it."
+      ],
+      "risks": [
+        "Over-reliance on one person; lack of diverse perspectives."
+      ],
+      "exceptions": [],
+      "uncertainty": [],
+      "decisions_or_preferences": [
+        "Prefers to fully own or dominate investments to maintain control."
+      ],
+      "actions_or_avoided_actions": [
+        "Avoids complex partnerships and external fundraising when possible."
+      ],
+      "view_change_conditions": [],
+      "speaker_behavior": [
+        "Strongly opinionated; values control and simplicity."
+      ],
+      "teaching_or_explanation_style": [
+        "Uses personal investment philosophy to illustrate business principles."
+      ],
+      "tags": [
+        "business_philosophy",
+        "founder_control",
+        "ownership_structure"
+      ],
+      "source_evidence": [
+        {
+          "start": 2972.97,
+          "end": 3178.79,
+          "merged_ids": [
+            122,
+            123,
+            124,
+            125,
+            126,
+            127,
+            128,
+            129,
+            130,
+            131
+          ],
+          "source_segment_id_ranges": [
+            {
+              "start_id": 2296,
+              "end_id": 2492
+            }
+          ],
+          "source_segment_ids": [],
+          "quote": "股東不要太複雜...事情一定要儘量的單純...所有東西我能夠吃我就自己吃掉"
+        }
+      ],
+      "confidence": 0.95
+    }
+  ]
+}

@@ -1,0 +1,14 @@
+{
+  "items": [
+    {
+      "principle_id": "L4-principle-001",
+      "classification": "needs_revision",
+      "reasons": [
+        "Evidence summary mentions possible tension, but contradictions field is empty."
+      ]
+    }
+  ],
+  "summary": {
+    "needs_revision": 1
+  }
+}

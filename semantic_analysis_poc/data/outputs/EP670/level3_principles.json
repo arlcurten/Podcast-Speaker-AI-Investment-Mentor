@@ -1,0 +1,280 @@
+{
+  "level": 3,
+  "episode_id": "EP670",
+  "selected_strategy": "principle_extraction",
+  "strategy_reason": "Multiple Level 2 reasoning records (e.g., EP670-reasoning-001, EP670-reasoning-002, EP670-reasoning-003, EP670-reasoning-005) exhibit a recurring decision logic centered on narrative anticipation and market psychology as drivers of valuation and positioning. These records share a common pattern: prioritizing early positioning in emerging narratives over traditional valuation metrics, with consistent speaker behavior of using personal action as market signal. The pattern is supported across distinct domains (space tech, semiconductors, AI regulation, passive components), indicating a broader decision framework rather than isolated opinions.",
+  "principles": [
+    {
+      "principle_id": "EP670-principle-001",
+      "episode_id": "EP670",
+      "name": "Narrative Anticipation Over Valuation Correctness",
+      "domains": [
+        "investment",
+        "market",
+        "portfolio"
+      ],
+      "decision_context": "Choosing whether to invest in a high-potential but uncertain technology company or theme before clear financial justification, based on perceived narrative momentum.",
+      "core_preference": "Positioning early in a strong market narrative rather than waiting for fundamental validation or consensus on valuation.",
+      "reasoning_steps": [
+        "Identify companies or sectors that combine multiple compelling technological narratives (e.g., SpaceX as rocket + satellite + AI).",
+        "Assess market sentiment and narrative strength, not just financial metrics.",
+        "Act before broad consensus forms, using personal investment as a signal of conviction.",
+        "Anticipate that crowd behavior will follow, creating price momentum."
+      ],
+      "preferred_actions": [
+        "Invest in companies with strong, multi-faceted narratives even if traditional valuation appears stretched.",
+        "Enter positions during or just after thematic realization events (e.g., IPOs).",
+        "Use personal trading behavior to illustrate broader market psychology."
+      ],
+      "conditions": [
+        "Sustained execution on key technological milestones.",
+        "Continued access to capital and absence of major regulatory setbacks.",
+        "Narrative remains dominant and not yet saturated."
+      ],
+      "exceptions": [
+        "Traditional valuation models may not apply to transformative companies.",
+        "Some assets may remain cheap despite strong fundamentals if narrative appeal is weak."
+      ],
+      "supporting_records": [
+        "EP670-reasoning-001",
+        "EP670-reasoning-002",
+        "EP670-reasoning-003",
+        "EP670-reasoning-005"
+      ],
+      "counterexamples": [],
+      "contradictions": [],
+      "principle_type": "conditional_pattern",
+      "decision_tradeoff": {
+        "option_a": "Wait for fundamental validation and clearer valuation metrics before investing.",
+        "option_b": "Invest early based on narrative strength and anticipated crowd behavior.",
+        "preferred_option": "option_b",
+        "reason_for_preference": "Market rewards early positioning in strong narratives; valuation is less about correctness and more about timing relative to crowd adoption.",
+        "cost_of_preference": "Risk of overpaying or narrative collapse if execution falters or sentiment shifts.",
+        "switch_conditions": [
+          "If the narrative loses momentum or fails to gain broader investor interest.",
+          "If regulatory or execution risks materialize significantly.",
+          "If market shifts to fundamentals-based pricing regime."
+        ]
+      },
+      "confidence": {
+        "evidence_strength": "high",
+        "evidence_independence": "high",
+        "speaker_specificity": "high",
+        "condition_clarity": "high",
+        "contradiction_severity": "none",
+        "cross_episode_consistency": "not_applicable",
+        "time_period_diversity": "not_applicable",
+        "overall": "medium"
+      },
+      "generalization_scope": "episode_local",
+      "speaker_specificity": "specific",
+      "genericness_status": "specific",
+      "genericness_reasons": [],
+      "distinctive_behavior": [
+        "Uses personal investment behavior to illustrate market psychology.",
+        "Connects executive tone shifts (e.g., reduced fear-mongering) to regulatory risk and market rotation.",
+        "Applies narrative logic across diverse sectors (space, semiconductors, AI)."
+      ],
+      "eligible_for_level4": true,
+      "eligible_for_online_reasoning": "principle_assisted_only",
+      "eligibility_reasons": [
+        "Episode-local principle may be used only as assisted context, not a confirmed policy."
+      ],
+      "runtime_mode_recommendation": "principle_assisted",
+      "provenance_stats": {
+        "supporting_record_count": 4,
+        "supporting_episode_count": 1,
+        "unique_level1_thread_count": 4,
+        "unique_level1_threads": [
+          "EP670-thread-001",
+          "EP670-thread-002",
+          "EP670-thread-003",
+          "EP670-thread-004"
+        ],
+        "distinct_decision_context_count": 4,
+        "source_region_count": 11,
+        "independent_source_context_count": 4,
+        "overlapping_or_duplicate_source_regions": 0
+      },
+      "provisional": true,
+      "extraction_strategy": "principle_extraction",
+      "evidence_summary": "This principle is derived from four Level 2 records (EP670-reasoning-001, EP670-reasoning-002, EP670-reasoning-003, EP670-reasoning-005) that consistently show a preference for early positioning in strong narratives over valuation debates. The speaker uses personal action (buying SpaceX, accumulating Taiwan stocks) as a proxy for market insight, and applies this logic across space tech, passive components, and AI regulation. The pattern is not generic value investing but a specific approach to narrative momentum. No contradictions exist in this episode, but uncertainty remains around timing and narrative sustainability."
+    },
+    {
+      "principle_id": "EP670-principle-002",
+      "episode_id": "EP670",
+      "name": "Directional Focus Over Data Frequency",
+      "domains": [
+        "investment",
+        "decision",
+        "information"
+      ],
+      "decision_context": "Managing information flow during periods of high market noise or data overload.",
+      "core_preference": "Focusing on directional trends and major shifts rather than high-frequency data revisions or granular metrics.",
+      "reasoning_steps": [
+        "Recognize that excessive data can become noise.",
+        "Filter out short-term estimate revisions that cancel out over time.",
+        "Prioritize major directional shifts in market structure or technology adoption.",
+        "Avoid overtrading based on minor data points."
+      ],
+      "preferred_actions": [
+        "Ignore short-term analyst estimate changes.",
+        "Focus on major structural trends (e.g., AI adoption, edge computing).",
+        "Use professional behavior (e.g., analysts ignoring 'headline numbers') as validation."
+      ],
+      "conditions": [
+        "Sufficient time horizon to ride out volatility.",
+        "Ability to distinguish signal from noise."
+      ],
+      "exceptions": [
+        "Some situations (e.g., earnings season, macro events) require detailed monitoring."
+      ],
+      "supporting_records": [
+        "EP670-reasoning-007",
+        "EP670-reasoning-006"
+      ],
+      "counterexamples": [],
+      "contradictions": [],
+      "principle_type": "conditional_pattern",
+      "decision_tradeoff": {
+        "option_a": "Track high-frequency data and revise positions frequently.",
+        "option_b": "Focus on high-level directional trends and ignore minor data fluctuations.",
+        "preferred_option": "option_b",
+        "reason_for_preference": "High-frequency data often cancels out; directional clarity improves decision quality.",
+        "cost_of_preference": "Risk of missing genuine turning points if filtering is too aggressive.",
+        "switch_conditions": [
+          "If market enters a regime where short-term data becomes highly predictive.",
+          "During major macro or earnings events requiring granular analysis."
+        ]
+      },
+      "confidence": {
+        "evidence_strength": "medium",
+        "evidence_independence": "medium",
+        "speaker_specificity": "high",
+        "condition_clarity": "high",
+        "contradiction_severity": "none",
+        "cross_episode_consistency": "not_applicable",
+        "time_period_diversity": "not_applicable",
+        "overall": "medium"
+      },
+      "generalization_scope": "episode_local",
+      "speaker_specificity": "specific",
+      "genericness_status": "specific",
+      "genericness_reasons": [],
+      "distinctive_behavior": [
+        "Uses anecdote about analyst not tracking 'headline numbers' to justify approach.",
+        "Connects attention management to investment decision quality."
+      ],
+      "eligible_for_level4": true,
+      "eligible_for_online_reasoning": "principle_assisted_only",
+      "eligibility_reasons": [
+        "Episode-local principle may be used only as assisted context, not a confirmed policy."
+      ],
+      "runtime_mode_recommendation": "principle_assisted",
+      "provenance_stats": {
+        "supporting_record_count": 2,
+        "supporting_episode_count": 1,
+        "unique_level1_thread_count": 2,
+        "unique_level1_threads": [
+          "EP670-thread-006",
+          "EP670-thread-008"
+        ],
+        "distinct_decision_context_count": 2,
+        "source_region_count": 3,
+        "independent_source_context_count": 2,
+        "overlapping_or_duplicate_source_regions": 0
+      },
+      "provisional": true,
+      "extraction_strategy": "principle_extraction",
+      "evidence_summary": "This principle is supported by EP670-reasoning-007 (information overload) and EP670-reasoning-006 (attention management), both emphasizing filtering and directional focus. The speaker uses a professional analyst's behavior as evidence that even experts ignore granular data. The logic links personal discipline to investment clarity, suggesting a unified framework for managing noise. No contradictions exist, but the principle is context-dependent and not universally applicable."
+    },
+    {
+      "principle_id": "EP670-principle-003",
+      "episode_id": "EP670",
+      "name": "Capital Preservation During High-Outflow Life Phases",
+      "domains": [
+        "personal_finance",
+        "life",
+        "decision"
+      ],
+      "decision_context": "Making financial decisions during transitional life events involving high expenditures (e.g., home purchase, car buying, donations).",
+      "core_preference": "Prioritize saving and capital preservation over spending or giving during periods of high outflow.",
+      "reasoning_steps": [
+        "Identify life phases with elevated spending pressure.",
+        "Recognize that early financial decisions compound in impact.",
+        "Delay non-essential purchases and donations until financial stability improves.",
+        "Preserve optionality for future opportunities."
+      ],
+      "preferred_actions": [
+        "Delay donations until financial situation stabilizes.",
+        "Avoid large purchases during career or life transitions.",
+        "Focus on preserving capital for future needs."
+      ],
+      "conditions": [
+        "Ability to delay non-essential spending.",
+        "Supportive financial environment (e.g., stable income)."
+      ],
+      "exceptions": [
+        "Some investments in personal development may justify spending."
+      ],
+      "supporting_records": [
+        "EP670-reasoning-008"
+      ],
+      "counterexamples": [],
+      "contradictions": [],
+      "principle_type": "case_derived_hypothesis",
+      "decision_tradeoff": {
+        "option_a": "Spend or donate according to social expectations or personal ideals.",
+        "option_b": "Preserve capital and delay spending until financial stability improves.",
+        "preferred_option": "option_b",
+        "reason_for_preference": "High-outflow periods increase financial vulnerability; early discipline compounds over time.",
+        "cost_of_preference": "Social pressure or missed opportunities for impact through giving.",
+        "switch_conditions": [
+          "If financial situation improves significantly."
+        ]
+      },
+      "confidence": {
+        "evidence_strength": "low",
+        "evidence_independence": "low",
+        "speaker_specificity": "high",
+        "condition_clarity": "high",
+        "contradiction_severity": "none",
+        "cross_episode_consistency": "not_applicable",
+        "time_period_diversity": "not_applicable",
+        "overall": "low"
+      },
+      "generalization_scope": "episode_local",
+      "speaker_specificity": "specific",
+      "genericness_status": "specific",
+      "genericness_reasons": [],
+      "distinctive_behavior": [
+        "Provides direct advice to listener in vulnerable financial position.",
+        "Emphasizes 'first few dollars' as critical."
+      ],
+      "eligible_for_level4": false,
+      "eligible_for_online_reasoning": "false",
+      "eligibility_reasons": [
+        "Single-record Level 3 output is a hypothesis, not a recurring principle.",
+        "Insufficient independent topic-thread evidence within the episode.",
+        "Overall Level 3 confidence is low."
+      ],
+      "runtime_mode_recommendation": "not_eligible",
+      "provenance_stats": {
+        "supporting_record_count": 1,
+        "supporting_episode_count": 1,
+        "unique_level1_thread_count": 1,
+        "unique_level1_threads": [
+          "EP670-thread-007"
+        ],
+        "distinct_decision_context_count": 1,
+        "source_region_count": 1,
+        "independent_source_context_count": 1,
+        "overlapping_or_duplicate_source_regions": 0
+      },
+      "provisional": true,
+      "extraction_strategy": "principle_extraction",
+      "evidence_summary": "This principle is derived from EP670-reasoning-008, a Q&A response advising capital preservation during high-outflow phases. While the advice is clear and behaviorally grounded, it is based on a single life-stage scenario. No broader pattern is evident, making this a case-derived hypothesis rather than a recurring principle. The speaker's specificity in advising a listener adds credibility but limits generalization."
+    }
+  ],
+  "schema_version": "principles.v2"
+}

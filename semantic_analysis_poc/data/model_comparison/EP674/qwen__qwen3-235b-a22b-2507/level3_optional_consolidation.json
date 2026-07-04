@@ -1,0 +1,20 @@
+{
+  "level": 3,
+  "episode_id": "EP674",
+  "selected_strategy": "bypass",
+  "strategy_reason": "The episode is heavily Q&A and conversational, with no single, deep investment thesis to synthesize. The most valuable insights are distributed across personal reflections, market commentary, and listener interactions. A full synthesis would not add significant value over the Level 1 map and Level 2 reasoning records, which already capture the key threads, reasoning, and speaker behavior accurately.",
+  "source_level1_map_id": "level1",
+  "source_reasoning_record_ids": [
+    "EP674-reasoning-001",
+    "EP674-reasoning-002",
+    "EP674-reasoning-003",
+    "EP674-reasoning-004",
+    "EP674-reasoning-005",
+    "EP674-reasoning-006",
+    "EP674-reasoning-007",
+    "EP674-reasoning-008"
+  ],
+  "full_synthesis": null,
+  "light_consolidation": null,
+  "bypass": {}
+}
