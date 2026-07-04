@@ -5,7 +5,9 @@ This repository is the full Podcast Speaker AI Investment Mentor project.
 Current workspace layout:
 
 - `legacy_segment_poc/`: completed Phase 1 transcription POC. Treat as frozen reference except for explicitly requested bug fixes.
-- `semantic_analysis_poc/`: active Phase 2 Semantic Extraction POC workspace.
+- `semantic_analysis_poc/`: Phase 2 offline semantic extraction POC workspace.
+- `legacy_mentor_rag_poc/`: legacy deterministic case-only Mentor RAG baseline. Keep working for regression and comparison, but do not add new reasoning architecture here.
+- `reasoning_mentor_poc/`: active skeleton for the next principle-plus-case Reasoning Mentor POC.
 
 ## Project Purpose
 
@@ -38,7 +40,7 @@ Phase 1 — Transcription POC
 Current phase:
 
 ```text
-Phase 2 — Semantic Extraction POC
+Reasoning Mentor POC preparation
 ```
 
 ## Global Invariants
@@ -53,7 +55,9 @@ Phase 2 — Semantic Extraction POC
 - Prefer project-relative paths for repository artifacts.
 - Phase 2 semantic extraction should be LLM-based, whole-episode-aware, evidence-grounded, hierarchical, and multi-tag.
 - Do not use deterministic keyword segmentation, fixed episode-position weighting, fixed-duration windows, or single-label classification as the main semantic method.
-- Level 3 is optional. Do not force a full episode synthesis, central theme, or unified narrative when Level 1 recommends `light_consolidation` or `bypass`.
+- Future Level 3 principles are episode-local and provisional. Do not treat them as confirmed long-term speaker rules.
+- Future Level 4 principles must preserve supporting cases, counterexamples, conflicts, evolution, and confidence.
+- A principle is an abstraction from evidence. Do not count it as an additional independent evidence item.
 - Terminology corrections are annotations/context and must not destructively rewrite raw transcript evidence.
 
 ## Simplicity And Organization Rules
@@ -71,6 +75,7 @@ Phase 2 — Semantic Extraction POC
 ## Documentation Index
 
 - `docs/architecture.md`: full long-term architecture.
+- `docs/reasoning_mentor_architecture.md`: planned four-level principle-plus-case Mentor architecture.
 - `docs/data-model.md`: project data layers and invariants.
 - `docs/cloud-processing-plan.md`: future cloud transcription plan.
 - `docs/future-improvements.md`: deferred optimization ideas.
@@ -78,6 +83,8 @@ Phase 2 — Semantic Extraction POC
 - `legacy_segment_poc/poc_docs/local-transcription-poc.md`: Phase 1 transcription POC results.
 - `legacy_segment_poc/poc_docs/data-source-notes.md`: RSS, SoundOn, Apple lookup, and manifest notes.
 - `legacy_segment_poc/poc_docs/troubleshooting.md`: Phase 1 troubleshooting and known failure modes.
-- `semantic_analysis_poc/README.md`: active Phase 2 workspace overview.
+- `semantic_analysis_poc/README.md`: Phase 2 offline semantic extraction workspace overview.
+- `legacy_mentor_rag_poc/README.md`: legacy case-only RAG baseline usage.
+- `reasoning_mentor_poc/README.md`: active skeleton for the new Reasoning Mentor POC.
 
 For Phase 2 operation rules, also read `semantic_analysis_poc/AGENTS.md`. For Phase 1 reference rules, read `legacy_segment_poc/AGENTS.md`.

@@ -15,4 +15,4 @@ max_retries: 1
 
 headers:
   http_referer:
-  x_title: Podcast Speaker AI Investment Mentor Agent POC
+  x_title: Podcast Speaker AI Investment Legacy Mentor RAG POC

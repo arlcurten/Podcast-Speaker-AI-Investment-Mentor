@@ -1,4 +1,4 @@
-# Mentor Agent POC Evaluation
+# Legacy Mentor RAG POC Evaluation
 
 ## 1. 他在不同時期如何看待追高？
 

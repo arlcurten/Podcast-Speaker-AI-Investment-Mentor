@@ -41,7 +41,7 @@ Manual transcript quality remains pending. These are performance/feasibility res
 ## Future Pre-check
 
 ```bash
-cd /home/g9161/projects/Podcast-Speaker-AI-Investment-Mentor/gooaye_mentor_poc
+cd /home/g9161/projects/Podcast-Speaker-AI-Investment-Mentor/legacy_segment_poc
 nvidia-smi
 python3 main.py inspect-env
 ```
@@ -53,7 +53,7 @@ Confirm there is no game or unrelated heavy GPU process. The transcription scrip
 Use the same fixed 15-minute EP674 clip to avoid a long full-episode rerun:
 
 ```bash
-cd /home/g9161/projects/Podcast-Speaker-AI-Investment-Mentor/gooaye_mentor_poc
+cd /home/g9161/projects/Podcast-Speaker-AI-Investment-Mentor/legacy_segment_poc
 python3 main.py benchmark-clip \
   --clip data/legacy/benchmarks/EP674/benchmark_clip.mp3 \
   --episode EP674 \
@@ -86,7 +86,7 @@ Record:
 The local same-clip `large-v3` comparison completed successfully once. Do not keep re-running without a specific reason.
 
 ```bash
-cd /home/g9161/projects/Podcast-Speaker-AI-Investment-Mentor/gooaye_mentor_poc
+cd /home/g9161/projects/Podcast-Speaker-AI-Investment-Mentor/legacy_segment_poc
 python3 main.py benchmark-clip \
   --clip data/legacy/benchmarks/EP674/benchmark_clip.mp3 \
   --episode EP674 \

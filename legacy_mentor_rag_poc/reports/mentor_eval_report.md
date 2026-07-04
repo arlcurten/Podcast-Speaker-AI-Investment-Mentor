@@ -1,4 +1,4 @@
-# Mentor Agent POC Evaluation
+# Legacy Mentor RAG POC Evaluation
 
 ## 1. 他通常怎麼看追高？
 

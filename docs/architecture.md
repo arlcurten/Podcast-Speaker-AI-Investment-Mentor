@@ -5,8 +5,9 @@ This document describes the long-term architecture for the Podcast Speaker AI In
 Current boundary:
 
 - Phase 1 Transcription POC is complete and preserved in `legacy_segment_poc/`.
-- Phase 2 Semantic Extraction POC is active in `semantic_analysis_poc/`.
-- Later retrieval and Mentor Agent phases are future work.
+- Phase 2 Semantic Extraction POC is implemented in `semantic_analysis_poc/` for the current pilot episodes.
+- `legacy_mentor_rag_poc/` is a working deterministic case-only RAG baseline.
+- `reasoning_mentor_poc/` is the minimal skeleton for the next principle-plus-case Reasoning Mentor.
 
 ## Target Flow
 
@@ -27,11 +28,11 @@ Level 1: Episode Semantic Map
     ↓
 Level 2: Topic-thread Reasoning Records
     ↓
-Level 3: Optional Episode Consolidation
+Level 3: Episode-Level Provisional Principles
     ↓
-Cross-episode decision cases and behavioral patterns
+Level 4: Cross-Episode Decision Principles
     ↓
-Hierarchical RAG / Mentor Agent
+Principle-plus-case Reasoning Mentor
 ```
 
 ## Phase 1 Verified
@@ -50,35 +51,63 @@ Verified in the completed transcription POC:
 
 Phase 1 is now legacy/reference, frozen except for bug fixes or explicitly requested reproducibility checks.
 
-## Phase 2 Active Direction
+## Phase 2 Semantic Extraction
 
-Phase 2 should use the normalized whole-episode transcript as LLM input. The LLM is responsible for semantic understanding. Deterministic code should only handle transcript preparation, source mapping, API orchestration, schema validation, retry handling, metadata, storage, and reproducibility.
+Phase 2 uses the normalized whole-episode transcript as LLM input. The LLM is responsible for semantic understanding. Deterministic code handles transcript preparation, source mapping, API orchestration, schema validation, retry handling, metadata, storage, and reproducibility.
 
 Target hierarchy:
 
 1. Episode Semantic Map
-2. Topic-thread Reasoning Records
-3. Optional Episode Consolidation
+2. Reasoning Records / Cases
+3. Future Episode-Level Provisional Principles
+4. Future Cross-Episode Decision Principles
 
 Topic threads may be long, overlapping, or non-contiguous. The primary method should not be deterministic keyword segmentation, fixed episode-position weighting, fixed-duration windows, or single-label classification.
 
-Level 3 is strategy-dependent:
+Level 3 in the new architecture should be principle-oriented and strategy-dependent:
 
-- `full_synthesis`: use only when the episode has a clear central theme.
-- `light_consolidation`: use for multi-topic, conversational, mixed, or loosely structured episodes.
-- `bypass`: use when Level 2 reasoning records are already complete and largely independent.
+- `principle_extraction`: identify episode-local recurring decision patterns.
+- `light_principle_grouping`: group overlapping local patterns without inventing a central theme.
+- `bypass`: skip principle extraction when Level 2 cases are already the useful output.
 
-Do not force every episode into one unified narrative. Level 2 may be the canonical useful output.
+Do not force every episode into one unified narrative. Level 2 cases may be the canonical useful output for loosely structured episodes.
+
+## Mentor POC Boundary
+
+`legacy_mentor_rag_poc/` is a completed case-only baseline:
+
+```text
+query
+    ↓
+retrieve Level 2 reasoning records
+    ↓
+domain filtering and context assembly
+    ↓
+LLM answer with citations
+```
+
+The new `reasoning_mentor_poc/` should eventually use principles and cases:
+
+```text
+query / scenario analysis
+    ↓
+retrieve Level 4 principles
+    ↓
+retrieve supporting, conflicting, and similar Level 2 cases
+    ↓
+online applicability check
+    ↓
+conditional answer with citations
+```
 
 ## Future
 
-- API/model selection.
-- 3 to 20 episode pilot.
+- Level 3 provisional principle extraction.
+- Level 4 cross-episode decision-principle construction.
+- Principle-plus-case Reasoning Mentor implementation.
 - Full corpus processing.
-- Cross-episode decision cases and behavioral patterns.
 - Conditional speaker model construction.
-- Hierarchical retrieval.
-- Mentor Agent MVP.
+- Current information tools, only after historical reasoning is stable.
 
 ## Boundaries
 

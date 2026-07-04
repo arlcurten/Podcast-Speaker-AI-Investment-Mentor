@@ -233,4 +233,4 @@ semantic_analysis_poc/data/phase1_inputs/EP*/
 
 # Mentor runtime/evaluation JSON outputs are reproducible; keep concise
 # Markdown summaries and source/config files trackable.
-mentor_agent_poc/reports/*_results.json
+legacy_mentor_rag_poc/reports/*_results.json

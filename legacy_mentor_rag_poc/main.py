@@ -53,7 +53,7 @@ DIFFICULT_RETRIEVAL_QUESTIONS = [
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Mentor Agent POC over semantic reasoning records.")
+    parser = argparse.ArgumentParser(description="Legacy case-only Mentor RAG baseline over semantic reasoning records.")
     sub = parser.add_subparsers(dest="command", required=True)
 
     ask = sub.add_parser("ask", help="Ask one question.")
@@ -156,7 +156,7 @@ def print_answer(result: dict, debug: bool = False) -> None:
 
 
 def write_eval_markdown(path: Path, results: list[dict]) -> None:
-    lines = ["# Mentor Agent POC Evaluation", ""]
+    lines = ["# Legacy Case-Only Mentor RAG Evaluation", ""]
     for idx, result in enumerate(results, 1):
         lines.extend(
             [

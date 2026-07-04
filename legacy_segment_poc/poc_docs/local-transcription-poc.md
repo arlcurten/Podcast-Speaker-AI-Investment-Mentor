@@ -45,8 +45,8 @@ The clean same-clip benchmark has now completed under a controlled desktop basel
 
 Fixed clip:
 
-- Source: `gooaye_mentor_poc/data/audio/EP674/episode.mp3`
-- Clip: `gooaye_mentor_poc/data/legacy/benchmarks/EP674/benchmark_clip.mp3`
+- Source: `legacy_segment_poc/data/audio/EP674/episode.mp3`
+- Clip: `legacy_segment_poc/data/legacy/benchmarks/EP674/benchmark_clip.mp3`
 - Requested start/end: `1200.00s` / `2100.00s`
 - Requested duration: `900.00s`
 - ffprobe duration: `900.022857s`
@@ -139,9 +139,9 @@ Verified from `data/evaluation/EP674/merge_summary.json`:
 - Text is not modified.
 - This is not semantic topic segmentation.
 
-The merge implementation now joins source segment text with a single space between non-empty stripped segment texts. Raw-to-merged integrity is verified automatically when running `gooaye_mentor_poc/main.py merge`.
+The merge implementation now joins source segment text with a single space between non-empty stripped segment texts. Raw-to-merged integrity is verified automatically when running `legacy_segment_poc/main.py merge`.
 
-Verified from `gooaye_mentor_poc/data/evaluation/EP674/merge_integrity.json`:
+Verified from `legacy_segment_poc/data/evaluation/EP674/merge_integrity.json`:
 
 - Merged start timestamp equals the first contributing raw segment start.
 - Merged end timestamp equals the last contributing raw segment end.
@@ -152,16 +152,16 @@ Verified from `gooaye_mentor_poc/data/evaluation/EP674/merge_integrity.json`:
 
 EP674 now has a separate Traditional Chinese normalization layer:
 
-- Merged normalized transcript: `gooaye_mentor_poc/data/transcripts/EP674/derived_large-v3-turbo_normalized_merged_transcript_zh_tw.json`
+- Merged normalized transcript: `legacy_segment_poc/data/transcripts/EP674/derived_large-v3-turbo_normalized_merged_transcript_zh_tw.json`
 - Method: OpenCC `s2twp` plus replacements from `docs/terminology.tsv`.
 - Raw ASR transcript remains unchanged.
 
 A minimal deterministic topic segmentation, classification, and routing POC exists for EP674:
 
-- Topic segments review reference: `gooaye_mentor_poc/data/topic_segments/EP674/topic_segments.json`
-- Human review package: `gooaye_mentor_poc/reports/EP674_human_review.md`
+- Topic segments review reference: `legacy_segment_poc/data/topic_segments/EP674/topic_segments.json`
+- Human review package: `legacy_segment_poc/reports/EP674_human_review.md`
 
-This POC uses keyword and continuity heuristics with configurable thresholds in `gooaye_mentor_poc/config/topic_routing.yaml`. It is designed for human review and does not create a vector database, RAG index, or Mentor Agent.
+This POC uses keyword and continuity heuristics with configurable thresholds in `legacy_segment_poc/config/topic_routing.yaml`. It is designed for human review and does not create a vector database, RAG index, or Mentor Agent.
 
 ## Transcript Quality
 
@@ -180,7 +180,7 @@ Review risk areas:
 
 ## Next Steps
 
-1. Review the selected examples in `gooaye_mentor_poc/reports/EP674_human_review.md`.
+1. Review the selected examples in `legacy_segment_poc/reports/EP674_human_review.md`.
 2. Add confirmed terminology corrections to `docs/terminology.tsv`.
 3. Treat topic/classification limitations as future optimization work unless they block the POC.
 4. Decide whether transcript quality is sufficient for a broader pilot.

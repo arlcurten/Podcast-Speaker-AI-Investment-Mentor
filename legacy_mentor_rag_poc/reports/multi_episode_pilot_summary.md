@@ -18,7 +18,7 @@ Total Phase 2 cost for the four loaded episodes: `$0.056540`.
 Command:
 
 ```bash
-cd mentor_agent_poc
+cd legacy_mentor_rag_poc
 python3 main.py eval-cross
 ```
 

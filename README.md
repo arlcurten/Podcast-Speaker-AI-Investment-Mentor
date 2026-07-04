@@ -9,15 +9,19 @@ The goal is not automated trading or order placement. The long-term goal is to p
 Current status:
 
 - Phase 1 Transcription POC is complete and preserved as a stable reference in `legacy_segment_poc/`.
-- Phase 2 Semantic Extraction POC is the active workspace in `semantic_analysis_poc/`.
-- Phase 2 starts from whole-episode normalized transcript input and will use LLM-based, evidence-grounded semantic extraction.
-- RAG, vector database, full Mentor Agent, fine-tuning, and cloud batch processing are not implemented yet.
+- Phase 2 Semantic Extraction POC is implemented in `semantic_analysis_poc/` for the current pilot episodes.
+- `legacy_mentor_rag_poc/` is a working legacy case-only RAG baseline over Level 2 reasoning records.
+- `reasoning_mentor_poc/` is the new minimal workspace for the future principle-plus-case Reasoning Mentor.
+- Vector database, current market tools, portfolio integration, fine-tuning, UI, deployment, and full corpus processing are not implemented yet.
 
 Start here:
 
 - `AGENTS.md`: project-wide agent rules.
-- `semantic_analysis_poc/README.md`: active Phase 2 workspace.
+- `semantic_analysis_poc/README.md`: offline semantic extraction workspace.
+- `legacy_mentor_rag_poc/README.md`: deterministic case-only RAG baseline.
+- `reasoning_mentor_poc/README.md`: new principle-plus-case Mentor skeleton.
 - `legacy_segment_poc/README.md`: completed Phase 1 transcription POC reference.
+- `docs/reasoning_mentor_architecture.md`: planned four-level reasoning architecture.
 - `docs/terminology.tsv`: shared terminology table for preserved terms, aliases, and corrections.
 - `docs/future-improvements.md`: deferred optimization ideas.
 
@@ -30,26 +34,28 @@ Start here:
 [done]    Phase 1: Raw ASR transcript
 [done]    Phase 1: Traditional Chinese normalization
 [done]    Phase 1: Deterministic merged utterances and integrity validation
-[active]  Phase 2: Whole-episode LLM semantic extraction POC
-[future]  Phase 3: API/model selection
-[future]  Phase 4: 3 to 20 episode pilot
-[future]  Phase 5: Full corpus processing
-[future]  Phase 6: Cross-episode knowledge
-[future]  Phase 7: Mentor MVP
+[done]    Phase 2: Whole-episode LLM semantic extraction POC for pilot episodes
+[done]    Legacy case-only Mentor RAG baseline over Level 2 records
+[active]  New Reasoning Mentor POC skeleton and design boundary
+[future]  Level 3: Episode-level provisional principles
+[future]  Level 4: Cross-episode decision principles
+[future]  Principle-plus-case Mentor implementation
+[future]  Full corpus processing
 [future]  Phase 8: Advanced version
 ```
 
 Every derived layer should remain traceable to episode, timestamp, and source segment IDs. Raw artifacts should not be overwritten by normalized, merged, corrected, or semantic extraction outputs.
 
-Phase 2 design direction:
+Current semantic design direction:
 
 - Use the whole normalized episode transcript as LLM input.
 - Supply terminology corrections as annotations, not destructive transcript rewrites.
-- Produce a three-level hierarchy: Episode Semantic Map, Topic-thread Reasoning Records, and optional Episode Consolidation.
-- Let Level 1 recommend whether Level 3 should use `full_synthesis`, `light_consolidation`, or `bypass`.
+- Produce Level 1 Episode Semantic Maps and Level 2 Reasoning Records / Cases.
+- Future Level 3 should extract episode-local provisional principles from Level 2 records.
+- Future Level 4 should compare principles and cases across episodes.
 - Preserve uncertainty, assumptions, risks, exceptions, counterexamples, opinion changes, decisions, and speaker behavior.
 - Do not use deterministic keyword segmentation/classification as the primary semantic method.
-- Do not invent an episode-level central message when the episode is conversational, multi-topic, or loosely structured.
+- Do not invent long-term speaker principles without cross-episode evidence.
 
 ## Repository Hierarchy
 
@@ -65,22 +71,35 @@ Podcast-Speaker-AI-Investment-Mentor/
 │   └── terminology.tsv
 ├── legacy_segment_poc/
 │   └── ...
-└── semantic_analysis_poc/
-    ├── AGENTS.md
+├── semantic_analysis_poc/
+│   └── ...
+├── legacy_mentor_rag_poc/
+│   └── ...
+└── reasoning_mentor_poc/
     ├── README.md
+    ├── main.py
     ├── config/
-    ├── data/
+    ├── modules/
+    ├── prompts/
     └── ...
 ```
 
 ## How To Use This Project
 
-For active Phase 2 work, start in `semantic_analysis_poc/`.
+For transcription and normalization reference, start in `legacy_segment_poc/`.
 
-For Phase 1 reference only:
+For offline semantic extraction, start in `semantic_analysis_poc/`.
+
+For the working case-only RAG demo, start in:
 
 ```text
-legacy_segment_poc/
+legacy_mentor_rag_poc/
+```
+
+For the next principle-plus-case Mentor architecture, start in:
+
+```text
+reasoning_mentor_poc/
 ```
 
 Do not rerun Phase 1 transcription, GPU benchmark, RSS discovery, or episode download unless explicitly needed.
@@ -88,6 +107,7 @@ Do not rerun Phase 1 transcription, GPU benchmark, RSS discovery, or episode dow
 ## More Detail
 
 - Architecture: `docs/architecture.md`
+- Reasoning Mentor architecture: `docs/reasoning_mentor_architecture.md`
 - Data model: `docs/data-model.md`
 - Cloud plan: `docs/cloud-processing-plan.md`
 - Future improvements: `docs/future-improvements.md`
@@ -95,3 +115,5 @@ Do not rerun Phase 1 transcription, GPU benchmark, RSS discovery, or episode dow
 - Phase 1 POC details: `legacy_segment_poc/poc_docs/local-transcription-poc.md`
 - Phase 1 troubleshooting: `legacy_segment_poc/poc_docs/troubleshooting.md`
 - Phase 2 POC: `semantic_analysis_poc/README.md`
+- Legacy case-only RAG baseline: `legacy_mentor_rag_poc/README.md`
+- New Reasoning Mentor skeleton: `reasoning_mentor_poc/README.md`

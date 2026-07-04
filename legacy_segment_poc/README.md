@@ -7,7 +7,7 @@ The POC validates one episode, EP674, through ingestion, audio validation, trans
 ## Folder Hierarchy
 
 ```text
-gooaye_mentor_poc/
+legacy_segment_poc/
 ├── AGENTS.md
 ├── README.md
 ├── main.py

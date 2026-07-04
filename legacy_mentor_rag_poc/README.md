@@ -1,6 +1,10 @@
-# Mentor Agent POC
+# Legacy Mentor RAG POC
 
-This is a minimal demo workspace for the Podcast Speaker AI Investment Mentor Agent.
+This is the legacy deterministic case-only RAG baseline.
+
+It retrieves Level 2 reasoning records and asks an LLM to synthesize an evidence-grounded answer. It does not contain the new Level 3 / Level 4 principle model or online applicability reasoning. It is retained for regression testing and comparison with the new `../reasoning_mentor_poc/`.
+
+Do not add future principle extraction, cross-episode decision-principle modeling, online applicability assessment, current-market tools, or production Agent features here. Keep this baseline stable unless a compatibility or correctness bug is found.
 
 It starts from semantic knowledge produced by `../semantic_analysis_poc/` and demonstrates:
 
@@ -38,7 +42,7 @@ episode / timestamp / record citations
 
 - Level 1 Episode Semantic Map
 - Level 2 Reasoning Records
-- Level 3 optional consolidation
+- Level 3 optional consolidation when present as Phase 2 context
 - compact evidence references with episode, timestamp, and record IDs
 
 The agent does not rerun transcription or semantic extraction.
@@ -94,7 +98,7 @@ MENTOR_MODEL_ID=qwen/qwen3-235b-a22b-2507
 Ask one question:
 
 ```bash
-cd mentor_agent_poc
+cd legacy_mentor_rag_poc
 python3 main.py ask "這種市場環境適合追高嗎？"
 ```
 
@@ -160,4 +164,4 @@ python3 main.py ask "他有沒有談到房地產投資策略？" --debug
 - If no evidence is retrieved, the agent should say evidence is insufficient rather than answer from general model knowledge.
 - Generated full transcripts, Phase 2 JSON outputs, API response JSON, and temporary indexes are local artifacts, not production storage.
 
-Additional episodes can be added by placing their Phase 2 outputs under `semantic_analysis_poc/data/outputs/<EPXXX>/` and adding them to `config/data.yaml`.
+Additional episodes can be added by placing their Phase 2 outputs under `semantic_analysis_poc/data/outputs/<EPXXX>/` and adding them to `config/data.yaml`. Larger reasoning-system changes should happen in `../reasoning_mentor_poc/`, not in this legacy baseline.

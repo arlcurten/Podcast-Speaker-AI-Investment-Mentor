@@ -1,16 +1,16 @@
 # Semantic Analysis POC
 
-This is the active semantic analysis POC workspace for the Podcast Speaker AI Investment Mentor project.
+This is the offline semantic analysis POC workspace for the Podcast Speaker AI Investment Mentor project.
 
 Phase 1 transcription is complete and preserved separately in `../legacy_segment_poc/`. This POC starts from Phase 1 outputs and prepares for LLM-based semantic extraction.
 
-Phase 2 semantic extraction and the initial one-episode Phase 3 model comparison have been run on EP674. The current primary pilot model is:
+Phase 2 semantic extraction has been run on the current pilot episodes. The current primary pilot model is:
 
 ```text
 qwen/qwen3-235b-a22b-2507
 ```
 
-RAG, vector database, Mentor Agent, full corpus processing, and cloud workflow are not implemented here.
+RAG, vector database, Mentor Agent, full corpus processing, and cloud workflow are not implemented here. The case-only Mentor baseline lives in `../legacy_mentor_rag_poc/`; the new principle-plus-case Mentor skeleton lives in `../reasoning_mentor_poc/`.
 
 ## Purpose
 
@@ -30,17 +30,18 @@ Test whether a whole normalized episode transcript can be converted into evidenc
 Phase 1 normalized transcript
   -> LLM semantic extraction
   -> Level 1: Episode Semantic Map
-  -> Level 2: Topic-thread Reasoning Records
-  -> Level 3: Optional Episode Consolidation
+  -> Level 2: Reasoning Records / Cases
+  -> future Level 3: Episode-Level Provisional Principles
+  -> future Level 4: Cross-Episode Decision Principles
   -> small pilot summary
 ```
 
 Topic threads may be long, overlapping, or non-contiguous. The main semantic method should not be deterministic keyword segmentation, fixed episode-position weighting, fixed-duration windows, or single-label classification.
 
-Level 3 is optional. Do not force every episode into a unified theme or narrative. Level 1 must recommend one of these Level 3 strategies:
+Future Level 3 is principle-oriented and optional. Do not force every episode into a unified theme or narrative. A future Level 3 pass may use:
 
-- `full_synthesis`: use only when the episode has a clear central theme.
-- `light_consolidation`: use for multi-topic, conversational, mixed, or loosely structured episodes.
+- `principle_extraction`: extract episode-local recurring decision patterns.
+- `light_principle_grouping`: group related local patterns without inventing a central thesis.
 - `bypass`: use when Level 2 reasoning records are already complete and mostly independent.
 
 Level 2 is allowed to be the final useful semantic output.
@@ -60,11 +61,11 @@ Level 2 asks: what reasoning, conditions, risks, exceptions, and behavioral sign
 
 Reasoning records may come from one continuous region or multiple non-contiguous transcript regions. Each record should preserve claims, observations, causes, assumptions, conditions, risks, uncertainty, exceptions, decisions or preferences, avoided actions, view-change conditions, speaker behavior, teaching style, tags, and source evidence.
 
-Level 3 asks: should this episode receive full synthesis, light consolidation, or no consolidation?
+Future Level 3 asks: are there episode-local decision principles worth extracting?
 
-- `full_synthesis`: consolidate major views, cases, decision principles, risks, exceptions, repeated arguments, corrections, contradictions, opinion changes, and overall stance.
-- `light_consolidation`: produce a topic inventory, merge duplicate or substantially overlapping reasoning records, identify cross-topic links, corrections, contradictions, and records useful for cross-episode analysis. Do not invent an episode-level central message.
-- `bypass`: preserve Level 2 records as canonical output and produce only minimal metadata explaining why consolidation was skipped.
+- `principle_extraction`: identify provisional principles supported by multiple local records.
+- `light_principle_grouping`: preserve useful groupings without over-compressing a loose episode.
+- `bypass`: preserve Level 2 records as canonical output and record why principle extraction was skipped.
 
 The LLM must be explicitly told that many episodes have no central theme, the speaker may move between unrelated topics, and it must not invent coherence or force a narrative.
 
@@ -197,7 +198,7 @@ reports/phase4_pilot_summary.md
 
 ## Current Status
 
-Current available Phase 1 input contains only EP674, so the pilot currently processes one episode rather than a true 3-5 episode sample. Add more normalized Phase 1 transcript inputs under `data/phase1_inputs/<EPXXX>/` before running a broader pilot.
+Current available Phase 1 inputs include the pilot episodes that have already been processed. Add more normalized Phase 1 transcript inputs under `data/phase1_inputs/<EPXXX>/` before running a broader pilot.
 
 ```bash
 cd semantic_analysis_poc

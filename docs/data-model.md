@@ -48,14 +48,16 @@ The long-term project should preserve evidence and derivation boundaries. Each l
    - Threads may be long, overlapping, or non-contiguous.
    - Must preserve conditions, assumptions, risks, exceptions, counterexamples, opinion changes, decisions, and speaker behavior.
 
-11. Optional Episode Consolidation
-   - Level 3 strategy-dependent consolidation.
-   - Supports `full_synthesis`, `light_consolidation`, and `bypass`.
-   - Should not invent a central message for conversational, multi-topic, or loosely structured episodes.
+11. Episode-Level Provisional Principles
+   - Future Level 3 layer derived from one episode's Level 2 records.
+   - Captures episode-local recurring decision patterns and preferences.
+   - Supports `principle_extraction`, `light_principle_grouping`, and `bypass`.
+   - Must remain provisional and evidence-linked.
 
-12. Future decision/reasoning cases
-   - Extracted investment reasoning examples.
-   - Must link back to source timestamps and text.
+12. Cross-Episode Decision Principles
+   - Future Level 4 layer comparing Level 2 cases and Level 3 provisional principles across episodes.
+   - Preserves conditions, exceptions, conflicts, counterexamples, evolution, independent episode coverage, and confidence.
+   - Must link back to Level 2 source records.
 
 13. Future behavioral patterns
    - Cross-case patterns such as risk attitude, changing views, and uncertainty handling.
@@ -76,8 +78,10 @@ The long-term project should preserve evidence and derivation boundaries. Each l
 - Text normalization must retain original text and store normalized text separately.
 - LLM extraction must store prompts, model, provider, version, schema version, token/cost metadata when available, and confidence/uncertainty notes.
 - Terminology corrections must be annotations or parallel fields, not destructive transcript rewrites.
-- Level 1 must record episode structure and recommend the Level 3 strategy.
-- Level 3 validators must only require fields for the selected strategy.
+- Level 1 must record episode structure and route evidence to Level 2 extraction.
+- Level 3 principles must be marked provisional and scoped to their episode.
+- Level 4 principles must preserve source case coverage and counterexamples.
+- A principle is an abstraction derived from records. It must not be counted as an additional independent piece of evidence.
 - Do not treat transcript text as verified until manual review is complete.
 
 ## Project-Wide Path Rule
@@ -97,12 +101,11 @@ Verified:
 - EP674 minimal deterministic topic segmentation, classification, and routing POC exists as legacy review/reference only.
 - EP674 segment audit and manual review package exist.
 
-Pending:
+Current higher-level status:
 
-- Manual quality judgments.
-- Phase 2 whole-episode LLM semantic extraction.
-- Reasoning-case extraction.
-- Behavioral pattern extraction.
+- Phase 2 Level 1/Level 2 extraction has pilot outputs for EP674, EP670, EP450, and EP57.
+- `legacy_mentor_rag_poc/` can retrieve Level 2 records and generate case-grounded answers.
+- Level 3 provisional principles and Level 4 cross-episode decision principles are planned, not implemented.
 
 ## Phase 2 Input Copy
 
