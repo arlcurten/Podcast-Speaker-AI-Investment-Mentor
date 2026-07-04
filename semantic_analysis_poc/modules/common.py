@@ -43,7 +43,13 @@ load_project_dotenv()
 
 
 def read_json(path: Path) -> Any:
-    return json.loads(path.read_text(encoding="utf-8"))
+    try:
+        return json.loads(path.read_text(encoding="utf-8"))
+    except FileNotFoundError as exc:
+        raise FileNotFoundError(
+            f"Missing data file: {path}. If this artifact is private, set "
+            "PIPELINE_DATA_ROOT to consultant-ai-agent-private/pipeline_data."
+        ) from exc
 
 
 def write_json(path: Path, data: Any) -> None:
@@ -180,6 +186,57 @@ def resolve_env_value(value: Any) -> Any:
     if isinstance(value, str) and value.startswith("${") and value.endswith("}"):
         return os.environ.get(value[2:-1])
     return value
+
+
+def expand_env_path(value: str | Path) -> Path:
+    if isinstance(value, str) and "${" in value:
+        var_name = value.split("${", 1)[1].split("}", 1)[0]
+        if var_name and not os.environ.get(var_name):
+            raise RuntimeError(
+                f"Missing environment variable {var_name} for private data path. "
+                "Set PIPELINE_DATA_ROOT to consultant-ai-agent-private/pipeline_data."
+            )
+    return Path(os.path.expandvars(str(value)))
+
+
+def private_pipeline_path(relative_path: str | Path, stage: str = "semantic_analysis") -> Path:
+    path = expand_env_path(relative_path)
+    if path.is_absolute():
+        return path
+    local = ROOT / path
+    if local.exists():
+        return local
+    private_root = os.environ.get("PIPELINE_DATA_ROOT")
+    if private_root:
+        parts = path.parts
+        if parts and parts[0] == "data":
+            path = Path(*parts[1:])
+        return Path(private_root) / stage / path
+    return local
+
+
+def private_report_path(relative_path: str | Path, stage: str = "semantic_analysis") -> Path:
+    path = expand_env_path(relative_path)
+    if path.is_absolute():
+        return path
+    parts = path.parts
+    private_root = os.environ.get("PIPELINE_DATA_ROOT")
+    if private_root:
+        if parts and parts[0] == "reports":
+            path = Path(*parts[1:])
+        return Path(private_root) / stage / "reports" / path
+    if parts and parts[0] == "reports":
+        return ROOT / path
+    return ROOT / "reports" / path
+
+
+def display_path(path: Path) -> str:
+    for base in (ROOT, PROJECT_ROOT):
+        try:
+            return path.resolve().relative_to(base.resolve()).as_posix()
+        except ValueError:
+            pass
+    return str(path)
 
 
 def estimate_cost(provider_config: dict[str, Any], usage: dict[str, Any]) -> dict[str, Any]:

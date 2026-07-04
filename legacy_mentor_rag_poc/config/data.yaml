@@ -1,24 +1,24 @@
 episodes:
   EP674:
-    level1: ../semantic_analysis_poc/data/outputs/EP674/level1_episode_semantic_map.json
-    level2: ../semantic_analysis_poc/data/outputs/EP674/level2_reasoning_records.json
-    level3: ../semantic_analysis_poc/data/outputs/EP674/level3_optional_consolidation.json
-    run_metadata: ../semantic_analysis_poc/data/outputs/EP674/run_metadata.json
+    level1: ${PIPELINE_DATA_ROOT}/semantic_analysis/outputs/EP674/level1_episode_semantic_map.json
+    level2: ${PIPELINE_DATA_ROOT}/semantic_analysis/outputs/EP674/level2_reasoning_records.json
+    level3: ${PIPELINE_DATA_ROOT}/semantic_analysis/outputs/EP674/level3_optional_consolidation.json
+    run_metadata: ${PIPELINE_DATA_ROOT}/semantic_analysis/outputs/EP674/run_metadata.json
   EP670:
-    level1: ../semantic_analysis_poc/data/outputs/EP670/level1_episode_semantic_map.json
-    level2: ../semantic_analysis_poc/data/outputs/EP670/level2_reasoning_records.json
-    level3: ../semantic_analysis_poc/data/outputs/EP670/level3_optional_consolidation.json
-    run_metadata: ../semantic_analysis_poc/data/outputs/EP670/run_metadata.json
+    level1: ${PIPELINE_DATA_ROOT}/semantic_analysis/outputs/EP670/level1_episode_semantic_map.json
+    level2: ${PIPELINE_DATA_ROOT}/semantic_analysis/outputs/EP670/level2_reasoning_records.json
+    level3: ${PIPELINE_DATA_ROOT}/semantic_analysis/outputs/EP670/level3_optional_consolidation.json
+    run_metadata: ${PIPELINE_DATA_ROOT}/semantic_analysis/outputs/EP670/run_metadata.json
   EP450:
-    level1: ../semantic_analysis_poc/data/outputs/EP450/level1_episode_semantic_map.json
-    level2: ../semantic_analysis_poc/data/outputs/EP450/level2_reasoning_records.json
-    level3: ../semantic_analysis_poc/data/outputs/EP450/level3_optional_consolidation.json
-    run_metadata: ../semantic_analysis_poc/data/outputs/EP450/run_metadata.json
+    level1: ${PIPELINE_DATA_ROOT}/semantic_analysis/outputs/EP450/level1_episode_semantic_map.json
+    level2: ${PIPELINE_DATA_ROOT}/semantic_analysis/outputs/EP450/level2_reasoning_records.json
+    level3: ${PIPELINE_DATA_ROOT}/semantic_analysis/outputs/EP450/level3_optional_consolidation.json
+    run_metadata: ${PIPELINE_DATA_ROOT}/semantic_analysis/outputs/EP450/run_metadata.json
   EP57:
-    level1: ../semantic_analysis_poc/data/outputs/EP57/level1_episode_semantic_map.json
-    level2: ../semantic_analysis_poc/data/outputs/EP57/level2_reasoning_records.json
-    level3: ../semantic_analysis_poc/data/outputs/EP57/level3_optional_consolidation.json
-    run_metadata: ../semantic_analysis_poc/data/outputs/EP57/run_metadata.json
+    level1: ${PIPELINE_DATA_ROOT}/semantic_analysis/outputs/EP57/level1_episode_semantic_map.json
+    level2: ${PIPELINE_DATA_ROOT}/semantic_analysis/outputs/EP57/level2_reasoning_records.json
+    level3: ${PIPELINE_DATA_ROOT}/semantic_analysis/outputs/EP57/level3_optional_consolidation.json
+    run_metadata: ${PIPELINE_DATA_ROOT}/semantic_analysis/outputs/EP57/run_metadata.json
 
 retrieval:
   mode: hybrid_dense

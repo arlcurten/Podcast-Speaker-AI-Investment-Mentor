@@ -23,6 +23,7 @@ Start here:
 - `reasoning_mentor_poc/README.md`: new principle-plus-case Mentor skeleton.
 - `legacy_segment_poc/README.md`: completed Phase 1 transcription POC reference.
 - `docs/reasoning_mentor_architecture.md`: planned four-level reasoning architecture.
+- `docs/private_data_setup.md`: how to connect the public source repo to the sibling private data repo.
 - `docs/terminology.tsv`: shared terminology table for preserved terms, aliases, and corrections.
 - `docs/future-improvements.md`: deferred optimization ideas.
 
@@ -68,6 +69,7 @@ Podcast-Speaker-AI-Investment-Mentor/
 ├── docs/
 │   ├── architecture.md
 │   ├── data-model.md
+│   ├── private_data_setup.md
 │   ├── cloud-processing-plan.md
 │   ├── future-improvements.md
 │   └── terminology.tsv
@@ -106,6 +108,26 @@ reasoning_mentor_poc/
 
 Do not rerun Phase 1 transcription, GPU benchmark, RSS discovery, or episode download unless explicitly needed.
 
+## Public / Private Data Boundary
+
+This public repository should contain code, schemas, prompts, configs, public documentation, and safe examples. Full podcast-derived artifacts live in a sibling private repository:
+
+```text
+projects/
+├── Podcast-Speaker-AI-Investment-Mentor/
+└── consultant-ai-agent-private/
+```
+
+Set these local environment variables when running commands that need private data:
+
+```bash
+PODCAST_DATA_ROOT=/absolute/path/to/consultant-ai-agent-private/shared_data
+PIPELINE_DATA_ROOT=/absolute/path/to/consultant-ai-agent-private/pipeline_data
+PRIVATE_DOCS_ROOT=/absolute/path/to/consultant-ai-agent-private/private_docs
+```
+
+See `docs/private_data_setup.md`.
+
 ## More Detail
 
 - Architecture: `docs/architecture.md`
@@ -113,6 +135,7 @@ Do not rerun Phase 1 transcription, GPU benchmark, RSS discovery, or episode dow
 - Data model: `docs/data-model.md`
 - Cloud plan: `docs/cloud-processing-plan.md`
 - Future improvements: `docs/future-improvements.md`
+- Private data setup: `docs/private_data_setup.md`
 - Terminology: `docs/terminology.tsv`
 - Phase 1 POC details: `legacy_segment_poc/poc_docs/local-transcription-poc.md`
 - Phase 1 troubleshooting: `legacy_segment_poc/poc_docs/troubleshooting.md`

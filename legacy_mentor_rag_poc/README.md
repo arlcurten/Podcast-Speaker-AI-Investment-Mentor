@@ -120,7 +120,7 @@ Run the cross-episode evaluation set:
 python3 main.py eval-cross
 ```
 
-Reports are written under `reports/`.
+Reports are private evaluation artifacts and should be written under `${PIPELINE_DATA_ROOT}/legacy_mentor_rag/evaluations/` or kept local/ignored.
 
 Build the deterministic domain annotation index:
 
@@ -164,4 +164,4 @@ python3 main.py ask "他有沒有談到房地產投資策略？" --debug
 - If no evidence is retrieved, the agent should say evidence is insufficient rather than answer from general model knowledge.
 - Generated full transcripts, Phase 2 JSON outputs, API response JSON, and temporary indexes are local artifacts, not production storage.
 
-Additional episodes can be added by placing their Phase 2 outputs under `semantic_analysis_poc/data/outputs/<EPXXX>/` and adding them to `config/data.yaml`. Larger reasoning-system changes should happen in `../reasoning_mentor_poc/`, not in this legacy baseline.
+Additional episodes can be added by placing their Phase 2 outputs under `${PIPELINE_DATA_ROOT}/semantic_analysis/outputs/<EPXXX>/` and adding them to `config/data.yaml`. Larger reasoning-system changes should happen in `../reasoning_mentor_poc/`, not in this legacy baseline.

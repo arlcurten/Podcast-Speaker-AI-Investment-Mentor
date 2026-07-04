@@ -223,7 +223,25 @@ __marimo__/
 semantic_analysis_poc/.env
 semantic_analysis_poc/.env.*
 !semantic_analysis_poc/.env.example
+semantic_analysis_poc/data/outputs/
+semantic_analysis_poc/data/model_comparison/
+semantic_analysis_poc/reports/
 
 # Local generated Phase 1 inputs copied for Phase 2 runs.
 # Existing tracked canonical examples remain tracked by Git.
 semantic_analysis_poc/data/phase1_inputs/EP*/
+
+# Private/source-derived artifacts should live in consultant-ai-agent-private.
+legacy_mentor_rag_poc/data/
+legacy_mentor_rag_poc/reports/
+legacy_segment_poc/data/audio/
+legacy_segment_poc/data/transcripts/
+legacy_segment_poc/data/rss_sources/*.xml
+legacy_segment_poc/data/rss_sources/*.jsonl
+legacy_segment_poc/reports/EP*_human_review.md
+legacy_segment_poc/reports/legacy/
+
+# Local links or mounts to private data should not be committed.
+private_data/
+consultant-ai-agent-private/
+*_private_data/

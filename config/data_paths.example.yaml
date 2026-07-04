@@ -1,0 +1,17 @@
+# Example private data path configuration.
+# Copy values into a local .env or adapt pipeline configs for your machine.
+# Do not commit real local absolute paths.
+
+environment_variables:
+  PODCAST_DATA_ROOT: /absolute/path/to/consultant-ai-agent-private/shared_data
+  PIPELINE_DATA_ROOT: /absolute/path/to/consultant-ai-agent-private/pipeline_data
+  PRIVATE_DOCS_ROOT: /absolute/path/to/consultant-ai-agent-private/private_docs
+
+private_repository:
+  expected_sibling_name: consultant-ai-agent-private
+  public_repo_name: Podcast-Speaker-AI-Investment-Mentor
+
+logical_roots:
+  shared_data: ${PODCAST_DATA_ROOT}
+  pipeline_data: ${PIPELINE_DATA_ROOT}
+  private_docs: ${PRIVATE_DOCS_ROOT}

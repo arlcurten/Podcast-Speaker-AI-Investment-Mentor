@@ -4,6 +4,7 @@ import csv
 import hashlib
 import json
 import logging
+import os
 import re
 import subprocess
 from datetime import datetime, timezone
@@ -31,7 +32,13 @@ def utc_now() -> str:
 
 
 def read_json(path: Path) -> Any:
-    return json.loads(path.read_text(encoding="utf-8"))
+    try:
+        return json.loads(path.read_text(encoding="utf-8"))
+    except FileNotFoundError as exc:
+        raise FileNotFoundError(
+            f"Missing data file: {path}. If this artifact is private, set "
+            "PIPELINE_DATA_ROOT to consultant-ai-agent-private/pipeline_data."
+        ) from exc
 
 
 def write_json(path: Path, obj: Any) -> None:
@@ -162,6 +169,8 @@ def parse_duration_to_seconds(value: str | None) -> float | None:
 
 def load_manifest(path: Path | None = None) -> list[dict[str, Any]]:
     manifest = path or DATA / "rss_sources" / "episodes.jsonl"
+    if not manifest.exists() and path is None and os.environ.get("PIPELINE_DATA_ROOT"):
+        manifest = Path(os.environ["PIPELINE_DATA_ROOT"]) / "legacy_segment" / "rss_sources" / "episodes.jsonl"
     rows: list[dict[str, Any]] = []
     with manifest.open("r", encoding="utf-8") as fh:
         for line in fh:

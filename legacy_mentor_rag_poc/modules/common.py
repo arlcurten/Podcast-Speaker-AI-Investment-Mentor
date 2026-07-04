@@ -37,7 +37,13 @@ load_project_dotenv()
 
 
 def read_json(path: Path) -> Any:
-    return json.loads(path.read_text(encoding="utf-8"))
+    try:
+        return json.loads(path.read_text(encoding="utf-8"))
+    except FileNotFoundError as exc:
+        raise FileNotFoundError(
+            f"Missing data file: {path}. If this artifact is private, set "
+            "PIPELINE_DATA_ROOT to consultant-ai-agent-private/pipeline_data."
+        ) from exc
 
 
 def write_json(path: Path, data: Any) -> None:
@@ -47,6 +53,30 @@ def write_json(path: Path, data: Any) -> None:
 
 def read_yaml(path: Path) -> dict[str, Any]:
     return yaml.safe_load(path.read_text(encoding="utf-8"))
+
+
+def expand_env_path(value: str | Path) -> Path:
+    return Path(os.path.expandvars(str(value)))
+
+
+def resolve_path(value: str | Path) -> Path:
+    if isinstance(value, str) and "${" in value:
+        var_name = value.split("${", 1)[1].split("}", 1)[0]
+        if var_name and not os.environ.get(var_name):
+            raise RuntimeError(
+                f"Missing environment variable {var_name} for private data path. "
+                "Set PIPELINE_DATA_ROOT to consultant-ai-agent-private/pipeline_data."
+            )
+    path = expand_env_path(value)
+    if path.is_absolute():
+        return path
+    local = ROOT / path
+    if local.exists():
+        return local
+    private_root = os.environ.get("PIPELINE_DATA_ROOT")
+    if private_root:
+        return Path(private_root) / path
+    return local
 
 
 def read_text(path: Path) -> str:

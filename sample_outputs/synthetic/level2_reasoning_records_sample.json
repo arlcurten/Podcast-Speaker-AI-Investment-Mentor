@@ -1,0 +1,72 @@
+{
+  "episode_id": "SYNTHETIC_EP001",
+  "reasoning_records": [
+    {
+      "reasoning_record_id": "SYNTHETIC_EP001-reasoning-001",
+      "topic_thread_id": "SYNTHETIC_EP001-thread-001",
+      "title": "Position sizing under uncertain demand",
+      "claims": [
+        "When demand visibility is incomplete, position size should reflect uncertainty rather than conviction alone."
+      ],
+      "observations": [
+        "The speaker-style example distinguishes between a promising setup and a confirmed trend."
+      ],
+      "reasoning_steps": [
+        "Identify the missing evidence.",
+        "Separate long-term thesis from short-term entry risk.",
+        "Use smaller exposure until confirming data appears."
+      ],
+      "assumptions": [
+        "The investor cannot verify current demand conditions."
+      ],
+      "conditions": [
+        "Increase confidence only after new evidence confirms demand or margin improvement."
+      ],
+      "risks": [
+        "Entering too aggressively may create avoidable drawdown if the thesis is early."
+      ],
+      "exceptions": [
+        "A small exploratory position may still be acceptable when the downside is explicitly budgeted."
+      ],
+      "uncertainty": [
+        "Current demand and market sentiment remain unresolved."
+      ],
+      "decisions_or_preferences": [
+        "Prefer staged exposure over all-in positioning."
+      ],
+      "actions_or_avoided_actions": [
+        "Avoid treating a plausible narrative as confirmed evidence."
+      ],
+      "view_change_conditions": [
+        "Change the view if confirming data appears or the original risk budget is breached."
+      ],
+      "speaker_behavior": [
+        "Uses conditional reasoning and emphasizes risk budget before conviction."
+      ],
+      "tags": [
+        "risk_management",
+        "position_sizing",
+        "uncertainty"
+      ],
+      "source_evidence": [
+        {
+          "episode_id": "SYNTHETIC_EP001",
+          "start": 120.0,
+          "end": 180.0,
+          "merged_ids": [
+            3,
+            4
+          ],
+          "source_segment_id_ranges": [
+            {
+              "start_id": 20,
+              "end_id": 35
+            }
+          ],
+          "source_segment_ids": [],
+          "quote": "Synthetic excerpt placeholder, not real transcript text."
+        }
+      ]
+    }
+  ]
+}

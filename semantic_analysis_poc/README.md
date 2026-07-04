@@ -77,18 +77,14 @@ semantic_analysis_poc/
 ├── README.md
 ├── main.py
 ├── config/
-├── modules/
-├── data/
-│   └── phase1_inputs/
+└── modules/
 ```
 
 - `main.py`: minimal Phase 2 command dispatcher.
 - `modules/`: current reusable Phase 2 execution code.
 - `config/`: Phase 2 input references, provider settings, and semantic design contract.
-- `data/phase1_inputs/`: small copied Phase 1 evidence inputs needed by this POC.
 - `config/semantic_design.yaml`: current semantic level, prompt, and validation contract.
-- `data/outputs/`: ignored generated semantic outputs.
-- `reports/`: ignored generated human-readable review and pilot reports.
+- private Phase 1 inputs, semantic outputs, model comparisons, and reports live in `../consultant-ai-agent-private/` when available locally.
 
 Do not create extra folders until the implementation actually needs them. When Phase 2 starts implementation, prefer the same simple style as `../legacy_segment_poc/`:
 
@@ -102,19 +98,13 @@ reports/
 
 Only add a folder when it has real content and a clear role. For example, create `modules/` when there is reusable code, `reports/` when there is a human-readable output, and `data/outputs/` only after the first generated semantic extraction artifact exists.
 
-## Phase 1 Input Copy
+## Private Phase 1 Inputs
 
 ```text
-data/phase1_inputs/EP674/raw_large-v3-turbo_transcript.json
-data/phase1_inputs/EP674/raw_large-v3-turbo_run_metadata.json
-data/phase1_inputs/EP674/derived_large-v3-turbo_merged_transcript.json
-data/phase1_inputs/EP674/derived_large-v3-turbo_normalized_merged_transcript_zh_tw.json
-data/phase1_inputs/EP674/merge_integrity.json
-data/phase1_inputs/EP674/audio_metadata.json
-data/phase1_inputs/EP674/download_metadata.json
+${PIPELINE_DATA_ROOT}/semantic_analysis/phase1_inputs/<EPISODE>/
 ```
 
-The MP3, benchmark artifacts, old deterministic topic outputs, and temporary data are not copied.
+Set `PIPELINE_DATA_ROOT` to the sibling private repository's `pipeline_data` directory. These inputs include raw transcripts and normalized full transcripts, so they should not be committed to the public repository.
 
 Shared terminology remains at:
 
@@ -183,17 +173,17 @@ python3 main.py pilot --model-id qwen/qwen3-235b-a22b-2507 --max-episodes 5
 Expected Level 1/2 outputs after real execution:
 
 ```text
-data/outputs/EP674/level1_episode_semantic_map.json
-data/outputs/EP674/level2_reasoning_records.json
-data/outputs/EP674/level3_optional_consolidation.json
-data/outputs/EP674/run_metadata.json
-reports/EP674_phase2_human_review.md
+${PIPELINE_DATA_ROOT}/semantic_analysis/outputs/EP674/level1_episode_semantic_map.json
+${PIPELINE_DATA_ROOT}/semantic_analysis/outputs/EP674/level2_reasoning_records.json
+${PIPELINE_DATA_ROOT}/semantic_analysis/outputs/EP674/level3_optional_consolidation.json
+${PIPELINE_DATA_ROOT}/semantic_analysis/outputs/EP674/run_metadata.json
+${PIPELINE_DATA_ROOT}/semantic_analysis/reports/EP674_phase2_human_review.md
 ```
 
 Pilot summary:
 
 ```text
-reports/phase4_pilot_summary.md
+${PIPELINE_DATA_ROOT}/semantic_analysis/reports/phase4_pilot_summary.md
 ```
 
 Offline principle extraction:
@@ -209,9 +199,9 @@ python3 main.py report-principles
 Principle outputs are generated artifacts:
 
 ```text
-data/outputs/<EPISODE>/level3_principles.json
-data/outputs/cross_episode/level4_principles.json
-reports/cross_episode_level4_principles_review.md
+${PIPELINE_DATA_ROOT}/semantic_analysis/outputs/<EPISODE>/level3_principles.json
+${PIPELINE_DATA_ROOT}/semantic_analysis/outputs/cross_episode/level4_principles.json
+${PIPELINE_DATA_ROOT}/semantic_analysis/reports/cross_episode_level4_principles_review.md
 ```
 
 Level 2 records remain the source of truth. Principles are provisional abstractions, not independent evidence.
@@ -233,7 +223,7 @@ Level 4 requires at least two supporting episodes. Each Level 4 principle also c
 
 ## Current Status
 
-Current available Phase 1 inputs include the pilot episodes that have already been processed. Add more normalized Phase 1 transcript inputs under `data/phase1_inputs/<EPXXX>/` before running a broader pilot.
+Current available Phase 1 inputs live in the private repository. Add more normalized Phase 1 transcript inputs under `${PIPELINE_DATA_ROOT}/semantic_analysis/phase1_inputs/<EPXXX>/` before running a broader pilot.
 
 ```bash
 cd semantic_analysis_poc

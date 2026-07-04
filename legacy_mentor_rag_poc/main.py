@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 from pathlib import Path
 
 from modules.agent import answer_question
@@ -50,6 +51,14 @@ DIFFICULT_RETRIEVAL_QUESTIONS = [
     "哪些觀點只適用於特定市場環境？",
     "他有沒有前後不一致或有條件差異的看法？",
 ]
+
+
+def private_output_path(kind: str, name: str) -> Path:
+    root = os.environ.get("PIPELINE_DATA_ROOT")
+    if root:
+        subdir = "evaluations" if kind == "reports" else "indexes"
+        return Path(root) / "legacy_mentor_rag" / subdir / name
+    return ROOT / kind / name
 
 
 def main() -> int:
@@ -103,25 +112,31 @@ def main() -> int:
                 retrieval_config=retrieval_cfg,
             )
             results.append(result)
-        write_json(ROOT / "reports" / json_name, results)
-        write_eval_markdown(ROOT / "reports" / report_name, results)
-        print(json.dumps({"questions": len(results), "report": f"reports/{report_name}"}, ensure_ascii=False, indent=2))
+        json_path = private_output_path("reports", json_name)
+        report_path = private_output_path("reports", report_name)
+        write_json(json_path, results)
+        write_eval_markdown(report_path, results)
+        print(json.dumps({"questions": len(results), "report": str(report_path)}, ensure_ascii=False, indent=2))
         return 0
 
     if args.command == "eval-retrieval":
         questions = [*CROSS_EPISODE_QUESTIONS, *DIFFICULT_RETRIEVAL_QUESTIONS]
         results = compare_retrieval_modes(questions, kb, provider, retrieval_cfg)
-        write_json(ROOT / "reports" / "retrieval_comparison_results.json", results)
-        write_retrieval_comparison_markdown(ROOT / "reports" / "retrieval_comparison_report.md", results)
-        print(json.dumps({"questions": len(questions), "report": "reports/retrieval_comparison_report.md"}, ensure_ascii=False, indent=2))
+        json_path = private_output_path("reports", "retrieval_comparison_results.json")
+        report_path = private_output_path("reports", "retrieval_comparison_report.md")
+        write_json(json_path, results)
+        write_retrieval_comparison_markdown(report_path, results)
+        print(json.dumps({"questions": len(questions), "report": str(report_path)}, ensure_ascii=False, indent=2))
         return 0
 
     if args.command == "eval-domain-gate":
         questions = [*CROSS_EPISODE_QUESTIONS, *DIFFICULT_RETRIEVAL_QUESTIONS]
         results = compare_domain_gate(questions, kb, retrieval_cfg)
-        write_json(ROOT / "reports" / "domain_gate_comparison_results.json", results)
-        write_domain_gate_markdown(ROOT / "reports" / "domain_gate_comparison_report.md", results)
-        print(json.dumps({"questions": len(questions), "report": "reports/domain_gate_comparison_report.md"}, ensure_ascii=False, indent=2))
+        json_path = private_output_path("reports", "domain_gate_comparison_results.json")
+        report_path = private_output_path("reports", "domain_gate_comparison_report.md")
+        write_json(json_path, results)
+        write_domain_gate_markdown(report_path, results)
+        print(json.dumps({"questions": len(questions), "report": str(report_path)}, ensure_ascii=False, indent=2))
         return 0
 
     if args.command == "build-domain-index":
@@ -134,8 +149,9 @@ def main() -> int:
             }
             for annotation in [annotate_record(record) for record in kb.records]
         ]
-        write_json(ROOT / "data" / "record_domain_annotations.json", {"records": rows})
-        print(json.dumps({"records": len(rows), "path": "data/record_domain_annotations.json"}, ensure_ascii=False, indent=2))
+        output_path = private_output_path("data", "record_domain_annotations.json")
+        write_json(output_path, {"records": rows})
+        print(json.dumps({"records": len(rows), "path": str(output_path)}, ensure_ascii=False, indent=2))
         return 0
 
     return 1

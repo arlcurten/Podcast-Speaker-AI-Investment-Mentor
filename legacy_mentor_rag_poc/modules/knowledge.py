@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from modules.common import ROOT, fmt_ts, read_json, read_yaml
+from modules.common import ROOT, fmt_ts, read_json, read_yaml, resolve_path
 
 
 @dataclass
@@ -86,7 +86,7 @@ class KnowledgeBase:
     def _load_records(self) -> list[ReasoningRecord]:
         records: list[ReasoningRecord] = []
         for episode_id, paths in (self.config.get("episodes") or {}).items():
-            level2 = read_json(ROOT / paths["level2"])
+            level2 = read_json(resolve_path(paths["level2"]))
             for item in level2.get("reasoning_records", []):
                 record_id = item.get("reasoning_record_id")
                 if not record_id:

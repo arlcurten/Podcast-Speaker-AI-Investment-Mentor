@@ -10,10 +10,13 @@ from typing import Any
 from modules.common import (
     ROOT,
     OpenAICompatibleClient,
+    display_path,
     estimate_cost,
     parse_json_object,
     read_json,
     read_yaml,
+    private_pipeline_path,
+    private_report_path,
     resolve_env_value,
     sha256_file,
     write_json,
@@ -31,13 +34,16 @@ def load_terminology(path: Path, max_chars: int = 8000) -> str:
 
 
 def input_path(config: dict[str, Any], key: str) -> Path:
-    return ROOT / config["inputs"][key]
+    return private_pipeline_path(config["inputs"][key])
 
 
 def standard_episode_config(episode_id: str, base_config: dict[str, Any]) -> dict[str, Any]:
-    episode_dir = ROOT / "data" / "phase1_inputs" / episode_id
+    episode_dir = private_pipeline_path(f"data/phase1_inputs/{episode_id}")
     if not episode_dir.exists():
-        raise SystemExit(f"Configured episode_id {base_config.get('episode_id')} does not match --episode {episode_id}")
+        raise SystemExit(
+            f"Missing Phase 1 private input directory for {episode_id}: {episode_dir}. "
+            "Set PIPELINE_DATA_ROOT or restore data/phase1_inputs."
+        )
     config = dict(base_config)
     config["episode_id"] = episode_id
     config["inputs"] = dict(base_config["inputs"])
@@ -82,7 +88,7 @@ def run_stage(
     write_json(output_path, data)
     return data, {
         "stage": name,
-        "output_path": str(output_path.relative_to(ROOT)),
+        "output_path": display_path(output_path),
         "usage": result.usage,
         "latency_seconds": result.latency_seconds,
         "retries": result.retries,
@@ -112,7 +118,7 @@ def main() -> int:
     normalized_path = input_path(config, "normalized_merged_transcript")
     raw_path = input_path(config, "raw_transcript")
     manifest_path = input_path(config, "merge_integrity")
-    terminology_path = ROOT / config["inputs"]["terminology"]
+    terminology_path = (ROOT / config["inputs"]["terminology"]).resolve()
     preflight_errors: list[str] = []
     preflight_warnings: list[str] = []
 
@@ -136,8 +142,8 @@ def main() -> int:
         if not path.exists():
             preflight_errors.append(f"Missing required {label}: {path}")
 
-    out_dir = ROOT / args.output_dir if args.output_dir else ROOT / args.output_root / episode_id
-    report_dir = ROOT / args.report_dir
+    out_dir = private_pipeline_path(args.output_dir) if args.output_dir else private_pipeline_path(Path(args.output_root) / episode_id)
+    report_dir = private_report_path(args.report_dir)
     for label, path in [("output parent", out_dir.parent), ("report parent", report_dir.parent)]:
         existing = path if path.exists() else path.parent
         if not existing.exists():
@@ -217,8 +223,8 @@ def main() -> int:
             "episode_duration_seconds": episode_duration_seconds,
             "level1_prompt_approx_chars": approx_level1_chars,
             "request_payload_summary": request_payload_summary,
-            "output_path": str(out_dir.relative_to(ROOT)),
-            "report_path": str(report_dir.relative_to(ROOT)),
+            "output_path": display_path(out_dir),
+            "report_path": display_path(report_dir),
             "output_parent_writable": os.access(out_dir.parent if out_dir.parent.exists() else out_dir.parent.parent, os.W_OK),
             "report_parent_writable": os.access(report_dir.parent, os.W_OK),
             "errors": preflight_errors,
@@ -308,11 +314,11 @@ def main() -> int:
     write_review_report(report_dir / f"{episode_id}_phase2_human_review.md", episode_id, level1, level2, level3, metadata)
     print(json.dumps({
         "episode_id": episode_id,
-        "level1": str((out_dir / "level1_episode_semantic_map.json").relative_to(ROOT)),
-        "level2": str((out_dir / "level2_reasoning_records.json").relative_to(ROOT)),
-        "level3": str((out_dir / "level3_optional_consolidation.json").relative_to(ROOT)),
-        "review": str((report_dir / f"{episode_id}_phase2_human_review.md").relative_to(ROOT)),
-        "metadata": str((out_dir / "run_metadata.json").relative_to(ROOT)),
+        "level1": display_path(out_dir / "level1_episode_semantic_map.json"),
+        "level2": display_path(out_dir / "level2_reasoning_records.json"),
+        "level3": display_path(out_dir / "level3_optional_consolidation.json"),
+        "review": display_path(report_dir / f"{episode_id}_phase2_human_review.md"),
+        "metadata": display_path(out_dir / "run_metadata.json"),
         "strategy": level3.get("selected_strategy"),
         "phase1_unchanged": metadata["phase1_raw_transcript_unchanged"],
     }, ensure_ascii=False, indent=2))

@@ -11,8 +11,11 @@ from typing import Any
 from modules.common import (
     ROOT,
     OpenAICompatibleClient,
+    display_path,
     estimate_cost,
     parse_json_object,
+    private_pipeline_path,
+    private_report_path,
     read_json,
     read_yaml,
     resolve_env_value,
@@ -56,15 +59,17 @@ def load_provider(path: str, model_id: str | None) -> dict[str, Any]:
 
 
 def output_dir(episode_id: str) -> Path:
-    return ROOT / "data" / "outputs" / episode_id
+    return private_pipeline_path(Path("data") / "outputs" / episode_id)
 
 
 def cross_episode_dir() -> Path:
-    return ROOT / "data" / "outputs" / "cross_episode"
+    return private_pipeline_path(Path("data") / "outputs" / "cross_episode")
 
 
 def available_episodes() -> list[str]:
-    root = ROOT / "data" / "outputs"
+    root = private_pipeline_path(Path("data") / "outputs")
+    if not root.exists():
+        return []
     found = [
         path.name
         for path in root.iterdir()
@@ -148,7 +153,7 @@ def extract_level3(args: argparse.Namespace) -> int:
             "validation": validation,
         }
         write_json(output_dir(episode_id) / "level3_principles_metadata.json", metadata)
-        write_level3_report(ROOT / "reports" / f"{episode_id}_level3_principles_review.md", data, level2, validation, metadata)
+        write_level3_report(private_report_path(f"{episode_id}_level3_principles_review.md"), data, level2, validation, metadata)
         summaries.append(level3_summary(data, validation, metadata))
     print(json.dumps({"episodes": summaries}, ensure_ascii=False, indent=2))
     return 0
@@ -189,7 +194,7 @@ def extract_level4(args: argparse.Namespace) -> int:
         "codex_review": review,
     }
     write_json(cross_episode_dir() / "level4_principles_metadata.json", metadata)
-    write_level4_report(ROOT / "reports" / "cross_episode_level4_principles_review.md", data, level3_outputs, level2_outputs, validation, review, metadata)
+    write_level4_report(private_report_path("cross_episode_level4_principles_review.md"), data, level3_outputs, level2_outputs, validation, review, metadata)
     print(json.dumps(level4_summary(data, validation, metadata), ensure_ascii=False, indent=2))
     return 0
 
@@ -225,10 +230,11 @@ def report_principles(_: argparse.Namespace) -> int:
     review = review_level4_principles(level4, level2_outputs)
     write_json(cross_episode_dir() / "level4_principles_codex_review.json", review)
     metadata = read_json(cross_episode_dir() / "level4_principles_metadata.json") if (cross_episode_dir() / "level4_principles_metadata.json").exists() else {}
-    write_level4_report(ROOT / "reports" / "cross_episode_level4_principles_review.md", level4, level3_outputs, level2_outputs, validation, review, metadata)
-    write_confidence_audit_report(ROOT / "reports" / "principle_confidence_audit.md", level3_outputs, level4, validation, review)
-    write_principle_quality_report(ROOT / "reports" / "principle_quality_summary.md", level3_outputs, level4, validation, review)
-    print(json.dumps({"report": "reports/cross_episode_level4_principles_review.md"}, ensure_ascii=False, indent=2))
+    report_path = private_report_path("cross_episode_level4_principles_review.md")
+    write_level4_report(report_path, level4, level3_outputs, level2_outputs, validation, review, metadata)
+    write_confidence_audit_report(private_report_path("principle_confidence_audit.md"), level3_outputs, level4, validation, review)
+    write_principle_quality_report(private_report_path("principle_quality_summary.md"), level3_outputs, level4, validation, review)
+    print(json.dumps({"report": display_path(report_path)}, ensure_ascii=False, indent=2))
     return 0
 
 

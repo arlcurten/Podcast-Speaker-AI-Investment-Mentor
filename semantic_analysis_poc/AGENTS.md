@@ -33,12 +33,12 @@ Current hierarchy:
 - Prefer one small module per real pipeline step. Do not split prompts, schemas, API code, validation, and reporting into separate trees before there is working content.
 - Level 3/4 validation must preserve evidence links, counterexamples, conflicts, multi-dimensional confidence, and runtime eligibility.
 
-## Local Inputs
+## Private Inputs
 
-Small Phase 1 input copies for EP674 live under:
+Phase 1 transcript inputs and generated Phase 2 outputs are private source-derived artifacts. They should live under the sibling private repository and be located through:
 
 ```text
-data/phase1_inputs/EP674/
+PIPELINE_DATA_ROOT=/absolute/path/to/consultant-ai-agent-private/pipeline_data
 ```
 
-These are copied evidence artifacts, not regenerated Phase 1 outputs.
+Do not commit raw transcripts, normalized full transcripts, complete model outputs, model comparison traces, or private review reports to the public repository.

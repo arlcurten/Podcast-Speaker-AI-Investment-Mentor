@@ -7,7 +7,7 @@ import sys
 from pathlib import Path
 from typing import Any
 
-from modules.common import ROOT, read_json
+from modules.common import ROOT, display_path, private_pipeline_path, private_report_path, read_json
 
 
 REQUIRED_INPUTS = [
@@ -18,7 +18,9 @@ REQUIRED_INPUTS = [
 
 
 def discover_episodes() -> list[str]:
-    base = ROOT / "data" / "phase1_inputs"
+    base = private_pipeline_path("data/phase1_inputs")
+    if not base.exists():
+        return []
     episodes = []
     for path in sorted(base.iterdir()):
         if not path.is_dir():
@@ -68,7 +70,7 @@ def automated_review(
 
 
 def result_from_output(episode_id: str) -> dict[str, Any] | None:
-    out_dir = ROOT / "data" / "outputs" / episode_id
+    out_dir = private_pipeline_path(Path("data") / "outputs" / episode_id)
     required = [
         "level1_episode_semantic_map.json",
         "level2_reasoning_records.json",
@@ -183,7 +185,7 @@ def main() -> int:
         if proc.returncode != 0:
             results.append({"episode_id": episode_id, "status": "failed", "error": proc.stderr.strip() or proc.stdout.strip()})
             continue
-        out_dir = ROOT / "data" / "outputs" / episode_id
+        out_dir = private_pipeline_path(Path("data") / "outputs" / episode_id)
         metadata = read_json(out_dir / "run_metadata.json")
         level1 = read_json(out_dir / "level1_episode_semantic_map.json")
         level2 = read_json(out_dir / "level2_reasoning_records.json")
@@ -203,9 +205,9 @@ def main() -> int:
                 "warnings": automated_review(episode_id, out_dir),
             }
         )
-    report_path = ROOT / "reports" / "phase4_pilot_summary.md"
+    report_path = private_report_path("phase4_pilot_summary.md")
     write_pilot_report(report_path, episodes, results)
-    print(json.dumps({"episodes": selected, "results": results, "report": str(report_path.relative_to(ROOT))}, ensure_ascii=False, indent=2))
+    print(json.dumps({"episodes": selected, "results": results, "report": display_path(report_path)}, ensure_ascii=False, indent=2))
     return 0
 
 
