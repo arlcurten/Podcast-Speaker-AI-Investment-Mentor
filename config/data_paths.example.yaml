@@ -3,12 +3,12 @@
 # Do not commit real local absolute paths.
 
 environment_variables:
-  PODCAST_DATA_ROOT: /absolute/path/to/consultant-ai-agent-private/shared_data
-  PIPELINE_DATA_ROOT: /absolute/path/to/consultant-ai-agent-private/pipeline_data
-  PRIVATE_DOCS_ROOT: /absolute/path/to/consultant-ai-agent-private/private_docs
+  PODCAST_DATA_ROOT: /absolute/path/to/AI-Investment-Mentor-private/shared_data
+  PIPELINE_DATA_ROOT: /absolute/path/to/AI-Investment-Mentor-private/pipeline_data
+  PRIVATE_DOCS_ROOT: /absolute/path/to/AI-Investment-Mentor-private/private_docs
 
 private_repository:
-  expected_sibling_name: consultant-ai-agent-private
+  expected_sibling_name: AI-Investment-Mentor-private
   public_repo_name: Podcast-Speaker-AI-Investment-Mentor
 
 logical_roots:

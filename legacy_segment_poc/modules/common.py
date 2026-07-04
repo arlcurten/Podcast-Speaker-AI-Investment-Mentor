@@ -37,7 +37,7 @@ def read_json(path: Path) -> Any:
     except FileNotFoundError as exc:
         raise FileNotFoundError(
             f"Missing data file: {path}. If this artifact is private, set "
-            "PIPELINE_DATA_ROOT to consultant-ai-agent-private/pipeline_data."
+            "PIPELINE_DATA_ROOT to AI-Investment-Mentor-private/pipeline_data."
         ) from exc
 
 

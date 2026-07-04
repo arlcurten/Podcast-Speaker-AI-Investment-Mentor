@@ -1,11 +1,11 @@
 # Private Data Setup
 
-This public repository should contain source code, schemas, prompts, public documentation, and small safe examples. Full or source-derived podcast artifacts should live in the sibling private repository:
+This public repository should contain source code, schemas, prompts, public documentation, and curated public derivatives only. The private sibling repository is the canonical source of truth for complete or source-derived podcast artifacts:
 
 ```text
 projects/
 ├── Podcast-Speaker-AI-Investment-Mentor/
-└── consultant-ai-agent-private/
+└── AI-Investment-Mentor-private/
 ```
 
 ## Environment Variables
@@ -13,9 +13,9 @@ projects/
 Create a local `.env` in the public repository or export these values in your shell:
 
 ```bash
-PODCAST_DATA_ROOT=/absolute/path/to/consultant-ai-agent-private/shared_data
-PIPELINE_DATA_ROOT=/absolute/path/to/consultant-ai-agent-private/pipeline_data
-PRIVATE_DOCS_ROOT=/absolute/path/to/consultant-ai-agent-private/private_docs
+PODCAST_DATA_ROOT=/absolute/path/to/AI-Investment-Mentor-private/shared_data
+PIPELINE_DATA_ROOT=/absolute/path/to/AI-Investment-Mentor-private/pipeline_data
+PRIVATE_DOCS_ROOT=/absolute/path/to/AI-Investment-Mentor-private/private_docs
 ```
 
 Do not commit `.env`.
@@ -31,6 +31,22 @@ Do not commit `.env`.
 - model comparison traces
 - private reports and review notes
 - retrieval indexes and runtime outputs
+- internal documents, experiment notes, and private know-how
+
+Public samples do not replace private data and must not be used as production pipeline input.
+
+## What Can Be Public
+
+- source code
+- schemas
+- prompts
+- non-sensitive configs
+- public documentation
+- synthetic fixtures
+- manually redacted real examples
+- aggregate reports that do not expose long transcript text or full model responses
+
+Public derivatives should be recorded in `docs/public_artifacts.md` and linked back to private manifest entries.
 
 ## Public Repo Behavior
 
@@ -41,3 +57,16 @@ Commands that only inspect source code, show help, run syntax checks, or validat
 ## Publication Policy
 
 Do not copy private transcript text, full model outputs, audio URLs with sensitive tokens, internal review notes, or private experiment details into public fixtures, reports, logs, or commits. Use schema-compatible synthetic examples or explicitly reviewed redacted examples for public demos.
+
+Do not create `private/`, `private_data/`, `internal/`, or `full_outputs/` directories inside the public repo. If an artifact is uncertain, keep it private and document it as unresolved.
+
+## Public Artifact Workflow
+
+1. Produce or preserve the complete artifact in the private repo.
+2. Register the canonical artifact in the private manifest.
+3. Decide whether a public derivative has portfolio, README, interview, architecture, or testing value.
+4. Create a synthetic, redacted, summarized, or aggregated derivative.
+5. Check transcript exposure and sensitive content.
+6. Place the derivative under `sample_outputs/` or `reports/public/`.
+7. Update `docs/public_artifacts.md`.
+8. Update the private manifest `public_derivatives` field.

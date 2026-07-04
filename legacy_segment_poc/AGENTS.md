@@ -5,13 +5,13 @@ This directory is the Local POC for the full Podcast Speaker AI Investment Mento
 Full project root:
 
 ```text
-/home/g9161/projects/Podcast-Speaker-AI-Investment-Mentor
+<workspace>/Podcast-Speaker-AI-Investment-Mentor
 ```
 
 Local POC directory:
 
 ```text
-/home/g9161/projects/Podcast-Speaker-AI-Investment-Mentor/legacy_segment_poc
+<workspace>/Podcast-Speaker-AI-Investment-Mentor/legacy_segment_poc
 ```
 
 Work in the Local POC directory unless the user explicitly asks for changes at the full project root.

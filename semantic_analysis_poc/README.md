@@ -84,19 +84,11 @@ semantic_analysis_poc/
 - `modules/`: current reusable Phase 2 execution code.
 - `config/`: Phase 2 input references, provider settings, and semantic design contract.
 - `config/semantic_design.yaml`: current semantic level, prompt, and validation contract.
-- private Phase 1 inputs, semantic outputs, model comparisons, and reports live in `../consultant-ai-agent-private/` when available locally.
+- Private Phase 1 inputs, semantic outputs, model comparisons, and reports are resolved through `PIPELINE_DATA_ROOT`.
 
-Do not create extra folders until the implementation actually needs them. When Phase 2 starts implementation, prefer the same simple style as `../legacy_segment_poc/`:
+Do not create local data folders for complete source-derived artifacts in this public repo. Use the private repo path interface described in `../docs/private_data_setup.md`.
 
-```text
-main.py
-modules/
-config/
-data/
-reports/
-```
-
-Only add a folder when it has real content and a clear role. For example, create `modules/` when there is reusable code, `reports/` when there is a human-readable output, and `data/outputs/` only after the first generated semantic extraction artifact exists.
+Public examples must be synthetic, redacted, summarized, or aggregated. They are not canonical Phase 2 inputs.
 
 ## Private Phase 1 Inputs
 

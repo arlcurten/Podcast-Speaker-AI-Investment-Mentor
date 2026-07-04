@@ -42,7 +42,7 @@ def read_json(path: Path) -> Any:
     except FileNotFoundError as exc:
         raise FileNotFoundError(
             f"Missing data file: {path}. If this artifact is private, set "
-            "PIPELINE_DATA_ROOT to consultant-ai-agent-private/pipeline_data."
+            "PIPELINE_DATA_ROOT to AI-Investment-Mentor-private/pipeline_data."
         ) from exc
 
 
@@ -65,7 +65,7 @@ def resolve_path(value: str | Path) -> Path:
         if var_name and not os.environ.get(var_name):
             raise RuntimeError(
                 f"Missing environment variable {var_name} for private data path. "
-                "Set PIPELINE_DATA_ROOT to consultant-ai-agent-private/pipeline_data."
+                "Set PIPELINE_DATA_ROOT to AI-Investment-Mentor-private/pipeline_data."
             )
     path = expand_env_path(value)
     if path.is_absolute():

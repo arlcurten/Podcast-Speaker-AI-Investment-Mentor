@@ -8,8 +8,8 @@ from typing import Any
 from modules.common import DATA, ROOT, path_for_report, project_relative_path, write_json
 
 
-OLD_ROOT = "/home/g9161/projects/gooaye_mentor_poc"
-MOVED_NOTE = "Repository moved under /home/g9161/projects/Podcast-Speaker-AI-Investment-Mentor; project-relative paths are now preferred."
+OLD_ROOT = "<old-workspace>/gooaye_mentor_poc"
+MOVED_NOTE = "Repository moved under the full project root; project-relative paths are now preferred."
 
 
 def load(path: Path) -> dict[str, Any]:

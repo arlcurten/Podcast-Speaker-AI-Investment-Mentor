@@ -253,7 +253,7 @@ Recommended handling:
 
 ## Repository Moved And Metadata Contains Stale Absolute Paths
 
-Symptom: metadata or reports reference `/home/g9161/projects/legacy_segment_poc`, but the Local POC now lives at `/home/g9161/projects/Podcast-Speaker-AI-Investment-Mentor/legacy_segment_poc`.
+Symptom: metadata or reports reference an old absolute path such as `<old-workspace>/legacy_segment_poc`, but the Local POC now lives under the full project root at `legacy_segment_poc/`.
 
 Possible causes:
 
@@ -265,7 +265,7 @@ Possible causes:
 How to diagnose:
 
 ```bash
-rg -uu -n '/home/g9161/projects/legacy_segment_poc' .
+rg -uu -n '<old-workspace>/legacy_segment_poc' .
 ```
 
 Classify hits as generated metadata, generated report, documentation, script hardcoding, or historical provenance.

@@ -60,6 +60,21 @@ Reasoning Mentor POC preparation
 - A principle is an abstraction from evidence. Do not count it as an additional independent evidence item.
 - Terminology corrections are annotations/context and must not destructively rewrite raw transcript evidence.
 
+## Public / Private Artifact Boundary
+
+- Private repo is the canonical source of truth for complete data, outputs, reports, and internal documents.
+- Public repo contains source code and curated public derivatives only.
+- Do not create a `private/`, `private_data/`, `internal/`, or `full_outputs/` directory inside this public repo.
+- Do not copy complete private artifacts into this public repo.
+- Do not use public samples as production or canonical pipeline inputs.
+- All complete transcripts, semantic outputs, evaluation traces, model response traces, and internal reports must remain in the private repo.
+- A public artifact must be synthetic, redacted, summarized, or aggregated.
+- Before creating a public artifact, identify its private source and record the relationship in `docs/public_artifacts.md` or the private artifact manifest.
+- Do not expose absolute local paths, credentials, private URLs, or private repository details in public files.
+- Do not move or delete canonical private artifacts solely to simplify public presentation.
+- If a public artifact name is easy to confuse with a canonical private artifact, rename it to clearly mark it as a public derivative, for example with `_public`, `_aggregate`, `_redacted_sample`, or `_synthetic_sample`.
+- When unsure whether an artifact is safe for public use, keep it private and report it as unresolved.
+
 ## Simplicity And Organization Rules
 
 - Keep the repository easy to read before making it more complete.
@@ -79,6 +94,8 @@ Reasoning Mentor POC preparation
 - `docs/data-model.md`: project data layers and invariants.
 - `docs/cloud-processing-plan.md`: future cloud transcription plan.
 - `docs/future-improvements.md`: deferred optimization ideas.
+- `docs/private_data_setup.md`: local private data connection and runtime path setup.
+- `docs/public_artifacts.md`: public/private artifact policy and public derivative index.
 - `docs/terminology.tsv`: shared terminology table for preserved terms, aliases, and corrections.
 - `legacy_segment_poc/poc_docs/local-transcription-poc.md`: Phase 1 transcription POC results.
 - `legacy_segment_poc/poc_docs/data-source-notes.md`: RSS, SoundOn, Apple lookup, and manifest notes.

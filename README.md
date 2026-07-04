@@ -24,6 +24,7 @@ Start here:
 - `legacy_segment_poc/README.md`: completed Phase 1 transcription POC reference.
 - `docs/reasoning_mentor_architecture.md`: planned four-level reasoning architecture.
 - `docs/private_data_setup.md`: how to connect the public source repo to the sibling private data repo.
+- `docs/public_artifacts.md`: public/private artifact policy and public derivative index.
 - `docs/terminology.tsv`: shared terminology table for preserved terms, aliases, and corrections.
 - `docs/future-improvements.md`: deferred optimization ideas.
 
@@ -110,23 +111,27 @@ Do not rerun Phase 1 transcription, GPU benchmark, RSS discovery, or episode dow
 
 ## Public / Private Data Boundary
 
-This public repository should contain code, schemas, prompts, configs, public documentation, and safe examples. Full podcast-derived artifacts live in a sibling private repository:
+This public repository is a curated showcase: code, schemas, prompts, configs, public documentation, synthetic examples, redacted examples, and aggregate reports.
+
+The private sibling repository is the canonical source of truth for complete data, complete outputs, complete reports, internal documents, experiment records, and daily runtime artifacts:
 
 ```text
 projects/
 ├── Podcast-Speaker-AI-Investment-Mentor/
-└── consultant-ai-agent-private/
+└── AI-Investment-Mentor-private/
 ```
 
 Set these local environment variables when running commands that need private data:
 
 ```bash
-PODCAST_DATA_ROOT=/absolute/path/to/consultant-ai-agent-private/shared_data
-PIPELINE_DATA_ROOT=/absolute/path/to/consultant-ai-agent-private/pipeline_data
-PRIVATE_DOCS_ROOT=/absolute/path/to/consultant-ai-agent-private/private_docs
+PODCAST_DATA_ROOT=/absolute/path/to/AI-Investment-Mentor-private/shared_data
+PIPELINE_DATA_ROOT=/absolute/path/to/AI-Investment-Mentor-private/pipeline_data
+PRIVATE_DOCS_ROOT=/absolute/path/to/AI-Investment-Mentor-private/private_docs
 ```
 
 See `docs/private_data_setup.md`.
+
+Public samples are not production data. They must be synthetic, redacted, summarized, or aggregated, and their relationship to private source artifacts is tracked in `docs/public_artifacts.md`.
 
 ## More Detail
 
@@ -136,6 +141,7 @@ See `docs/private_data_setup.md`.
 - Cloud plan: `docs/cloud-processing-plan.md`
 - Future improvements: `docs/future-improvements.md`
 - Private data setup: `docs/private_data_setup.md`
+- Public artifacts: `docs/public_artifacts.md`
 - Terminology: `docs/terminology.tsv`
 - Phase 1 POC details: `legacy_segment_poc/poc_docs/local-transcription-poc.md`
 - Phase 1 troubleshooting: `legacy_segment_poc/poc_docs/troubleshooting.md`

@@ -38,7 +38,7 @@ Current hierarchy:
 Phase 1 transcript inputs and generated Phase 2 outputs are private source-derived artifacts. They should live under the sibling private repository and be located through:
 
 ```text
-PIPELINE_DATA_ROOT=/absolute/path/to/consultant-ai-agent-private/pipeline_data
+PIPELINE_DATA_ROOT=/absolute/path/to/AI-Investment-Mentor-private/pipeline_data
 ```
 
 Do not commit raw transcripts, normalized full transcripts, complete model outputs, model comparison traces, or private review reports to the public repository.
