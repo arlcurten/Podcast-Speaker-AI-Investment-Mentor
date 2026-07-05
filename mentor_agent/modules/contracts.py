@@ -200,18 +200,18 @@ class CaseStore(Protocol):
 
 
 def analyze_query(query: str) -> QueryAnalysis:
-    raise NotImplementedError("Reasoning Mentor query analysis is not implemented yet.")
+    raise RuntimeError("Compatibility contract only. Use mentor_agent.modules.runtime.MentorRuntime.inspect_query().")
 
 
 def retrieve_principles(query_analysis: QueryAnalysis) -> list[PrincipleCandidate]:
-    raise NotImplementedError("Level 4 principle retrieval is not implemented yet.")
+    raise RuntimeError("Compatibility contract only. Use mentor_agent.modules.runtime.MentorRuntime.retrieve().")
 
 
 def retrieve_cases(
     query_analysis: QueryAnalysis,
     selected_principles: list[PrincipleCandidate],
 ) -> list[CaseEvidence]:
-    raise NotImplementedError("Level 2 case retrieval for reasoning is not implemented yet.")
+    raise RuntimeError("Compatibility contract only. Use mentor_agent.modules.runtime.MentorRuntime.retrieve().")
 
 
 def assess_applicability(
@@ -219,7 +219,7 @@ def assess_applicability(
     principles: list[PrincipleCandidate],
     cases: list[CaseEvidence],
 ) -> OnlineApplicabilityAssessment:
-    raise NotImplementedError("Online applicability assessment is not implemented yet.")
+    raise RuntimeError("Compatibility contract only. Use mentor_agent.modules.runtime.MentorRuntime.ask().")
 
 
 def generate_answer(
@@ -227,8 +227,8 @@ def generate_answer(
     principles: list[PrincipleCandidate],
     cases: list[CaseEvidence],
 ) -> ReasoningAnswer:
-    raise NotImplementedError("Reasoning Mentor answer generation is not implemented yet.")
+    raise RuntimeError("Compatibility contract only. Use mentor_agent.modules.runtime.MentorRuntime.ask().")
 
 
 def validate_citations(answer: ReasoningAnswer, cases: list[CaseEvidence]) -> bool:
-    raise NotImplementedError("Reasoning Mentor citation validation is not implemented yet.")
+    raise RuntimeError("Compatibility contract only. Use mentor_agent.modules.guards.validate_citations().")

@@ -1,0 +1,68 @@
+episodes:
+  EP674:
+    level2: ${PIPELINE_DATA_ROOT}/semantic_analysis/outputs/EP674/level2_reasoning_records.json
+  EP670:
+    level2: ${PIPELINE_DATA_ROOT}/semantic_analysis/outputs/EP670/level2_reasoning_records.json
+  EP450:
+    level2: ${PIPELINE_DATA_ROOT}/semantic_analysis/outputs/EP450/level2_reasoning_records.json
+  EP57:
+    level2: ${PIPELINE_DATA_ROOT}/semantic_analysis/outputs/EP57/level2_reasoning_records.json
+
+principles:
+  level4: ${PIPELINE_DATA_ROOT}/semantic_analysis/outputs/cross_episode/level4_principles.json
+
+retrieval:
+  case_top_k: 6
+  case_candidate_pool: 12
+  principle_top_k: 3
+  min_case_score: 1.8
+  min_principle_score: 0.8
+  max_cases_per_episode: 3
+  lexical_weight: 0.50
+  dense_weight: 0.35
+  metadata_weight: 0.15
+  domain_gate:
+    enabled: true
+    min_investment_relevance_for_investment_query: medium
+    matching_domain_boost: 1.12
+    mismatch_penalty: 0.55
+
+routing:
+  min_cases_for_principle_assisted: 2
+  min_cases_for_case_only: 1
+  downgrade_principle_on_unresolved_conflict: true
+  downgrade_case_only_on_low_confidence_conflict: true
+  allowed_principle_runtime_modes:
+    - principle_assisted
+  disallowed_genericness:
+    - too_generic
+
+guards:
+  require_retrieved_citations: true
+  current_market_terms:
+    - 現在
+    - 今天
+    - 目前
+    - 最新
+    - 現階段
+  action_terms:
+    - 買
+    - 賣
+    - 加碼
+    - 減碼
+    - 進場
+    - 出場
+    - 適合
+
+model:
+  provider: openai_compatible
+  base_url: https://openrouter.ai/api/v1
+  api_key_env: OPENROUTER_API_KEY
+  model_id: qwen/qwen3-235b-a22b-2507
+  temperature: 0.2
+  timeout_seconds: 120
+  max_output_tokens: 1000
+  max_retries: 1
+  headers:
+    http_referer:
+    x_title: Podcast Speaker AI Investment Mentor

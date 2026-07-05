@@ -1,5 +1,5 @@
-# Minimal planned data contracts for the Reasoning Mentor POC.
-# These are design contracts, not active extraction schemas yet.
+# Minimal data contracts consumed by the AI Investment Mentor Agent.
+# Extraction schemas remain owned by semantic_analysis_poc.
 
 level3_provisional_principle:
   required:

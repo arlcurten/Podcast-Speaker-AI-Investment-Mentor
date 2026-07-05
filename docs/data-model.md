@@ -109,14 +109,10 @@ Current higher-level status:
 - Phase 2 Level 1/Level 2 extraction has pilot outputs for EP674, EP670, EP450, and EP57.
 - Offline Level 3/Level 4 principle extraction POC has generated local outputs from those Level 2 records.
 - `legacy_mentor_rag_poc/` can retrieve Level 2 records and generate case-grounded answers.
-- `reasoning_mentor_poc/` has only contracts/skeleton for consuming principles later; no online reasoning path is implemented yet.
+- `mentor_agent/` consumes private Level 2 records and Level 4 principles for first-version online principle-assisted or case-only answering.
 
-## Phase 2 Input Copy
+## Phase 2 Inputs
 
-The active Phase 2 POC keeps a small self-contained input copy under:
-
-```text
-semantic_analysis_poc/data/phase1_inputs/EP674/
-```
+Complete Phase 2 inputs and generated outputs live in the private repository and are accessed through `PIPELINE_DATA_ROOT`. Public samples are synthetic or curated derivatives only, not canonical pipeline input.
 
 It intentionally does not copy MP3 files, benchmark artifacts, old deterministic topic outputs, or cloud/runtime scratch data.

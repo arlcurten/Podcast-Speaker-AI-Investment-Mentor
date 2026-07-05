@@ -1,0 +1,30 @@
+questions:
+  - id: weak_conflict_valuation_vs_narrative
+    category: weak_or_partial_conflict
+    expected_behavior: identify_conflict_or_context_difference
+    query: 台積電本益比要保守、但 SpaceX 這類公司又可以接受敘事估值，這是不是他的投資邏輯前後矛盾？
+
+  - id: context_difference_chasing_vs_gradual
+    category: context_difference
+    expected_behavior: avoid_false_conflict
+    query: 他一方面說修正時可以逐步買，一方面又提醒不要追高，這兩個做法是不是互相矛盾？
+
+  - id: exception_not_conflict_supply_chain
+    category: exception_not_conflict
+    expected_behavior: exception_not_conflict
+    query: 如果利空真的造成供應鏈中斷，重視數據勝過敘事這個原則是不是失效，還是只是例外？
+
+  - id: principle_case_tension_early_theme
+    category: principle_case_tension
+    expected_behavior: principle_limited_by_case
+    query: 如果早期題材還沒有完整數據，但市場敘事很強，他會完全拒絕嗎，還是可以小部位參與？
+
+  - id: unresolved_missing_context_position
+    category: unresolved_missing_context
+    expected_behavior: preserve_unresolved_conflict
+    query: 我有一點持股，現在遇到市場修正，到底該照逐步加碼，還是照技術面破線先避開？
+
+  - id: no_conflict_control_data_check
+    category: no_conflict_control
+    expected_behavior: no_false_conflict
+    query: 當市場敘事和油價匯率等資料不一致時，他通常會怎麼判斷？

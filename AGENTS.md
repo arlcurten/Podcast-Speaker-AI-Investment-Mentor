@@ -7,7 +7,7 @@ Current workspace layout:
 - `legacy_segment_poc/`: completed Phase 1 transcription POC. Treat as frozen reference except for explicitly requested bug fixes.
 - `semantic_analysis_poc/`: Phase 2 offline semantic extraction POC workspace.
 - `legacy_mentor_rag_poc/`: legacy deterministic case-only Mentor RAG baseline. Keep working for regression and comparison, but do not add new reasoning architecture here.
-- `reasoning_mentor_poc/`: active skeleton for the next principle-plus-case Reasoning Mentor POC.
+- `mentor_agent/`: formal AI Investment Mentor runtime. It reads private Level 2/Level 4 artifacts and performs principle-assisted or case-only grounded answering.
 
 ## Project Purpose
 
@@ -40,7 +40,7 @@ Phase 1 — Transcription POC
 Current phase:
 
 ```text
-Reasoning Mentor POC preparation
+Formal Mentor Agent MVP complete; next phase is full-corpus expansion planning and implementation.
 ```
 
 ## Global Invariants
@@ -102,6 +102,6 @@ Reasoning Mentor POC preparation
 - `legacy_segment_poc/poc_docs/troubleshooting.md`: Phase 1 troubleshooting and known failure modes.
 - `semantic_analysis_poc/README.md`: Phase 2 offline semantic extraction workspace overview.
 - `legacy_mentor_rag_poc/README.md`: legacy case-only RAG baseline usage.
-- `reasoning_mentor_poc/README.md`: active skeleton for the new Reasoning Mentor POC.
+- `mentor_agent/README.md`: formal AI Investment Mentor runtime usage and limitations.
 
 For Phase 2 operation rules, also read `semantic_analysis_poc/AGENTS.md`. For Phase 1 reference rules, read `legacy_segment_poc/AGENTS.md`.
