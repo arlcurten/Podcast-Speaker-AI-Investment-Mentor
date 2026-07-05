@@ -40,7 +40,7 @@ Phase 1 — Transcription POC
 Current phase:
 
 ```text
-AI Investment Mentor Agent implementation
+Formal Mentor Agent MVP complete; next phase is full-corpus expansion planning and implementation.
 ```
 
 ## Global Invariants

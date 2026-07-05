@@ -12,7 +12,7 @@ Current status:
 - Phase 2 Semantic Extraction POC is implemented in `semantic_analysis_poc/` for the current pilot episodes.
 - `legacy_mentor_rag_poc/` is a working legacy case-only RAG baseline over Level 2 reasoning records.
 - Offline Level 3/Level 4 principle extraction is implemented in `semantic_analysis_poc/`.
-- `mentor_agent/` is the formal principle-plus-case AI Investment Mentor runtime.
+- `mentor_agent/` is the implemented and validated formal principle-plus-case AI Investment Mentor MVP runtime.
 - Vector database, current market tools, portfolio integration, fine-tuning, UI, deployment, and full corpus processing are not implemented yet.
 
 Start here:
@@ -40,9 +40,9 @@ Start here:
 [done]    Phase 2: Whole-episode LLM semantic extraction POC for pilot episodes
 [done]    Offline Level 3/4 principle extraction POC
 [done]    Legacy case-only Mentor RAG baseline over Level 2 records
-[active]  Formal Mentor Agent runtime: principle-assisted / case-only grounded answering
+[done]    Formal Mentor Agent MVP runtime: principle-assisted / case-only grounded answering
+[future]  Full corpus expansion planning and implementation
 [future]  Full principle-guided reasoning after stronger Level 4 evidence
-[future]  Full corpus processing
 [future]  Phase 8: Advanced version
 ```
 

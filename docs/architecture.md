@@ -8,7 +8,7 @@ Current boundary:
 - Phase 2 Semantic Extraction POC is implemented in `semantic_analysis_poc/` for the current pilot episodes.
 - `legacy_mentor_rag_poc/` is a working deterministic case-only RAG baseline.
 - Offline Level 3/Level 4 principle extraction is implemented as a POC in `semantic_analysis_poc/`.
-- `mentor_agent/` is the first formal runtime for principle-plus-case Reasoning Mentor.
+- `mentor_agent/` is the implemented and validated first formal runtime for principle-plus-case Reasoning Mentor.
 
 ## Target Flow
 
@@ -118,8 +118,8 @@ conditional answer with citations
 ## Future
 
 - Stronger Level 4 evidence before enabling `principle_guided`.
+- Full corpus expansion planning and implementation.
 - More robust online applicability evaluation.
-- Full corpus processing.
 - Conditional speaker model construction.
 - Current information tools, only after historical reasoning is stable.
 
