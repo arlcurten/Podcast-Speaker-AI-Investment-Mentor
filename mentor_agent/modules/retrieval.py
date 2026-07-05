@@ -27,6 +27,10 @@ class RetrievalResult:
     score_breakdown: dict[str, Any] = field(default_factory=dict)
     relationship: str = "candidate"
     selection_reason: str = "selected"
+    evidence_role_candidate: str = "neutral"
+    role_reason: str = ""
+    conflict_signal_score: float = 0.0
+    exception_signal_score: float = 0.0
 
 
 class Searchable(Protocol):
@@ -177,6 +181,63 @@ def make_principle_search(principles: list[Principle], config: dict[str, Any]) -
         },
         config=config,
     )
+
+
+def annotate_case_roles(
+    analysis: QueryAnalysis,
+    cases: list[RetrievalResult],
+    *,
+    principle_supporting_records: set[str] | None = None,
+) -> list[RetrievalResult]:
+    supporting = principle_supporting_records or set()
+    conflict_query = any(term in analysis.query for term in ["矛盾", "衝突", "不同情境", "取捨", "trade-off", "conflict"])
+    if "還是" in analysis.query and any(term in analysis.query for term in ["加碼", "避開", "拒絕", "參與", "追高", "忍住"]):
+        conflict_query = True
+    exception_query = any(term in analysis.query for term in ["例外", "不適用", "不能直接套用", "什麼情況", "除非", "override"])
+    for case in cases:
+        fields = getattr(case.item, "fields", {}) or {}
+        has_conditions = bool(fields.get("conditions") or fields.get("view_change_conditions"))
+        has_exceptions = bool(fields.get("exceptions") or fields.get("view_change_conditions"))
+        has_contradictions = bool(fields.get("contradictions"))
+        has_decision = bool(fields.get("decisions_or_preferences") or fields.get("actions_or_avoided_actions"))
+        conflict_score = 0.0
+        exception_score = 0.0
+        reasons: list[str] = []
+        if has_contradictions:
+            conflict_score += 1.0
+            reasons.append("record has contradiction metadata")
+        if conflict_query and has_decision and has_conditions:
+            conflict_score += 0.45
+            reasons.append("query asks about conflicting/conditional decisions")
+        if case.item_id in supporting:
+            reasons.append("linked supporting case for retrieved principle")
+        if has_exceptions:
+            exception_score += 0.7
+            reasons.append("record has exception or switch-condition metadata")
+        if exception_query and has_exceptions:
+            exception_score += 0.4
+            reasons.append("query asks about exception/applicability")
+
+        if has_contradictions or conflict_score >= 0.45:
+            role = "potential_conflict"
+        elif exception_score >= 0.8:
+            role = "exception"
+        elif conflict_query and has_conditions:
+            role = "context_difference"
+        elif case.item_id in supporting:
+            role = "supporting"
+        else:
+            role = "neutral"
+        case.evidence_role_candidate = role
+        case.role_reason = "; ".join(reasons) or "selected by relevance"
+        case.conflict_signal_score = round(conflict_score, 3)
+        case.exception_signal_score = round(exception_score, 3)
+        case.score_breakdown = {
+            **case.score_breakdown,
+            "conflict_signal": case.conflict_signal_score,
+            "exception_signal": case.exception_signal_score,
+        }
+    return cases
 
 
 def diversify(items: list[RetrievalResult], top_k: int) -> list[RetrievalResult]:

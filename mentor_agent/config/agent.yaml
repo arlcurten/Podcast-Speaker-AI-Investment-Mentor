@@ -13,6 +13,7 @@ principles:
 
 retrieval:
   case_top_k: 6
+  case_candidate_pool: 12
   principle_top_k: 3
   min_case_score: 1.8
   min_principle_score: 0.8
@@ -29,6 +30,8 @@ retrieval:
 routing:
   min_cases_for_principle_assisted: 2
   min_cases_for_case_only: 1
+  downgrade_principle_on_unresolved_conflict: true
+  downgrade_case_only_on_low_confidence_conflict: true
   allowed_principle_runtime_modes:
     - principle_assisted
   disallowed_genericness:

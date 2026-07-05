@@ -31,8 +31,24 @@ def candidate_route(
 
 
 def final_route_from_assessment(assessment: dict[str, Any], fallback: str) -> str:
+    return final_route_from_assessment_with_config(assessment, fallback, {})
+
+
+def final_route_from_assessment_with_config(assessment: dict[str, Any], fallback: str, config: dict[str, Any]) -> str:
     selected = assessment.get("selected_route")
     if selected in {"principle_assisted", "case_only", "insufficient_evidence"}:
-        return str(selected)
-    return fallback
-
+        route = str(selected)
+    else:
+        route = fallback
+    route_cfg = config.get("routing") or {}
+    unresolved = assessment.get("unresolved_conflicts")
+    if unresolved and route == "principle_assisted" and route_cfg.get("downgrade_principle_on_unresolved_conflict", True):
+        return "case_only"
+    if (
+        unresolved
+        and route == "case_only"
+        and assessment.get("confidence") == "low"
+        and route_cfg.get("downgrade_case_only_on_low_confidence_conflict", True)
+    ):
+        return "insufficient_evidence"
+    return route

@@ -9,8 +9,8 @@ from .common import ROOT, read_yaml
 from .guards import run_guards
 from .model import ChatResult, OpenAICompatibleClient
 from .query import QueryAnalysis, analyze_query_deterministic
-from .retrieval import RetrievalResult, make_case_search, make_principle_search
-from .routing import candidate_route, final_route_from_assessment
+from .retrieval import RetrievalResult, annotate_case_roles, make_case_search, make_principle_search
+from .routing import candidate_route, final_route_from_assessment_with_config
 from .stores import CaseStore, PrincipleStore, ReasoningRecord
 
 
@@ -46,7 +46,7 @@ class MentorRuntime:
         principles, cases = self._retrieve(analysis)
         candidate = candidate_route(analysis.to_dict(), principles, cases, self.config)
         assessment, assessment_meta = self._assess_applicability(analysis, principles, cases, candidate)
-        route = final_route_from_assessment(assessment, candidate["candidate_route"])
+        route = final_route_from_assessment_with_config(assessment, candidate["candidate_route"], self.config)
         answer, answer_meta = self._generate_answer(analysis, principles, cases, assessment, route)
         guards = run_guards(answer, analysis.to_dict(), cases, assessment)
         if not guards["ok"] and route != "insufficient_evidence":
@@ -86,14 +86,14 @@ class MentorRuntime:
             min_score=float(cfg.get("min_principle_score", 0.8)),
         )
         principles = filter_principles_for_query(analysis, principles)
-        cases = self.case_search.search(
+        case_pool = self.case_search.search(
             analysis,
-            top_k=int(cfg.get("case_top_k", 6)),
+            top_k=int(cfg.get("case_candidate_pool", max(int(cfg.get("case_top_k", 6)) * 2, 8))),
             min_score=float(cfg.get("min_case_score", 1.8)),
         )
         # Add supporting cases for selected principles, and keep conflicts/exceptions
         # visible through ordinary search rather than only support-only evidence.
-        by_id = {case.item_id: case for case in cases}
+        by_id = {case.item_id: case for case in case_pool}
         for principle in principles:
             for record_id in principle.item.supporting_records:
                 record = self.case_store.get(record_id)
@@ -110,10 +110,12 @@ class MentorRuntime:
                         relationship="principle_supporting_case",
                         selection_reason=f"selected: supporting case for {principle.item_id}",
                     )
-                    cases.append(item)
+                    case_pool.append(item)
                     by_id[record_id] = item
-        cases.sort(key=lambda x: x.score, reverse=True)
-        return principles, cases[: int(cfg.get("case_top_k", 6))]
+        supporting_records = {rid for principle in principles for rid in principle.item.supporting_records}
+        cases = annotate_case_roles(analysis, list(by_id.values()), principle_supporting_records=supporting_records)
+        cases = select_conflict_aware_cases(cases, int(cfg.get("case_top_k", 6)))
+        return principles, cases
 
     def _client(self) -> OpenAICompatibleClient:
         return OpenAICompatibleClient(self.config["model"])
@@ -147,6 +149,7 @@ class MentorRuntime:
             ]
             payload, result = self._client().json_chat(messages)
             normalized = normalize_assessment(payload, fallback)
+            normalized = postprocess_conflict_classification(normalized, cases)
             return normalized, model_meta(result, "applicability", messages)
         except Exception as exc:
             fallback["warnings"] = [f"LLM applicability failed; deterministic fallback used: {exc}"]
@@ -196,14 +199,33 @@ APPLICABILITY_SYSTEM = """You are the structured applicability assessor for an A
 Return JSON only. Principles are revisable reasoning abstractions, not evidence. Level 2 cases are evidence authority.
 Select only one route: principle_assisted, case_only, or insufficient_evidence. Do not use principle_guided.
 Reject principles when context mismatches, evidence is weak, contradictions are unresolved, current data is needed, or the principle is too generic.
-Always preserve missing information, exceptions, conflicts, and current-data gaps."""
+Always preserve missing information, exceptions, conflicts, context differences, and current-data gaps.
+
+Definitions:
+- conflict: cases address a similar decision context but support different directions, priorities, or preferences.
+- exception: a principle or tendency generally applies, but a specific condition prevents direct use.
+- context_difference: cases look different but apply to different time horizons, asset types, market regimes, information completeness, position sizing, risk tolerance, or objectives.
+
+Required conflict handling:
+1. Do not mark every different conclusion as conflict.
+2. First compare whether conditions and decision context are similar.
+3. Put explainable differences into resolved_context_differences.
+4. Put same-context divergent preferences into conflicting_evidence.
+5. Put unresolved issues into unresolved_conflicts and lower confidence.
+6. Severe unresolved conflicts should downgrade principle_assisted to case_only, or case_only to insufficient_evidence.
+7. Do not ignore counter-cases merely to preserve a principle.
+8. If a case is marked evidence_role_candidate=exception, classify it as an exception unless it directly opposes another same-context case. Do not duplicate pure exceptions as conflicts.
+
+Return these fields when relevant:
+conflicting_evidence, resolved_context_differences, exceptions_triggered, unresolved_conflicts, conflict_resolution, confidence_impact."""
 
 
 ANSWER_SYSTEM = """You are an AI Investment Mentor runtime, not the podcast speaker.
 Answer in Traditional Chinese. Be concise and practical, preferably under 700 Chinese characters.
 Separate speaker historical evidence, model interpretation, current-data limitation, and user-scenario assumptions when relevant.
 Use Level 4 principles only as an organizing framework. Support speaker-specific claims with Level 2 record citations.
-Do not provide current buy/sell advice without current data tools. Include citations using episode, timestamp, and record IDs."""
+Do not provide current buy/sell advice without current data tools. Include citations using episode, timestamp, and record IDs.
+When evidence conflicts, explain the trade-off naturally: what differs, which conditions separate the cases, what remains unresolved, and cite both sides."""
 
 
 def deterministic_assessment(
@@ -227,7 +249,11 @@ def deterministic_assessment(
         "unmatched_conditions": analysis.missing_information,
         "missing_information": analysis.missing_information,
         "exceptions_triggered": collect_fields(cases, "exceptions", limit=4),
-        "conflicting_evidence": collect_fields(cases, "contradictions", limit=4),
+        "conflicting_evidence": candidate_conflicts(cases),
+        "resolved_context_differences": candidate_context_differences(cases),
+        "unresolved_conflicts": [],
+        "conflict_resolution": "No unresolved conflict identified by deterministic fallback.",
+        "confidence_impact": "none",
         "supporting_cases": [x.item_id for x in cases],
         "counter_cases": [],
         "current_data_needed": analysis.current_data_requirement,
@@ -257,10 +283,58 @@ def normalize_assessment(payload: dict[str, Any], fallback: dict[str, Any]) -> d
     out = {**fallback, **{k: v for k, v in payload.items() if k in fallback or k in {"warnings"}}}
     if out.get("selected_route") not in {"principle_assisted", "case_only", "insufficient_evidence"}:
         out["selected_route"] = fallback["selected_route"]
-    for key in ["candidate_principles", "applicable_principles", "rejected_principles", "missing_information", "supporting_cases"]:
+    for key in [
+        "candidate_principles",
+        "applicable_principles",
+        "rejected_principles",
+        "missing_information",
+        "supporting_cases",
+        "conflicting_evidence",
+        "resolved_context_differences",
+        "exceptions_triggered",
+        "unresolved_conflicts",
+    ]:
         if not isinstance(out.get(key), list):
             out[key] = fallback.get(key, [])
+    for key in ["conflict_resolution", "confidence_impact"]:
+        if not isinstance(out.get(key), str):
+            out[key] = fallback.get(key, "")
     return out
+
+
+def postprocess_conflict_classification(assessment: dict[str, Any], cases: list[RetrievalResult]) -> dict[str, Any]:
+    role_by_id = {case.item_id: case.evidence_role_candidate for case in cases}
+    kept_conflicts = []
+    moved = []
+    for item in assessment.get("conflicting_evidence") or []:
+        ids = referenced_record_ids(item)
+        if ids and all(role_by_id.get(rid) == "exception" for rid in ids):
+            moved.append(item)
+            continue
+        kept_conflicts.append(item)
+    if moved:
+        assessment["conflicting_evidence"] = kept_conflicts
+        existing = assessment.get("exceptions_triggered") or []
+        assessment["exceptions_triggered"] = [*existing, *moved]
+        note = "Exception-only candidate conflicts were reclassified as exceptions."
+        assessment["conflict_resolution"] = "; ".join(x for x in [str(assessment.get("conflict_resolution") or ""), note] if x)
+    return assessment
+
+
+def referenced_record_ids(item: Any) -> list[str]:
+    if isinstance(item, str):
+        return []
+    if not isinstance(item, dict):
+        return []
+    ids: list[str] = []
+    for key in ["record_id", "case_id"]:
+        value = item.get(key)
+        if isinstance(value, str):
+            ids.append(value)
+    value = item.get("record_ids")
+    if isinstance(value, list):
+        ids.extend(str(x) for x in value)
+    return ids
 
 
 def deterministic_answer(
@@ -276,6 +350,12 @@ def deterministic_answer(
     if route == "principle_assisted" and principles:
         p = principles[0].item
         lines.append(f"可用的歷史推理框架：{p.name}。這是 Level 4 抽象，只能輔助思考，不能當成額外證據。")
+    if assessment.get("unresolved_conflicts"):
+        lines.append("目前有未解的 historical evidence conflict，因此不能給單邊結論；必須先釐清缺少條件。")
+    elif assessment.get("conflicting_evidence"):
+        lines.append("歷史案例中有不同做法；需要比較它們的適用條件，而不是直接選邊。")
+    if assessment.get("resolved_context_differences"):
+        lines.append("部分差異可由時間尺度、估值/敘事條件、部位或市場階段解釋，屬於 context difference。")
     lines.append("從 Level 2 cases 來看，較安全的回答是條件式的：先確認資料與條件，再決定是否行動；不要只因敘事或情緒做操作。")
     if assessment.get("missing_information"):
         lines.append("缺少資訊：" + "；".join(str(x) for x in assessment["missing_information"]))
@@ -307,6 +387,7 @@ def compact_principle(item: RetrievalResult) -> dict[str, Any]:
         "conditions": f.get("conditions"),
         "exceptions": f.get("exceptions"),
         "contradictions": f.get("contradictions"),
+        "counterexamples": f.get("counterexamples"),
         "runtime_mode_recommendation": f.get("runtime_mode_recommendation"),
         "confidence": f.get("confidence"),
         "supporting_records": f.get("supporting_records"),
@@ -322,11 +403,20 @@ def compact_case(item: RetrievalResult) -> dict[str, Any]:
         "title": r.title,
         "score": item.score,
         "relationship": item.relationship,
+        "evidence_role_candidate": item.evidence_role_candidate,
+        "role_reason": item.role_reason,
+        "conflict_signal_score": item.conflict_signal_score,
+        "exception_signal_score": item.exception_signal_score,
         "claims": f.get("claims", [])[:3],
         "reasoning_steps": f.get("reasoning_steps", [])[:3],
+        "assumptions": f.get("assumptions", [])[:2],
         "conditions": f.get("conditions", [])[:3],
+        "view_change_conditions": f.get("view_change_conditions", [])[:2],
         "risks": f.get("risks", [])[:3],
         "exceptions": f.get("exceptions", [])[:3],
+        "contradictions": f.get("contradictions", [])[:3],
+        "decisions_or_preferences": f.get("decisions_or_preferences", [])[:3],
+        "actions_or_avoided_actions": f.get("actions_or_avoided_actions", [])[:3],
         "uncertainty": f.get("uncertainty", [])[:2],
         "speaker_behavior": f.get("speaker_behavior", [])[:2],
         "citations": [c.label() for c in r.citations()[:2]],
@@ -343,6 +433,10 @@ def serialize_retrieval(item: RetrievalResult) -> dict[str, Any]:
         "matched_fields": item.matched_fields,
         "score_breakdown": item.score_breakdown,
         "relationship": item.relationship,
+        "evidence_role_candidate": item.evidence_role_candidate,
+        "role_reason": item.role_reason,
+        "conflict_signal_score": item.conflict_signal_score,
+        "exception_signal_score": item.exception_signal_score,
         "selection_reason": item.selection_reason,
     }
 
@@ -367,6 +461,59 @@ def collect_fields(cases: list[RetrievalResult], field: str, limit: int) -> list
         if isinstance(values, list):
             out.extend(str(x) for x in values)
     return out[:limit]
+
+
+def select_conflict_aware_cases(cases: list[RetrievalResult], top_k: int) -> list[RetrievalResult]:
+    cases = sorted(cases, key=lambda x: x.score, reverse=True)
+    selected: list[RetrievalResult] = []
+    def add(predicate):
+        for case in cases:
+            if case in selected:
+                continue
+            if predicate(case):
+                selected.append(case)
+                if len(selected) >= top_k:
+                    return
+
+    add(lambda x: x.evidence_role_candidate == "potential_conflict")
+    add(lambda x: x.evidence_role_candidate == "exception")
+    add(lambda x: x.evidence_role_candidate == "context_difference")
+    add(lambda x: x.evidence_role_candidate == "supporting")
+    add(lambda x: True)
+    return sorted(selected[:top_k], key=lambda x: x.score, reverse=True)
+
+
+def candidate_conflicts(cases: list[RetrievalResult]) -> list[dict[str, Any]]:
+    out: list[dict[str, Any]] = []
+    for case in cases:
+        if case.evidence_role_candidate != "potential_conflict":
+            continue
+        out.append(
+            {
+                "record_ids": [case.item_id],
+                "conflict_topic": case.title,
+                "why_they_conflict": case.role_reason,
+                "whether_resolvable_by_context": "unknown",
+                "effect_on_conclusion": "requires LLM applicability assessment",
+            }
+        )
+    return out[:4]
+
+
+def candidate_context_differences(cases: list[RetrievalResult]) -> list[dict[str, Any]]:
+    out: list[dict[str, Any]] = []
+    for case in cases:
+        if case.evidence_role_candidate != "context_difference":
+            continue
+        out.append(
+            {
+                "record_ids": [case.item_id],
+                "apparent_difference": case.title,
+                "context_difference": case.role_reason,
+                "why_not_a_true_conflict": "candidate context difference; final classification requires applicability assessment",
+            }
+        )
+    return out[:4]
 
 
 def model_meta(result: ChatResult, stage: str, messages: list[dict[str, str]] | None = None) -> dict[str, Any]:

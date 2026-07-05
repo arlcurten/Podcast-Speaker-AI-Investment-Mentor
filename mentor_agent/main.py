@@ -34,6 +34,9 @@ def main(argv: list[str] | None = None) -> int:
     validation.add_argument("--question-file", default=str(ROOT / "config" / "reasoning_validation_questions.yaml"))
     validation.add_argument("--skip-legacy", action="store_true")
 
+    conflict_validation = sub.add_parser("validate-conflicts", help="Run focused live conflict-handling validation.")
+    conflict_validation.add_argument("--question-file", default=str(ROOT / "config" / "conflict_validation_questions.yaml"))
+
     sub.add_parser("validate-data", help="Validate private Level 2 and Level 4 artifacts.")
 
     args = parser.parse_args(argv)
@@ -61,6 +64,12 @@ def main(argv: list[str] | None = None) -> int:
         from .modules.validation_runner import run_reasoning_validation
 
         result = run_reasoning_validation(Path(args.question_file), use_llm=not args.no_llm, run_legacy=not args.skip_legacy)
+        print(json.dumps(result, ensure_ascii=False, indent=2))
+        return 0
+    if args.command == "validate-conflicts":
+        from .modules.conflict_validation_runner import run_conflict_validation
+
+        result = run_conflict_validation(Path(args.question_file), use_llm=not args.no_llm)
         print(json.dumps(result, ensure_ascii=False, indent=2))
         return 0
     return 1
