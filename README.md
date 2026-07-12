@@ -14,6 +14,7 @@ Current status:
 - Offline Level 3/Level 4 principle extraction is implemented in `semantic_analysis_poc/`.
 - `mentor_agent/` is the implemented and validated formal principle-plus-case AI Investment Mentor MVP runtime.
 - Vector database, current market tools, portfolio integration, fine-tuning, UI, deployment, and full corpus processing are not implemented yet.
+- RunPod-ready batch transcription infrastructure is being prepared for the next full-corpus expansion phase; RunPod is only a temporary faster-whisper worker.
 
 Start here:
 
@@ -24,6 +25,7 @@ Start here:
 - `legacy_segment_poc/README.md`: completed Phase 1 transcription POC reference.
 - `docs/reasoning_mentor_architecture.md`: planned four-level reasoning architecture.
 - `docs/private_data_setup.md`: how to connect the public source repo to the sibling private data repo.
+- `docs/runpod_transcription.md`: RunPod single-GPU batch transcription setup.
 - `docs/public_artifacts.md`: public/private artifact policy and public derivative index.
 - `docs/terminology.tsv`: shared terminology table for preserved terms, aliases, and corrections.
 - `docs/future-improvements.md`: deferred optimization ideas.
@@ -41,7 +43,8 @@ Start here:
 [done]    Offline Level 3/4 principle extraction POC
 [done]    Legacy case-only Mentor RAG baseline over Level 2 records
 [done]    Formal Mentor Agent MVP runtime: principle-assisted / case-only grounded answering
-[future]  Full corpus expansion planning and implementation
+[active]  Full corpus expansion planning and RunPod-ready transcription pipeline preparation
+[future]  Full corpus transcription execution
 [future]  Full principle-guided reasoning after stronger Level 4 evidence
 [future]  Phase 8: Advanced version
 ```

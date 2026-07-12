@@ -1,8 +1,10 @@
 # Gooaye Mentor Local POC
 
-This folder is a sandbox/playground for the Local POC. It is intentionally separate from the future production project.
+This folder is the completed Phase 1 transcription reference plus the reusable transcription utilities for the next full-corpus expansion.
 
 The POC validates one episode, EP674, through ingestion, audio validation, transcription, normalization, deterministic merging, minimal topic review, and human review preparation.
+
+The new batch commands wrap the existing Phase 1 ingestion/download/faster-whisper code for RunPod-ready transcription. They do not change the completed EP674 reference artifacts.
 
 ## Folder Hierarchy
 
@@ -12,6 +14,7 @@ legacy_segment_poc/
 ├── README.md
 ├── main.py
 ├── modules/
+│   ├── batch/
 │   ├── source/
 │   ├── transcript/
 │   ├── segmentation/
@@ -19,16 +22,10 @@ legacy_segment_poc/
 │   └── legacy/
 ├── config/
 ├── poc_docs/
-├── data/
-│   ├── rss_sources/
-│   ├── audio/
-│   ├── transcripts/
-│   ├── topic_segments/
-│   ├── evaluation/
-│   └── legacy/
-├── reports/
 └── requirements.txt
 ```
+
+Complete audio, transcripts, and batch outputs are private artifacts and should live under the configured private data roots, not in this public source tree.
 
 ## POC Flow
 
@@ -42,6 +39,18 @@ RSS / manifest
   -> concise human review file
 ```
 
+Batch transcription flow:
+
+```text
+episode list
+  -> exact episode metadata resolution
+  -> audio download or reuse
+  -> faster-whisper raw transcript
+  -> output validation
+  -> checkpoint / resume / retry
+  -> private batch summary
+```
+
 The raw transcript is immutable evidence. Normalized, merged, topic, classification, and routing outputs are derived artifacts and can be regenerated.
 
 ## Main Entry Point
@@ -49,11 +58,15 @@ The raw transcript is immutable evidence. Normalized, merged, topic, classificat
 Run commands from this directory:
 
 ```bash
+python3 main.py batch-plan --config config/transcription_batch.example.yaml --dry-run
+python3 main.py batch-status --config config/transcription_batch.example.yaml
 python3 main.py merge --episode EP674 --configuration large-v3-turbo
 python3 main.py normalize --episode EP674 --configuration large-v3-turbo
 python3 main.py topic-review-poc --episode EP674 --configuration large-v3-turbo
 python3 -m py_compile main.py modules/*.py modules/*/*.py
 ```
+
+Batch transcription is RunPod-ready but should not be executed locally or on GPU without explicit approval. See `../docs/runpod_transcription.md`.
 
 ## Important Files
 
@@ -64,6 +77,8 @@ data/rss_sources/rss_snapshot_*.xml
 ```
 
 RSS snapshot, episode manifest, and feed provenance.
+
+For new batch runs, equivalent complete manifests and outputs should be read from or written to the private repository through `PODCAST_DATA_ROOT` and `PIPELINE_DATA_ROOT`.
 
 ```text
 data/transcripts/EP674/raw_large-v3-turbo_transcript.json
@@ -99,7 +114,7 @@ Shared terminology table for transcription prompts, normalization aliases, and h
 
 ## Not In Scope Here
 
-This POC does not implement production RAG, embeddings, vector database, Mentor Agent, fine-tuning, cloud orchestration, or multi-episode batch processing.
+This folder does not implement production RAG, embeddings, vector database, Mentor Agent, fine-tuning, semantic extraction, or distributed cloud orchestration. RunPod batch transcription is single-GPU faster-whisper execution only.
 
 ## More Detail
 

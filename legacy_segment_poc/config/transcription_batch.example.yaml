@@ -1,0 +1,35 @@
+batch_id: runpod_pilot_example
+
+# Example only. Resolve through the episode manifest using exact matching first.
+episode_ids:
+  - EP674
+  - EP670
+  - EP450
+  - EP57
+  - EP672
+
+manifest_path: ${PIPELINE_DATA_ROOT}/legacy_segment/rss_sources/episodes.jsonl
+output_root: ${PIPELINE_DATA_ROOT}/legacy_segment/batches
+audio_root: ${PODCAST_DATA_ROOT}/audio
+transcript_root: ${PODCAST_DATA_ROOT}/transcripts/raw
+
+model_name: large-v3-turbo
+device: cuda
+compute_type: float16
+language: zh
+beam_size: 5
+condition_on_previous_text: false
+word_timestamps: false
+vad:
+  enabled: true
+  min_silence_duration_ms: 500
+
+audio_policy: delete_on_success
+retry_count: 2
+download_timeout_seconds: 60
+skip_existing: true
+
+checkpoint_path: ${PIPELINE_DATA_ROOT}/legacy_segment/batches/runpod_pilot_example/checkpoint.json
+
+cost:
+  hourly_rate_usd:

@@ -30,10 +30,31 @@ COMMANDS = {
 
     # Build the historical Local POC report from existing artifacts.
     "poc-report": "modules.build_reports.build_poc_report",
+
+    # Plan a RunPod-ready transcription batch without downloading audio or loading Whisper.
+    "batch-plan": "modules.batch.transcription_batch",
+
+    # Run a checkpointed transcription batch. Use --dry-run for deterministic validation.
+    "batch-run": "modules.batch.transcription_batch",
+
+    # Show checkpoint status for a configured transcription batch.
+    "batch-status": "modules.batch.transcription_batch",
+
+    # Resume a checkpointed transcription batch without rerunning completed episodes.
+    "batch-resume": "modules.batch.transcription_batch",
+
+    # Validate checkpoint and output status for a transcription batch.
+    "batch-validate": "modules.batch.transcription_batch",
 }
 
 
 def main() -> int:
+    if len(sys.argv) > 1 and sys.argv[1] in COMMANDS:
+        command = sys.argv[1]
+        rest = sys.argv[2:]
+        sys.argv = [command, *rest]
+        runpy.run_module(COMMANDS[command], run_name="__main__")
+        return 0
     parser = argparse.ArgumentParser(description="Local POC modular entrypoint.")
     parser.add_argument("command", choices=sorted(COMMANDS))
     args, rest = parser.parse_known_args()
