@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import os
+import subprocess
 import sys
 from pathlib import Path
 
@@ -194,6 +195,38 @@ def test_sync_dry_run_script_exists() -> None:
 def test_sync_checksum_flag_present() -> None:
     script = (ROOT.parent / "scripts" / "sync_transcription_outputs.sh").read_text(encoding="utf-8")
     assert "--checksum" in script
+
+
+def test_sync_root_mode_covers_transcripts_and_batch_metadata(tmp_path: Path) -> None:
+    source = tmp_path / "runpod"
+    dest = tmp_path / "private"
+    batch_dir = source / "pipeline_data" / "legacy_segment" / "batches" / "smoke"
+    transcript_dir = source / "shared_data" / "transcripts" / "raw" / "EP57"
+    audio_dir = source / "shared_data" / "audio" / "EP57"
+    batch_dir.mkdir(parents=True)
+    transcript_dir.mkdir(parents=True)
+    audio_dir.mkdir(parents=True)
+    dest.mkdir()
+    (audio_dir / "episode.mp3").write_bytes(b"not-synced")
+    (batch_dir / "checkpoint.json").write_text(json.dumps({"jobs": {"EP57": {"status": "completed"}}}), encoding="utf-8")
+    (batch_dir / "summary.json").write_text(json.dumps({"status_counts": {"completed": 1}}), encoding="utf-8")
+    (transcript_dir / "raw_transcript.json").write_text(
+        json.dumps({
+            "metadata": {"episode_id": "EP57", "source_episode_metadata": {"episode_id": "EP57"}},
+            "segments": [{"segment_id": 0, "start": 0, "end": 1, "text": "ok"}],
+        }),
+        encoding="utf-8",
+    )
+    script = ROOT.parent / "scripts" / "sync_transcription_outputs.sh"
+    result = subprocess.run(
+        [str(script), "--source-root", str(source), "--dest-root", str(dest), "--batch-id", "smoke"],
+        check=True,
+        text=True,
+        capture_output=True,
+    )
+    assert "raw_transcript.json" in result.stdout
+    assert "checkpoint.json" in result.stdout
+    assert "episode.mp3" not in result.stdout
 
 
 def test_failure_isolation_records_failed_job(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:

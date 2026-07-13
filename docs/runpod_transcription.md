@@ -97,20 +97,29 @@ Default sync is dry-run:
 
 ```bash
 scripts/sync_transcription_outputs.sh \
-  --source /runpod/volume/pipeline_data/legacy_segment/batches/<batch_id> \
-  --dest /local/path/to/AI-Investment-Mentor-private
+  --source-root /runpod/volume \
+  --dest-root /local/path/to/AI-Investment-Mentor-private \
+  --batch-id <batch_id> \
+  --dry-run
 ```
 
 Execute copy:
 
 ```bash
 scripts/sync_transcription_outputs.sh \
-  --source /runpod/volume/pipeline_data/legacy_segment/batches/<batch_id> \
-  --dest /local/path/to/AI-Investment-Mentor-private \
+  --source-root /runpod/volume \
+  --dest-root /local/path/to/AI-Investment-Mentor-private \
+  --batch-id <batch_id> \
   --execute
 ```
 
-The sync helper verifies JSON after copy. It does not commit or push.
+The sync helper copies batch metadata and raw transcript directories into:
+
+```text
+pipeline_data/legacy_segment/runpod_smoke/<batch_id>/
+```
+
+It does not sync audio, does not overwrite newer local files, verifies JSON and transcript timestamps, and does not commit or push.
 
 ## Audio Policy
 
