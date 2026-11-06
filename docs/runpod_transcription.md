@@ -18,6 +18,9 @@ System ffmpeg/ffprobe remain required by our audio-inspection wrapper.
 Use a volume with at least 35 GB initially free, preferably 60 GB or more;
 models/environments and the 25 GB safety reserve need room even though audio
 is sequential. Put outputs on persistent storage, not the container layer.
+On Linux the shared budget uses a stable filesystem root, so creating cache or
+output subdirectories does not reset or invalidate it. On WSL the actual Windows
+backing-drive mount must still be configured explicitly.
 Stopping/deleting has different consequences for container, volume and network
 storage; consult [RunPod storage lifetimes](https://docs.runpod.io/pods/storage/types).
 

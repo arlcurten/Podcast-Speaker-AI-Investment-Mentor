@@ -36,6 +36,18 @@ def existing_parent(path: Path) -> Path:
     return path
 
 
+def filesystem_root(path: Path) -> Path:
+    """Stable local budget identity as cache/output directories come into being."""
+    current = existing_parent(path).resolve()
+    if current.is_file():
+        current = current.parent
+    while current != current.parent and not current.is_mount():
+        if current.parent.stat().st_dev != current.stat().st_dev:
+            break
+        current = current.parent
+    return current
+
+
 def tree_bytes(path: Path) -> int:
     if not path.exists():
         return 0
@@ -57,7 +69,7 @@ class StorageGuard:
         host = settings.get("host_root")
         if is_wsl() and not host:
             raise StorageLimitError("WSL requires storage.host_root pointing to the actual Windows backing-drive mount; virtual ext4 free space is not sufficient.")
-        self.host_root = private_path(host) if host else existing_parent(write_roots[0])
+        self.host_root = private_path(host) if host else filesystem_root(write_roots[0])
         if not self.host_root.exists():
             raise StorageLimitError("Configured host storage mount is unavailable.")
         if is_wsl() and not windows_mount(self.host_root):

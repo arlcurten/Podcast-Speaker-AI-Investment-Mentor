@@ -56,6 +56,22 @@ def test_invalid_or_changed_budget_fails_closed(guard):
         storage.StorageGuard({}, audio_root=guard.audio_root, write_roots=guard.write_roots, budget_file=guard.budget_file)
 
 
+def test_linux_cache_and_outputs_share_stable_budget_identity(tmp_path, monkeypatch):
+    monkeypatch.setattr(storage, "is_wsl", lambda: False)
+    monkeypatch.setattr(storage.shutil, "disk_usage", lambda _: SimpleNamespace(free=100_000_000_000))
+    budget = tmp_path / "budget.json"
+    cache = tmp_path / "cache/hub"
+    first = storage.StorageGuard({}, audio_root=tmp_path / "audio", write_roots=[cache], budget_file=budget)
+    before = read_json(budget)
+    cache.mkdir(parents=True)
+    outputs = tmp_path / "pipeline/batches"
+    outputs.mkdir(parents=True)
+    second = storage.StorageGuard({}, audio_root=tmp_path / "audio", write_roots=[outputs, cache], budget_file=budget)
+    assert first.host_root == second.host_root == storage.filesystem_root(tmp_path)
+    assert read_json(budget) == before
+    second.check()
+
+
 def test_download_checks_stream_size_and_cleans_partial(tmp_path, monkeypatch):
     class Response:
         status_code = 200
