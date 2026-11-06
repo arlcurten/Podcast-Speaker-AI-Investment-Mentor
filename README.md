@@ -13,11 +13,14 @@ The rebuild starts with working [`transcription/`](transcription/README.md):
 private episode-manifest input, exact matching, single/batch faster-whisper
 worker, checkpoint/resume, raw validation, normalization and a pre-extraction
 quality gate with private review queues. Automated integrity checks and
-source-content review are separate. GPU execution has **not** been validated
-in this rebuild.
+source-content review are separate. The rebuild's one local GPU regression
+completed with valid timestamps and no-work resume. Source accuracy is still
+under review; a clean RunPod image has not been exercised.
 
-No new `knowledge/` or `mentor_agent/` placeholder is created yet. The archived
-Mentor remains runnable while its replacement is developed in later stages.
+Host-aware disk limits, immutable RSS catalogs and checksum-bound GPU-worker
+transfer bundles are implemented. No cloud resource was rented. No new
+`knowledge/` or `mentor_agent/` placeholder is created yet. The archived Mentor
+remains runnable while its replacement is developed in later stages.
 
 ## End-to-End Plan
 

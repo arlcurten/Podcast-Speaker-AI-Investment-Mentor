@@ -15,9 +15,11 @@ private episode metadata -> exact episode resolution -> plan
 -> extraction eligibility (later knowledge pipeline consumes this)
 ```
 
-RSS discovery remains available in the archive; this first active slice consumes
-an existing private JSON/JSONL episode manifest. RunPod performs transcription
-only. Normalization stays local. No GPU smoke is claimed yet.
+`catalog-fetch` records immutable RSS snapshots without downloading audio.
+Ambiguous numbering fails by default; `--quarantine-ambiguous` preserves bad
+metadata separately and excludes it from runnable episodes. Legacy JSON/JSONL
+episode manifests remain readable. The current deployment is a sequential local
+worker; a remote GPU is optional, never provisioned by this package.
 
 ## Setup and Commands
 
@@ -32,6 +34,7 @@ paths, not the public repository or symlinks into it.
 
 ```bash
 python3 -m transcription --help
+python3 -m transcription catalog-fetch --rss-url "$PODCAST_RSS_URL" --output "$CATALOG_OUTPUT"
 python3 -m transcription batch-plan --config transcription/config/batch.example.yaml --dry-run
 python3 -m transcription batch-run --config "$BATCH_CONFIG" --episode EP57 --max-episodes 1
 python3 -m transcription batch-status --config "$BATCH_CONFIG"
@@ -74,11 +77,38 @@ prevents simultaneous workers for the same batch. There is no distributed
 locking. A crash during transcription restarts that episode, not the batch;
 there is no within-audio model checkpoint.
 
-`keep` (example default) and `reuse_existing` retain audio. `delete_on_success`
-deletes only after validation and durable job completion. Failures retain audio.
-The old shell sync helper remains a **legacy** smoke tool, not the formal v2
-publisher; do not use its output layout blindly. Cross-machine formal sync is
-still pending. No batch or sync command performs Git operations.
+`keep` and `reuse_existing` retain audio. `delete_on_success` (example default)
+deletes only batch-owned audio after validation and durable job completion.
+Existing user audio is not deleted; replaced audio fails the cleanup hash check.
+Completed-job resume also recovers interrupted cleanup. Failures retain audio.
+`batch-export` publishes a checksum-bound bundle; `batch-import` verifies it and
+publishes under private `pipeline_data/transcription/imports/<batch_id>` without
+overwriting older raw data. Both default to dry-run. The shell sync wrapper
+calls this formal importer; the old helper is archived under `legacy/scripts/`.
+See [GPU setup and transfer](../docs/runpod_transcription.md). No batch or sync
+command performs Git operations.
+
+## Local Storage Safety
+
+The worker handles one episode at a time. Example defaults use cached models
+only, a 500 MB per-download limit, a 2 GB audio working set and 25 GB free-space
+reserve. Streaming checks stop a download before exceeding the byte limit.
+Low-space failures stop admitting further jobs; failed audio is not silently
+deleted to make space. Existing transcripts/checkpoints are preserved.
+
+WSL's reported ext4 capacity may exceed the actual host disk. Configure
+`storage.host_root` in private config to the confirmed Windows backing-drive
+mount. WSL execution fails closed without it; Linux/tmpfs paths do not qualify.
+Both host and output filesystem space are checked. See
+[Microsoft's WSL storage explanation](https://learn.microsoft.com/en-us/windows/wsl/disk-space).
+
+A shared private `storage.budget_file` persists the initial host free space.
+The default 60 GB growth cap is a conservative limit on **net host free-space
+decline**, including other applications. Restarting a batch cannot reset or
+increase an existing budget. This is application-level admission control, not
+an OS quota or protection against unrelated processes exhausting the disk.
+Deleting WSL files need not immediately shrink the host VHD; host checks remain
+authoritative. The pipeline never resizes or compacts the VHD.
 
 ## Quality Gate
 

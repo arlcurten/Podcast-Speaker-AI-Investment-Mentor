@@ -106,6 +106,8 @@ def load_manifest(path: Path | None = None) -> list[dict[str, Any]]:
         rows = [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines() if line.strip()]
     else:
         rows = read_json(path)
+    if isinstance(rows, dict) and rows.get("schema_version") == "episode_catalog.v1":
+        rows = rows.get("episodes")
     if not isinstance(rows, list) or not all(isinstance(row, dict) for row in rows):
         raise ValueError("Episode manifest must contain a list of objects.")
     return rows

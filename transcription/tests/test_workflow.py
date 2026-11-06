@@ -103,7 +103,7 @@ def test_config_mismatch_precedes_skip_and_retry(config, worker):
 def test_failed_job_isolated_and_explicit_retry(config, worker, monkeypatch):
     original = batch.transcribe_audio
 
-    def fail_one(audio, cfg, episode):
+    def fail_one(audio, cfg, episode, storage=None):
         if episode["episode_id"] == "EP57":
             raise RuntimeError("https://secret.invalid/?token=do-not-record")
         return original(audio, cfg, episode)
@@ -310,3 +310,42 @@ def test_missing_cuda_is_explicit(monkeypatch):
     with pytest.raises(RuntimeError, match="CUDA requested"):
         batch.ensure_cuda_if_requested("cuda")
     batch.ensure_cuda_if_requested("cpu")
+
+
+def test_preexisting_audio_is_not_deleted(config, worker):
+    paths = batch.resolve_paths(config)
+    target = batch.audio_path(paths, "EP57")
+    target.parent.mkdir(parents=True)
+    target.write_bytes(b"synthetic audio placeholder")
+    config["audio_policy"] = "delete_on_success"
+    run(config)
+    assert target.exists()
+    assert not batch.audio_path(paths, "EP670").exists()
+
+
+def test_completed_resume_recovers_cleanup_without_retranscription(config, worker):
+    run(config)
+    paths = batch.resolve_paths(config)
+    config["audio_policy"] = "delete_on_success"
+    run(config)
+    assert worker == {"download": 2, "transcribe": 2}
+    assert not batch.audio_path(paths, "EP57").exists()
+
+
+def test_replaced_audio_not_deleted_on_resume(config, worker):
+    run(config)
+    target = batch.audio_path(batch.resolve_paths(config), "EP57")
+    target.write_bytes(b"different user audio")
+    config["audio_policy"] = "delete_on_success"
+    run(config)
+    assert target.read_bytes() == b"different user audio"
+
+
+def test_storage_failure_stops_admitting_more_jobs(config, worker, monkeypatch):
+    def full(*args):
+        raise batch.StorageLimitError("synthetic storage floor")
+    monkeypatch.setattr(batch, "download_audio", full)
+    result = run(config)
+    assert result["status_counts"] == {"failed": 1}
+    assert worker["transcribe"] == 0
+    assert "EP670" not in batch.status(config)["jobs"]

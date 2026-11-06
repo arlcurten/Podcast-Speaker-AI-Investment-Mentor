@@ -1,7 +1,9 @@
-faster-whisper>=1.1.0
-ctranslate2>=4.4.0
-PyYAML>=6.0.0
-requests>=2.31.0
-psutil>=5.9.0
-numpy>=1.26.0
-scikit-learn>=1.4.0
+# Python 3.12 / Linux x86_64 worker baseline; no Torch, extraction or Agent stack.
+faster-whisper==1.2.1
+ctranslate2==4.8.0
+av==17.1.0
+PyYAML==6.0.3
+requests==2.34.2
+psutil==7.2.2
+nvidia-cublas-cu12==12.8.4.1
+nvidia-cudnn-cu12==9.19.0.56

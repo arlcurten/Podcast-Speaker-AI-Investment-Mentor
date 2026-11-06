@@ -1,0 +1,29 @@
+# Single regression, not a corpus job. Copy/edit privately before execution.
+batch_id: gpu_regression_v1
+episode_ids: [EP674]
+manifest_path: ${PODCAST_DATA_ROOT}/episode_metadata/catalog_v1.json
+output_root: ${PIPELINE_DATA_ROOT}/transcription/batches
+audio_root: ${PODCAST_DATA_ROOT}/audio/transcription_work
+transcript_root: ${PODCAST_DATA_ROOT}/transcripts/raw/gpu_regression_v1
+model_name: large-v3-turbo
+# Pinned snapshot already used by the archived local regression.
+model_revision: 0a363e9161cbc7ed1431c9597a8ceaf0c4f78fcf
+local_files_only: true
+device: cuda
+compute_type: float16
+language: zh
+beam_size: 5
+vad: {enabled: true, min_silence_duration_ms: 500}
+condition_on_previous_text: false
+word_timestamps: false
+audio_policy: keep
+retry_count: 0
+skip_existing: true
+cost: {hourly_rate_usd: null}
+storage:
+  host_root: null
+  budget_file: ${PIPELINE_DATA_ROOT}/storage_budget.json
+  minimum_free_bytes: 25000000000
+  max_growth_bytes: 60000000000
+  max_audio_bytes: 2000000000
+  max_download_bytes: 500000000

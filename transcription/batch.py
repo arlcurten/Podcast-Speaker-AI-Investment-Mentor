@@ -19,6 +19,7 @@ from .common import (find_episode, load_manifest, run_command, sha256_file, utc_
 from .audio import download as stream_download, inspect as inspect_audio, VramMonitor, pkg
 from .common import terminology_prompt
 from .quality import validate_transcript
+from .storage import StorageGuard, StorageLimitError
 
 
 STATUSES = {"pending", "downloading", "downloaded", "transcribing", "completed", "failed", "skipped"}
@@ -71,6 +72,9 @@ def load_batch_config(path: Path, overrides: argparse.Namespace | None = None) -
     cfg.setdefault("retry_count", 2)
     cfg.setdefault("download_timeout_seconds", 60)
     cfg.setdefault("skip_existing", True)
+    cfg.setdefault("storage", {})
+    if not isinstance(cfg["storage"], dict):
+        raise ValueError("storage must be a mapping.")
     if cfg["audio_policy"] not in {"keep", "delete_on_success", "reuse_existing"}:
         raise ValueError("audio_policy must be one of: keep, delete_on_success, reuse_existing")
     safe_id(str(cfg["batch_id"]))
@@ -139,6 +143,7 @@ def config_fingerprint(cfg: dict[str, Any]) -> dict[str, Any]:
         "vad": cfg.get("vad"),
         "condition_on_previous_text": cfg.get("condition_on_previous_text"),
         "word_timestamps": cfg.get("word_timestamps"),
+        **({"model_revision": cfg["model_revision"]} if cfg.get("model_revision") else {}),
     }
 
 
@@ -231,13 +236,17 @@ def validate_audio(path: Path) -> dict[str, Any]:
     return {**meta, "sha256": sha256_file(path), "size_bytes": path.stat().st_size}
 
 
-def download_audio(episode: dict[str, Any], dest: Path, timeout: int, retries: int) -> dict[str, Any]:
+def download_audio(episode: dict[str, Any], dest: Path, timeout: int, retries: int,
+                   storage: StorageGuard | None = None) -> dict[str, Any]:
     if dest.exists() and dest.stat().st_size > 0:
         return {"skipped_existing": True, **validate_audio(dest)}
     url = episode.get("audio_url")
     if not url:
         raise ValueError("episode missing audio_url")
-    result = stream_download(str(url), dest, timeout=timeout, retries=retries)
+    if storage:
+        storage.admit_download()
+    result = stream_download(str(url), dest, timeout=timeout, retries=retries,
+                             **({"max_bytes": storage.max_download_bytes, "check_space": storage.check} if storage else {}))
     return {**result, **validate_audio(dest)}
 
 
@@ -263,10 +272,12 @@ def serialize_segment(segment: Any, segment_id: int, word_timestamps: bool = Fal
     return item
 
 
-def transcribe_audio(audio: Path, cfg: dict[str, Any], episode: dict[str, Any]) -> tuple[list[dict[str, Any]], dict[str, Any]]:
+def transcribe_audio(audio: Path, cfg: dict[str, Any], episode: dict[str, Any],
+                     storage: StorageGuard | None = None) -> tuple[list[dict[str, Any]], dict[str, Any]]:
     ensure_cuda_if_requested(str(cfg.get("device")))
     try:
         from faster_whisper import WhisperModel
+        from faster_whisper.utils import download_model
         import psutil
     except Exception as exc:
         raise RuntimeError(f"Missing transcription dependency: {exc}") from exc
@@ -277,7 +288,12 @@ def transcribe_audio(audio: Path, cfg: dict[str, Any], episode: dict[str, Any]) 
     vram.start()
     try:
         model_load_start = time.perf_counter()
-        model = WhisperModel(str(cfg["model_name"]), device=str(cfg["device"]), compute_type=str(cfg["compute_type"]))
+        model_path = str(cfg["model_name"])
+        if not Path(model_path).is_dir():
+            model_path = download_model(model_path, local_files_only=bool(cfg.get("local_files_only", False)),
+                                        revision=cfg.get("model_revision"))
+        model = WhisperModel(model_path, device=str(cfg["device"]), compute_type=str(cfg["compute_type"]),
+                             local_files_only=True)
         model_load_seconds = time.perf_counter() - model_load_start
         segments, info = model.transcribe(
             str(audio),
@@ -291,6 +307,8 @@ def transcribe_audio(audio: Path, cfg: dict[str, Any], episode: dict[str, Any]) 
         )
         out = []
         for idx, seg in enumerate(segments):
+            if storage and idx % 25 == 0:
+                storage.check(64_000_000)
             peak_rss = max(peak_rss, process.memory_info().rss)
             out.append(serialize_segment(seg, idx, bool(cfg.get("word_timestamps"))))
     finally:
@@ -301,6 +319,7 @@ def transcribe_audio(audio: Path, cfg: dict[str, Any], episode: dict[str, Any]) 
         "episode_id": episode.get("episode_id"),
         "backend": "faster-whisper",
         "model": cfg.get("model_name"),
+        "model_revision": Path(model_path).name if Path(model_path).parent.name == "snapshots" else cfg.get("model_revision"),
         "device": cfg.get("device"),
         "compute_type": cfg.get("compute_type"),
         "language": cfg.get("language"),
@@ -351,7 +370,24 @@ def record_failure(checkpoint: dict[str, Any], paths: BatchPaths, episode_id: st
     update_job(checkpoint, paths.checkpoint_path, episode_id, {"status": "failed", "stage": stage, "last_error": failure})
 
 
-def run_job(cfg: dict[str, Any], paths: BatchPaths, checkpoint: dict[str, Any], item: dict[str, Any], *, retry_failed: bool = False) -> dict[str, Any]:
+def cleanup_completed_audio(cfg: dict[str, Any], paths: BatchPaths, checkpoint: dict[str, Any], episode_id: str) -> dict[str, Any]:
+    job = checkpoint["jobs"][episode_id]
+    if cfg.get("audio_policy") != "delete_on_success" or not job.get("audio_owned_by_batch"):
+        return job
+    target = audio_path(paths, episode_id)
+    try:
+        if target.exists():
+            meta = read_json(transcript_path(paths, episode_id))["metadata"]
+            if sha256_file(target) != meta["audio_sha256"]:
+                raise ValueError("Audio replaced since transcription")
+            target.unlink()
+        return update_job(checkpoint, paths.checkpoint_path, episode_id, {"audio_cleanup": "deleted_or_absent", "cleanup_warning": None})
+    except (OSError, ValueError):
+        return update_job(checkpoint, paths.checkpoint_path, episode_id, {"cleanup_warning": "Validated transcript retained; audio cleanup requires inspection."})
+
+
+def run_job(cfg: dict[str, Any], paths: BatchPaths, checkpoint: dict[str, Any], item: dict[str, Any], *, retry_failed: bool = False,
+            storage: StorageGuard | None = None) -> dict[str, Any]:
     episode_id = item["episode_id"]
     episode = item["episode"]
     fingerprint = config_fingerprint(cfg)
@@ -370,7 +406,8 @@ def run_job(cfg: dict[str, Any], paths: BatchPaths, checkpoint: dict[str, Any], 
             atomic_write_json(sidecar, meta, overwrite=False)
         validation = validate_transcript(transcript_path(paths, episode_id), episode_id)
         update_job(checkpoint, paths.checkpoint_path, episode_id, {"status": "completed", "stage": "output_validated", "validation": validation, "config_fingerprint": fingerprint})
-        return update_job(checkpoint, paths.checkpoint_path, episode_id, {"status": "completed", "stage": "job_completed", "last_action": "skipped", "last_error": None, "output": str(transcript_path(paths, episode_id))})
+        update_job(checkpoint, paths.checkpoint_path, episode_id, {"status": "completed", "stage": "job_completed", "last_action": "skipped", "last_error": None, "output": str(transcript_path(paths, episode_id))})
+        return cleanup_completed_audio(cfg, paths, checkpoint, episode_id)
     if transcript_path(paths, episode_id).exists() or run_metadata_path(paths, episode_id).exists():
         raise ValueError("Existing incomplete/incompatible output will not be overwritten; use a new output version.")
     if existing.get("status") == "failed" and not retry_failed:
@@ -383,12 +420,16 @@ def run_job(cfg: dict[str, Any], paths: BatchPaths, checkpoint: dict[str, Any], 
         try:
             update_job(checkpoint, paths.checkpoint_path, episode_id, {"status": "pending", "stage": "metadata_resolved", "config_fingerprint": fingerprint, "attempt": previous_attempt + attempt})
             stage = "audio_download"
+            if storage:
+                storage.check(64_000_000)
+            owned_audio = bool(checkpoint.get("jobs", {}).get(episode_id, {}).get("audio_owned_by_batch")) or not audio_path(paths, episode_id).exists()
             update_job(checkpoint, paths.checkpoint_path, episode_id, {"status": "downloading"})
-            audio_meta = download_audio(episode, audio_path(paths, episode_id), int(cfg.get("download_timeout_seconds", 60)), 1)
+            update_job(checkpoint, paths.checkpoint_path, episode_id, {"audio_owned_by_batch": owned_audio})
+            audio_meta = download_audio(episode, audio_path(paths, episode_id), int(cfg.get("download_timeout_seconds", 60)), 1, storage)
             update_job(checkpoint, paths.checkpoint_path, episode_id, {"status": "downloaded", "audio_metadata": audio_meta, "stage": "audio_downloaded"})
             stage = "transcribing"
             update_job(checkpoint, paths.checkpoint_path, episode_id, {"status": "transcribing", "stage": "transcribing"})
-            segments, metadata = transcribe_audio(audio_path(paths, episode_id), cfg, episode)
+            segments, metadata = transcribe_audio(audio_path(paths, episode_id), cfg, episode, storage)
             metadata.update({"episode_id": episode_id, "model": cfg["model_name"], "language": cfg.get("language"),
                              "audio_sha256": audio_meta["sha256"], "audio_duration_seconds": audio_meta["duration_seconds"],
                              "config_fingerprint": fingerprint, "download_seconds": audio_meta.get("download_runtime_seconds", 0),
@@ -400,19 +441,16 @@ def run_job(cfg: dict[str, Any], paths: BatchPaths, checkpoint: dict[str, Any], 
             metadata["estimated_job_cost_usd"] = rate * metadata["total_episode_seconds"] / 3600 if rate is not None else None
             metadata["cost_scope"] = "episode processing estimate only; excludes idle time and storage"
             stage = "persist_output"
+            if storage:
+                storage.check(64_000_000)
             update_job(checkpoint, paths.checkpoint_path, episode_id, {"status": "transcribing", "stage": "transcription_completed", "segment_count": len(segments)})
             write_transcript(paths, episode_id, segments, metadata, episode)
             validation = validate_transcript(transcript_path(paths, episode_id), episode_id)
             update_job(checkpoint, paths.checkpoint_path, episode_id, {"status": "transcribing", "stage": "output_validated", "validation": validation})
-            result = update_job(checkpoint, paths.checkpoint_path, episode_id, {"status": "completed", "stage": "job_completed", "last_action": "transcribed", "last_error": None, "completed_at": utc_now(), "output": str(transcript_path(paths, episode_id))})
-            if cfg.get("audio_policy") == "delete_on_success":
-                try:
-                    audio_path(paths, episode_id).unlink(missing_ok=True)
-                except OSError:
-                    result = update_job(checkpoint, paths.checkpoint_path, episode_id, {"cleanup_warning": "Validated output retained; remove temporary audio manually."})
-            return result
+            update_job(checkpoint, paths.checkpoint_path, episode_id, {"status": "completed", "stage": "job_completed", "last_action": "transcribed", "last_error": None, "completed_at": utc_now(), "output": str(transcript_path(paths, episode_id))})
+            return cleanup_completed_audio(cfg, paths, checkpoint, episode_id)
         except Exception as exc:
-            retryable = attempt < attempts and not transcript_path(paths, episode_id).exists()
+            retryable = not isinstance(exc, StorageLimitError) and attempt < attempts and not transcript_path(paths, episode_id).exists()
             record_failure(checkpoint, paths, episode_id, stage, exc, previous_attempt + attempt, retryable)
             if not retryable:
                 return checkpoint["jobs"][episode_id]
@@ -492,12 +530,18 @@ def run_batch(cfg: dict[str, Any], *, dry_run: bool, resume: bool, retry_failed:
         checkpoint = load_checkpoint(paths.checkpoint_path)
         check_compatibility(cfg, checkpoint)
         checkpoint.update({"batch_id": cfg["batch_id"], "config_fingerprint": config_fingerprint(cfg)})
+        storage = StorageGuard(cfg.get("storage") or {}, audio_root=paths.audio_root,
+                               write_roots=[paths.output_root, paths.transcript_root, paths.audio_root],
+                               budget_file=paths.output_root / "storage_budget.json")
+        checkpoint["storage"] = storage.check()
         atomic_write_json(paths.checkpoint_path, checkpoint)
         batch_manifest = {"batch_id": cfg["batch_id"], "config_fingerprint": config_fingerprint(cfg), "jobs": [{"episode_id": j["episode_id"], "title": j["episode"].get("episode_title")} for j in jobs], "created_at": utc_now()}
         atomic_write_json(paths.output_root / str(cfg["batch_id"]) / "batch_manifest.json", batch_manifest)
         for item in jobs:
             try:
-                run_job(cfg, paths, checkpoint, item, retry_failed=retry_failed)
+                job = run_job(cfg, paths, checkpoint, item, retry_failed=retry_failed, storage=storage)
+                if (job.get("last_error") or {}).get("error_type") == "StorageLimitError":
+                    break
             except Exception as exc:
                 record_failure(checkpoint, paths, item["episode_id"], "preflight", exc, 0, False)
         return build_summary(cfg, checkpoint, paths)

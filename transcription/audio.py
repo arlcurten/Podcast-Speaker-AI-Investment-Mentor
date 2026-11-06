@@ -7,13 +7,14 @@ import threading
 import time
 from importlib.metadata import version
 from pathlib import Path
-from typing import Any
+from typing import Any, Callable
 
 import requests
 
 from .common import run_command
 
-def download(url: str, dest: Path, timeout: int, retries: int) -> dict[str, Any]:
+def download(url: str, dest: Path, timeout: int, retries: int, *, max_bytes: int = 500_000_000,
+             check_space: Callable[[int], Any] | None = None) -> dict[str, Any]:
     dest.parent.mkdir(parents=True, exist_ok=True)
     part = dest.with_suffix(dest.suffix + ".part")
     headers = {"User-Agent": "podcast-mentor-transcription/1.0"}
@@ -29,11 +30,19 @@ def download(url: str, dest: Path, timeout: int, retries: int) -> dict[str, Any]
                 response.raise_for_status()
                 content_type = response.headers.get("Content-Type")
                 content_length = response.headers.get("Content-Length")
+                if content_length and content_length.isdigit() and int(content_length) > max_bytes:
+                    raise ValueError("Audio exceeds configured download byte limit.")
                 if content_type and not content_type.lower().startswith(("audio/", "application/octet-stream")):
                     raise ValueError("Unexpected audio Content-Type.")
                 with part.open("wb") as fh:
+                    written = 0
                     for chunk in response.iter_content(chunk_size=1024 * 1024):
                         if chunk:
+                            written += len(chunk)
+                            if written > max_bytes:
+                                raise ValueError("Streaming audio exceeds configured download byte limit.")
+                            if check_space:
+                                check_space(len(chunk) + 64_000_000)
                             fh.write(chunk)
                 if content_length and content_length.isdigit() and not response.headers.get("Content-Encoding"):
                     if part.stat().st_size != int(content_length):

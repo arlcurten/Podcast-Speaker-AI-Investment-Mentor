@@ -187,13 +187,13 @@ def test_public_sample_not_production_output() -> None:
 
 
 def test_sync_dry_run_script_exists() -> None:
-    script = ROOT.parent.parent / "scripts" / "sync_transcription_outputs.sh"
+    script = ROOT.parent / "scripts" / "sync_transcription_outputs.sh"
     assert script.exists()
     assert os.access(script, os.X_OK)
 
 
 def test_sync_checksum_flag_present() -> None:
-    script = (ROOT.parent.parent / "scripts" / "sync_transcription_outputs.sh").read_text(encoding="utf-8")
+    script = (ROOT.parent / "scripts" / "sync_transcription_outputs.sh").read_text(encoding="utf-8")
     assert "--checksum" in script
 
 
@@ -217,7 +217,7 @@ def test_sync_root_mode_covers_transcripts_and_batch_metadata(tmp_path: Path) ->
         }),
         encoding="utf-8",
     )
-    script = ROOT.parent.parent / "scripts" / "sync_transcription_outputs.sh"
+    script = ROOT.parent / "scripts" / "sync_transcription_outputs.sh"
     result = subprocess.run(
         [str(script), "--source-root", str(source), "--dest-root", str(dest), "--batch-id", "smoke"],
         check=True,
