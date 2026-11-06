@@ -118,6 +118,15 @@ an OS quota or protection against unrelated processes exhausting the disk.
 Deleting WSL files need not immediately shrink the host VHD; host checks remain
 authoritative. The pipeline never resizes or compacts the VHD.
 
+Shared cloud mounts need different accounting: set `storage.shared_volume_root`
+and the actual `storage.volume_capacity_bytes`. This checks owned-volume bytes
+and its allocation, rather than attributing changes across an entire shared
+storage pool to one job. The separate `storage_volume_budget.v1` persists its
+baseline and limits; old host budgets are not silently migrated. All worker
+writes must stay inside that volume. This option is prohibited on WSL and does
+not replace the Windows host-space safeguards. See the GPU setup guide for
+matching installation and runtime settings.
+
 ## Quality Gate
 
 Structural checks cover episode identity, nonempty text, unique IDs,

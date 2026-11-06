@@ -111,3 +111,18 @@ def test_cache_dry_run_does_not_import_whisper_or_write(monkeypatch, tmp_path):
     monkeypatch.delenv("HF_HOME")
     with pytest.raises(ValueError, match="HF_HOME"):
         environment.cache_model({"model_name": "large-v3"})
+
+
+def test_setup_shared_volume_passes_all_paths_and_actual_capacity(monkeypatch, tmp_path):
+    observed = {}
+    class Guard:
+        def __init__(self, settings, **kwargs):
+            observed.update(settings=settings, **kwargs)
+        def check(self, reserve):
+            return {"reserve": reserve}
+    monkeypatch.setattr(environment, "StorageGuard", Guard)
+    result = environment.setup_storage_check(str(tmp_path / "venv"), str(tmp_path / "cache"), str(tmp_path / "pipeline"),
+                                            shared_volume_root=str(tmp_path), volume_capacity_bytes=80_000_000_000)
+    assert observed["settings"]["volume_capacity_bytes"] == 80_000_000_000
+    assert observed["budget_file"].name == "volume_storage_budget.json"
+    assert result["reserve"] == 10_000_000_000

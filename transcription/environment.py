@@ -58,14 +58,20 @@ def doctor() -> dict:
 
 
 def setup_storage_check(venv: str, cache: str, pipeline_root: str, host_root: str | None = None,
-                        *, reserve_bytes: int = 10_000_000_000) -> dict:
+                        *, reserve_bytes: int = 10_000_000_000, shared_volume_root: str | None = None,
+                        volume_capacity_bytes: int | None = None) -> dict:
     """Share the runtime's persistent budget before installing large GPU wheels."""
     venv_path, cache_path, pipeline_path = map(private_path, (venv, cache, pipeline_root))
+    if volume_capacity_bytes is not None and not shared_volume_root:
+        raise ValueError("Set shared_volume_root together with volume_capacity_bytes.")
     if venv_path.exists() and any(venv_path.iterdir()) and not (venv_path / "pyvenv.cfg").is_file():
         raise ValueError("WORKER_VENV must be new/empty or an existing virtual environment.")
-    guard = StorageGuard({"host_root": host_root}, audio_root=cache_path,
+    settings = {"host_root": host_root}
+    if shared_volume_root:
+        settings.update(shared_volume_root=shared_volume_root, volume_capacity_bytes=volume_capacity_bytes)
+    guard = StorageGuard(settings, audio_root=cache_path,
                          write_roots=[venv_path, cache_path, pipeline_path],
-                         budget_file=pipeline_path / "storage_budget.json")
+                         budget_file=pipeline_path / ("volume_storage_budget.json" if shared_volume_root else "storage_budget.json"))
     return guard.check(reserve_bytes)
 
 

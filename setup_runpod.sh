@@ -17,13 +17,14 @@ nvidia-smi
 : "${PIPELINE_DATA_ROOT:?Set PIPELINE_DATA_ROOT to an external worker-volume data path}"
 
 check_storage() {
-python3 - "$WORKER_VENV" "$HF_HOME" "$PIPELINE_DATA_ROOT" "${WORKER_HOST_ROOT:-}" "$1" <<'PY'
+python3 - "$WORKER_VENV" "$HF_HOME" "$PIPELINE_DATA_ROOT" "${WORKER_HOST_ROOT:-}" "$1" "${WORKER_VOLUME_ROOT:-}" "${WORKER_VOLUME_CAPACITY_BYTES:-}" <<'PY'
 import json
 import sys
 from transcription.environment import setup_storage_check
 try:
     result = setup_storage_check(*sys.argv[1:4], host_root=sys.argv[4] or None,
-                                 reserve_bytes=int(sys.argv[5]))
+                                 reserve_bytes=int(sys.argv[5]), shared_volume_root=sys.argv[6] or None,
+                                 volume_capacity_bytes=int(sys.argv[7]) if sys.argv[7] else None)
 except (ValueError, RuntimeError, OSError) as exc:
     raise SystemExit(f"Worker setup storage check failed: {exc}") from None
 print(json.dumps(result))

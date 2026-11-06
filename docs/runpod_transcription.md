@@ -39,6 +39,9 @@ export WORKER_VENV="$WORKER_ROOT/venv"
 export HF_HOME="$WORKER_ROOT/model-cache"
 export PODCAST_DATA_ROOT="$WORKER_ROOT/shared_data"
 export PIPELINE_DATA_ROOT="$WORKER_ROOT/pipeline_data"
+export WORKER_VOLUME_ROOT="$(realpath "$VOLUME_MOUNT")"
+# Match the allocated disk size shown by RunPod; 80 GB is an example.
+export WORKER_VOLUME_CAPACITY_BYTES=80000000000
 bash setup_runpod.sh
 bash scripts/transcription_worker.sh doctor
 ```
@@ -49,7 +52,7 @@ if setup reports they are missing. Setup does not change drivers, download a
 model, fetch podcast audio, or call any LLM. CUDA library paths are configured
 by `scripts/transcription_worker.sh` before Python starts.
 
-Setup shares `PIPELINE_DATA_ROOT/storage_budget.json` with the worker; it checks
+Setup shares `PIPELINE_DATA_ROOT/volume_storage_budget.json` with the worker; it checks
 all installation/cache/output filesystems before installation and again after.
 It reserves 10 GB of installation headroom in addition to the 25 GB free-space
 minimum and never resets an existing growth budget. This is admission control,
@@ -57,6 +60,19 @@ not a hard filesystem quota on pip or other processes. When validating setup on
 WSL, explicitly set `WORKER_HOST_ROOT` to the confirmed Windows backing-drive
 mount, matching private batch `storage.host_root`. Linux Pods normally leave it
 unset. A nonempty `WORKER_VENV` that is not a virtual environment is rejected.
+
+RunPod can report the free space of a shared storage pool, not the allocated
+Pod volume. Do not interpret changes in that pool as this job's disk growth.
+Set private batch `storage.shared_volume_root` to the same volume mount and
+`storage.volume_capacity_bytes` to its actual allocation, matching setup above.
+This mode counts all files under that volume (including models/environments),
+enforces allocated capacity minus the free-space reserve, and retains the
+growth cap. It also checks pool free space, but does not charge other tenants'
+usage against this job. It is admission control, not an OS quota, and requires
+exclusive ownership of the configured workspace. WSL cannot use this mode.
+When changing from a previously used host-free-space budget, preserve that
+budget and its failed-run record; use the separate volume budget filename.
+Never reset or enlarge a budget just to bypass a real capacity limit.
 
 The isolated Python 3.12 installation, dependency imports, CUDA libraries and
 compute-type diagnostics have passed locally without loading Whisper. That

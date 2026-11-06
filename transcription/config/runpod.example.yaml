@@ -22,7 +22,10 @@ skip_existing: true
 cost: {hourly_rate_usd: null}
 storage:
   host_root: null
-  budget_file: ${PIPELINE_DATA_ROOT}/storage_budget.json
+  # Must match the actual allocated volume, not the shared pool reported by df.
+  shared_volume_root: ${VOLUME_MOUNT}
+  volume_capacity_bytes: 80000000000
+  budget_file: ${PIPELINE_DATA_ROOT}/volume_storage_budget.json
   minimum_free_bytes: 25000000000
   max_growth_bytes: 60000000000
   max_audio_bytes: 2000000000
