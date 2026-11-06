@@ -34,6 +34,14 @@ Archived implementations still read their original private layouts. The
 versioned formal transcript/checkpoint format is not silently substituted for
 legacy artifacts. Source-bound quality reviews also belong in private storage.
 
+`knowledge/` uses explicit private raw/normalized/review paths and a versioned
+run directory under `PIPELINE_DATA_ROOT/knowledge`. Only reviewed artifacts can
+be published as an immutable release descriptor. `MENTOR_RELEASE` selects that
+descriptor for `mentor_agent/`; there is no automatic fallback to samples or
+archived output. Root `.env` also supports `KNOWLEDGE_MODEL_ID`,
+`MENTOR_MODEL_ID` and the local `OPENROUTER_API_KEY`. No API credential is needed
+on the transcription GPU worker.
+
 ## What Belongs In Private Data
 
 - audio

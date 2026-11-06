@@ -18,9 +18,12 @@ completed with valid timestamps and no-work resume. Source accuracy is still
 under review; a clean RunPod image has not been exercised.
 
 Host-aware disk limits, immutable RSS catalogs and checksum-bound GPU-worker
-transfer bundles are implemented. No cloud resource was rented. No new
-`knowledge/` or `mentor_agent/` placeholder is created yet. The archived Mentor
-remains runnable while its replacement is developed in later stages.
+transfer bundles are implemented. No cloud resource was rented.
+[`knowledge/`](knowledge/README.md) implements resumable L1-L4 construction and
+review-bound publication. [`mentor_agent/`](mentor_agent/README.md) implements
+bounded local evidence retrieval, structured applicability/answers and a
+loopback HTTP service. Their deterministic tests use synthetic data; this is
+not approval of real transcripts or a claim of live answer-quality validation.
 
 ## End-to-End Plan
 
@@ -62,6 +65,8 @@ Real download/transcription is explicit, never part of tests or dry-run.
 
 ```text
 transcription/     active worker, preparation, quality gate and synthetic tests
+knowledge/         offline extraction, evidence qualification, reviewed releases
+mentor_agent/      local retrieval, structured reasoning, CLI and loopback API
 legacy/           frozen transcription, extraction and two Mentor baselines
 docs/             public policies, setup and labeled historical designs
 sample_outputs/   curated demonstration artifacts, never production inputs

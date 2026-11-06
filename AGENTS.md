@@ -6,7 +6,8 @@ Current workspace layout:
 
 - `legacy/`: frozen earlier transcription, extraction, case-only RAG and principle-assisted Mentor implementations. Preserve comparison behavior; only relocation or explicit regression fixes belong here.
 - `transcription/`: active formal transcription worker, normalization and source-quality gate. Read its `AGENTS.md` before editing.
-- `knowledge/` and a replacement `mentor_agent/` are planned, not scaffolded. Create them only with working implementations for their agreed stage.
+- `knowledge/`: active, versioned L1-L4 offline extraction and review-bound release publication. Read its guide before editing.
+- `mentor_agent/`: active local retrieval, structured applicability/answers and loopback HTTP service over reviewed private releases. Read its guide before editing.
 - New production code must not import `legacy/`. Promote reviewed utilities with focused tests instead of copying an entire POC.
 
 ## Project Purpose
@@ -36,8 +37,9 @@ Transcript acquisition and quality acceptance
 Current phase:
 
 ```text
-Prior MVP archived; active rebuild starts with formal transcription and quality gating.
-Deliver a usable Mentor before automating corpus expansion and continuing updates.
+Prior MVP archived. Formal transcription, knowledge and Mentor code are implemented
+with deterministic tests; real-source quality acceptance and clean cloud-worker
+validation remain separate gates. Do not claim that code tests approve the corpus.
 ```
 
 ## Global Invariants

@@ -14,7 +14,8 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 TERMINOLOGY = PROJECT_ROOT / "docs" / "terminology.tsv"
 
 
-def load_project_dotenv() -> None:
+def load_project_dotenv(keys: set[str] | None = None) -> None:
+    allowed = keys if keys is not None else {"PODCAST_DATA_ROOT", "PIPELINE_DATA_ROOT", "PRIVATE_DOCS_ROOT"}
     path = PROJECT_ROOT / ".env"
     if not path.exists():
         return
@@ -27,7 +28,7 @@ def load_project_dotenv() -> None:
         value = value.strip()
         if len(value) >= 2 and value[0] == value[-1] and value[0] in "\"'":
             value = value[1:-1]
-        if key in {"PODCAST_DATA_ROOT", "PIPELINE_DATA_ROOT", "PRIVATE_DOCS_ROOT"}:
+        if key in allowed:
             os.environ.setdefault(key, value)
 
 
