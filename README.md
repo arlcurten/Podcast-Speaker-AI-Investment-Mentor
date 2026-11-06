@@ -60,6 +60,9 @@ The example plan requires a configured private episode manifest. A structural
 check without a source-bound quality review reports
 `ready_for_extraction: false`. `prepare` never rewrites raw or prior outputs.
 Real download/transcription is explicit, never part of tests or dry-run.
+The default tests cover active code only. Archived regressions remain available
+with `python3 -m pytest -q legacy` in an environment with the archive's own
+dependencies; new application installation does not pull in old retrieval stacks.
 
 ## Repository Layout
 
