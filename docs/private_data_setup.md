@@ -20,6 +20,20 @@ PRIVATE_DOCS_ROOT=/absolute/path/to/AI-Investment-Mentor-private/private_docs
 
 Do not commit `.env`.
 
+## Rebuild Paths
+
+The active `transcription/` package loads the three data-root variables from
+the root `.env` without overwriting existing environment values. It rejects
+public-tree sources/destinations, including symlinks into the public tree.
+Batch defaults use `PIPELINE_DATA_ROOT/transcription/batches/<batch_id>` and
+`PODCAST_DATA_ROOT/transcripts/raw/<batch_id>/<episode_id>` to keep new runs
+separate from old canonical transcripts. `prepare --output` requires a new
+external path. No source-tree rename changes existing private artifact paths.
+
+Archived implementations still read their original private layouts. The
+versioned formal transcript/checkpoint format is not silently substituted for
+legacy artifacts. Source-bound quality reviews also belong in private storage.
+
 ## What Belongs In Private Data
 
 - audio

@@ -1,5 +1,10 @@
 # Data Model
 
+> Historical design reference for the archived implementations in `legacy/`.
+> The active rebuild and four-stage sequence are documented in the root README.
+> Do not treat past implementation status here as completion of the new pipeline.
+
+
 The long-term project should preserve evidence and derivation boundaries. Each layer should remain traceable to the layer below it.
 
 ## Layers
@@ -108,8 +113,8 @@ Current higher-level status:
 
 - Phase 2 Level 1/Level 2 extraction has pilot outputs for EP674, EP670, EP450, and EP57.
 - Offline Level 3/Level 4 principle extraction POC has generated local outputs from those Level 2 records.
-- `legacy_mentor_rag_poc/` can retrieve Level 2 records and generate case-grounded answers.
-- `mentor_agent/` consumes private Level 2 records and Level 4 principles for first-version online principle-assisted or case-only answering.
+- `legacy/legacy_mentor_rag_poc/` can retrieve Level 2 records and generate case-grounded answers.
+- `legacy/mentor_agent/` consumes private Level 2 records and Level 4 principles for first-version online principle-assisted or case-only answering.
 
 ## Phase 2 Inputs
 

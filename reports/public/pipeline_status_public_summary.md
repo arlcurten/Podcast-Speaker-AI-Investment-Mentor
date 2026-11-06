@@ -1,15 +1,18 @@
 # Public Pipeline Status Summary
 
+> Historical aggregate for the archived baseline, not a result of the rebuild.
+
+
 This is a curated public aggregate summary. It is derived from private project artifacts and intentionally excludes transcript text, full model responses, human review details, and internal experiment notes.
 
 ## Current Scope
 
-- Phase 1 transcription POC is complete and preserved as `legacy_segment_poc/`.
+- Phase 1 transcription POC is complete and preserved as `legacy/legacy_segment_poc/`.
 - Phase 2 semantic extraction has been run for four pilot episodes: EP57, EP450, EP670, and EP674.
 - The pilot corpus contains approximately 38 Level 2 reasoning records.
 - Offline Level 3 / Level 4 principle extraction has been implemented as a POC.
-- `legacy_mentor_rag_poc/` remains a deterministic case-only RAG baseline.
-- `mentor_agent/` is the first formal principle-plus-case online reasoning runtime.
+- `legacy/legacy_mentor_rag_poc/` remains a deterministic case-only RAG baseline.
+- `legacy/mentor_agent/` is the first formal principle-plus-case online reasoning runtime.
 
 ## Public / Private Boundary
 

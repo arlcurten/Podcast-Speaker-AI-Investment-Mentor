@@ -35,6 +35,12 @@ Do not create a `private/` directory in the public repo. If an artifact is uncer
 
 ## Current Public Artifact Index
 
+Rebuild note: historical reports below describe the archived implementations
+under `legacy/`, not a new GPU run or newly validated Mentor. Synthetic in-code
+fixtures in `transcription/tests/` are invented text and temporary metadata,
+with no private source or real transcript excerpts; they test structural
+contracts and failure recovery, not real ASR quality.
+
 | Public artifact | Type | Private source | Source manifest ID | Episodes | Review status | Notes |
 | --- | --- | --- | --- | --- | --- | --- |
 | `sample_outputs/synthetic/level2_reasoning_records_synthetic_sample.json` | synthetic_fixture | none | none | synthetic | safe_by_construction | Schema-shaped example, not derived from real transcript text. |

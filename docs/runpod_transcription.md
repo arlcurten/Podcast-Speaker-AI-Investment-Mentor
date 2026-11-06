@@ -1,5 +1,11 @@
 # RunPod Batch Transcription
 
+> This document retains the pre-rebuild RunPod smoke procedure for the archived
+> worker. The active `python3 -m transcription` CLI uses versioned output paths
+> and a new checkpoint format; see `transcription/README.md` before any run.
+> Its formal cross-machine sync and real GPU smoke are still pending.
+
+
 RunPod is intended only as a temporary single-GPU faster-whisper worker.
 Local machines remain responsible for orchestration, normalization, semantic extraction through OpenRouter, validation, and reports.
 
@@ -52,7 +58,7 @@ Use local absolute paths only in your shell environment, not in tracked config.
 Dry-run planning does not download audio and does not initialize faster-whisper:
 
 ```bash
-cd legacy_segment_poc
+cd legacy/legacy_segment_poc
 python3 main.py batch-plan --config config/transcription_batch.example.yaml --dry-run --max-episodes 1
 ```
 
@@ -61,7 +67,7 @@ python3 main.py batch-plan --config config/transcription_batch.example.yaml --dr
 After manually confirming the config points to writable private or mounted-volume paths:
 
 ```bash
-cd legacy_segment_poc
+cd legacy/legacy_segment_poc
 python3 main.py batch-run \
   --config config/transcription_batch.example.yaml \
   --episode EP674 \
@@ -74,7 +80,7 @@ python3 main.py batch-run \
 Edit a private copy of `config/transcription_batch.example.yaml` with the selected pilot episodes, then run:
 
 ```bash
-cd legacy_segment_poc
+cd legacy/legacy_segment_poc
 python3 main.py batch-run --config /path/to/private/transcription_batch.yaml
 ```
 

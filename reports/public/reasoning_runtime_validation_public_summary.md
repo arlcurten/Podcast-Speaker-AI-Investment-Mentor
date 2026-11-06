@@ -1,5 +1,8 @@
 # Reasoning Runtime Validation Public Summary
 
+> Historical aggregate for the archived baseline, not a result of the rebuild.
+
+
 This is a public-safe aggregate summary of a focused Mentor Agent reasoning validation run.
 The complete live traces, model responses, detailed review notes, and legacy comparison outputs are kept in the private repository.
 

@@ -1,0 +1,24 @@
+# Copy to a private config before using real episode IDs or source URLs.
+# Example regression only; no automatic catalog discovery or full-corpus run.
+batch_id: regression_v1
+episode_ids: [EP57]
+manifest_path: ${PIPELINE_DATA_ROOT}/legacy_segment/rss_sources/episodes.jsonl
+output_root: ${PIPELINE_DATA_ROOT}/transcription/batches
+audio_root: ${PODCAST_DATA_ROOT}/audio
+transcript_root: ${PODCAST_DATA_ROOT}/transcripts/raw/regression_v1
+model_name: large-v3-turbo
+device: cuda
+compute_type: float16
+language: zh
+beam_size: 5
+vad:
+  enabled: true
+  min_silence_duration_ms: 500
+condition_on_previous_text: false
+word_timestamps: false
+audio_policy: keep
+retry_count: 1
+download_timeout_seconds: 60
+skip_existing: true
+cost:
+  hourly_rate_usd: null
