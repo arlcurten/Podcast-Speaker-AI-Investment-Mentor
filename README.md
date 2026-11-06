@@ -48,7 +48,7 @@ context. No live-data tools or current investment claims are implied.
 ## Commands
 
 ```bash
-python3 -m pip install -r transcription/requirements.txt
+python3 -m pip install -r requirements.txt
 python3 -m transcription --help
 python3 -m transcription batch-plan --config transcription/config/batch.example.yaml --dry-run
 python3 -m transcription validate-transcript --input "$RAW_TRANSCRIPT" --require-ready
