@@ -4,12 +4,11 @@ from __future__ import annotations
 from pathlib import Path
 
 from transcription.common import atomic_write_json, private_path, read_json, sha256_file, utc_now
-from .pipeline import run
+from .pipeline import run, release_locations
 
 
 def publish(cfg: dict, review_path: Path, output: Path) -> dict:
     run(cfg, validate_only=True)
-    root = private_path(cfg["output_root"]) / cfg["run_id"]
     review_path, output = private_path(review_path), private_path(output)
     if output.exists():
         raise FileExistsError("Use a new release descriptor; existing releases are immutable.")
@@ -21,14 +20,13 @@ def publish(cfg: dict, review_path: Path, output: Path) -> dict:
             raise ValueError(f"Review requires {key}.")
     if review.get("unresolved_critical_issues") != []:
         raise ValueError("Unresolved semantic issues block publication.")
-    paths = [root / e["episode_id"] / "level2.json" for e in cfg["episodes"]]
-    paths.append(root / "cross_episode/level4.json")
     artifacts = []
-    for path in paths:
-        relative = str(path.relative_to(root))
+    for location in release_locations(cfg):
+        path = Path(location["path"])
+        relative = location["logical_path"]
         if review.get("artifact_sha256", {}).get(relative) != sha256_file(path):
             raise ValueError("Review does not cover the exact artifact version.")
-        artifacts.append({"path": str(path), "sha256": sha256_file(path), "stage": read_json(path)["stage"]})
+        artifacts.append({**location, "sha256": sha256_file(path)})
     data = {"schema_version": "knowledge_release.v1", "created_at": utc_now(), "run_id": cfg["run_id"],
             "artifacts": artifacts, "review_path": str(review_path), "review_sha256": sha256_file(review_path),
             "accepted_case_ids": review.get("accepted_case_ids"), "accepted_principle_ids": review.get("accepted_principle_ids"),
@@ -52,14 +50,19 @@ def load_release_payload(data: dict) -> tuple[dict, dict]:
     if review.get("decision") != "accept" or review.get("unresolved_critical_issues") != []:
         raise ValueError("Release acceptance is missing or revoked.")
     # Revalidates raw/normalized/review hashes and every upstream stage.
-    run(data["source_config"], validate_only=True)
-    root = private_path(data["source_config"]["output_root"]) / data["run_id"]
+    run(data["source_config"], validate_only=True, allow_pinned_prompts=True)
+    expected = {p["path"]: p for p in release_locations(data["source_config"])}
+    actual = [str(private_path(a["path"])) for a in data["artifacts"]]
+    if len(actual) != len(expected) or set(actual) != set(expected):
+        raise ValueError("Release artifacts do not exactly match the validated run configuration.")
     cases, principles = {}, {}
     for item in data["artifacts"]:
         path = private_path(item["path"])
-        if not path.is_relative_to(root) or sha256_file(path) != item["sha256"]:
-            raise ValueError("Release artifact changed or escaped its run.")
-        if review["artifact_sha256"].get(str(path.relative_to(root))) != item["sha256"]:
+        location = expected[str(path)]
+        if (sha256_file(path) != item["sha256"] or item["stage"] != location["stage"]
+                or item.get("logical_path", location["logical_path"]) != location["logical_path"]):
+            raise ValueError("Release artifact changed or differs from its configured identity.")
+        if review["artifact_sha256"].get(location["logical_path"]) != item["sha256"]:
             raise ValueError("Release artifact lacks exact review coverage.")
         artifact = read_json(path)
         if item["stage"] != artifact["stage"]:
@@ -70,7 +73,8 @@ def load_release_payload(data: dict) -> tuple[dict, dict]:
                 if rid in cases:
                     raise ValueError("Duplicate released record ID.")
                 cases[rid] = {**row, "episode_id": artifact["content"]["episode_id"], "evidence": artifact["evidence"][rid],
-                              "publication_date": artifact["source"]["publication_date"]}
+                              "publication_date": artifact["source"]["publication_date"],
+                              "knowledge_artifact_sha256": item["sha256"]}
         elif item["stage"] == "level4":
             for p in artifact["content"]["principles"]:
                 pid = p["principle_id"]

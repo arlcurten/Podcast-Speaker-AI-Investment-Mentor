@@ -52,6 +52,12 @@ cost remains null otherwise. No model fallback silently changes the backend.
 The loader revalidates source reviews, source/artifact hashes and deterministic
 qualification. A release descriptor pins accepted case/principle IDs. Public
 fixtures are never auto-discovered. Changing/revoking review invalidates use.
+New knowledge does not silently alter a running service. Publish a new reviewed
+descriptor, change `MENTOR_RELEASE` and restart; retain the old descriptor and
+its referenced sources/stages for rollback. Responses include `release_sha256`;
+each citation also pins its L2 artifact hash, distinguishing revised knowledge
+that uses the same episode/record ID. This is version traceability, not proof
+that the new interpretation is more accurate.
 
 Retrieval uses local BM25, term-frequency cosine, metadata matches and Chinese
 concept aliases. This is not neural embeddings or the archived LSA experiment.

@@ -66,6 +66,7 @@ def test_principle_assisted_and_compact_source_links(mentor_setup):
     assert model.calls == ["analysis", "applicability", "answer"]
     assert result["guards"][0]["status"] == "passed"
     assert all(c["regions"] and c["record_id"].startswith("SYN") for c in result["citations"])
+    assert all(len(c["knowledge_artifact_sha256"]) == 64 for c in result["citations"])
     compact = compact_case(result["retrieval"]["cases"][0])
     assert all(k in compact for k in ("conditions", "assumptions", "exceptions", "contradictions", "evidence"))
     assert "lexical_score" not in compact and "raw_text" not in compact
@@ -129,6 +130,7 @@ def test_no_llm_retrieval_and_loopback_api(mentor_setup):
     response = client.post("/ask", json={"query": "evidence wait"})
     assert response.status_code == 200
     assert response.json()["route"] == "principle_assisted"
+    assert response.json()["release_sha256"] == mentor.release_hash
     assert "retrieval" not in response.json()
     assert client.post("/ask", json={"query": ""}).status_code == 422
     assert client.get("/health", headers={"host": "external.example"}).status_code == 400

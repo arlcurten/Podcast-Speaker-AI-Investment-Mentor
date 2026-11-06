@@ -35,6 +35,7 @@ paths, not the public repository or symlinks into it.
 ```bash
 python3 -m transcription --help
 python3 -m transcription catalog-fetch --rss-url "$PODCAST_RSS_URL" --output "$CATALOG_OUTPUT"
+python3 -m transcription catalog-diff --before "$OLD_CATALOG" --after "$NEW_CATALOG" --output "$PRIVATE_DELTA"
 python3 -m transcription batch-plan --config transcription/config/batch.example.yaml --dry-run
 python3 -m transcription batch-run --config "$BATCH_CONFIG" --episode EP57 --max-episodes 1
 python3 -m transcription batch-status --config "$BATCH_CONFIG"
@@ -52,6 +53,13 @@ Real commands above are opt-in, not instructions to run automatically.
 outputs. Supported overrides include `--episode-file`, `--device`,
 `--compute-type`, `--audio-root`, `--transcript-root`, `--output-root`.
 Only listed episodes run; numeric IDs never fall back to substring matching.
+
+`catalog-diff` compares existing snapshots without network/model calls. It lists
+added/missing IDs and metadata changes; GUID renumbering or duplicate identities
+fail before work is scheduled. A feed membership change is not proof of a new
+publication: RSS windows can omit old episodes. Missing entries never delete
+data, changed audio metadata requires review, and new entries are not downloaded
+automatically. Choose episodes explicitly after inspecting the private delta.
 
 ## Versions and Resume
 
@@ -164,8 +172,9 @@ are suggestions requiring verification in the new context, not global edits.
 New worker outputs retain `avg_logprob`, `no_speech_prob` and
 `compression_ratio` when available; missing/nonfinite metrics are `null`.
 `transcription_normalized.v1` metadata carries input/review hashes and readiness.
-It can prepare a pending-review view, but that is not accepted evidence. No
-active extraction consumer exists yet. New outputs never overwrite old ones.
+It can prepare a pending-review view, but that is not accepted evidence.
+The active `knowledge` consumer rejects unaccepted versions. New outputs never
+overwrite old ones.
 
 ## Validation
 

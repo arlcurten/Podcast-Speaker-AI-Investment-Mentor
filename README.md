@@ -24,6 +24,9 @@ review-bound publication. [`mentor_agent/`](mentor_agent/README.md) implements
 bounded local evidence retrieval, structured applicability/answers and a
 loopback HTTP service. Their deterministic tests use synthetic data; this is
 not approval of real transcripts or a claim of live answer-quality validation.
+Incremental-update code is also prepared: read-only catalog deltas, hash-pinned
+reuse of old knowledge, explicit source replacement, resumable new stages and
+reviewed release switching/rollback. No automatic corpus expansion is running.
 
 ## End-to-End Plan
 
@@ -38,7 +41,7 @@ not approval of real transcripts or a claim of live answer-quality validation.
    with OpenRouter reasoning, conditional answers and citations. Deliver on a
    small validated corpus first; no full-corpus requirement.
 4. **Expansion and continuing updates:** after the service is usable, add
-   backlog/new episodes and implement incremental knowledge/index refresh with
+   backlog/new episodes and validate incremental knowledge/index refresh with
    regression checks. This is separate from serving, not its prerequisite.
 
 L2 cases remain the evidence authority; principles are abstractions, not

@@ -37,6 +37,42 @@ Resume verifies source/schema/prompt/model/upstream fingerprints and skips valid
 stages. Changed settings require a new run ID. Default retry count is zero;
 at most one retry is configurable. A per-execution call cap bounds work.
 
+## Incremental Updates
+
+Keep the serving release fixed while preparing new knowledge. A private JSON or
+YAML source list contains entries with `episode_id`, `raw`, `normalized`, and
+`review`, just like `config.episodes`; every source must already be accepted.
+
+```bash
+python3 -m knowledge extend --config "$PREVIOUS_CONFIG" --sources "$NEW_SOURCES" --run-id corpus_v2 --output "$NEXT_CONFIG"
+python3 -m knowledge plan --config "$NEXT_CONFIG"
+python3 -m knowledge run --config "$NEXT_CONFIG"
+python3 -m knowledge validate --config "$NEXT_CONFIG"
+# After actual source-grounded semantic review:
+python3 -m knowledge publish --config "$NEXT_CONFIG" --review "$NEW_REVIEW" --output "$NEW_RELEASE"
+```
+
+`extend` makes no model call. Unchanged episodes reference their original L1-L3
+paths and exact hashes, without copying files or creating symlinks. New episodes
+get new L1-L3; L4 is reconsolidated across the explicit selection. One new episode
+normally requires four calls, excluding retries. All existing references are
+checked before any call; incompatible prompts/models/schemas or changed/missing
+artifacts fail closed. Completed update stages are skipped on resume.
+
+Replacing an episode requires a new accepted source version and explicit
+`--replace-existing`; originals and old releases remain intact. Repeating an
+identical replacement is rejected. Changed extraction settings require a new
+generation run without incompatible reuse references. A reference is a storage
+dependency: retain the old run and source files when backing up a newer release.
+
+Publication still requires a fresh hash-bound review of the selected corpus,
+including conflicts with new evidence. A successful update never activates
+itself. Select the new descriptor via `MENTOR_RELEASE` and restart the service;
+rollback selects the retained old descriptor. New artifacts capture their
+generation prompt so later prompt edits do not invalidate reviewed serving
+releases. Earlier artifacts without that snapshot require the matching prompt
+revision. Schema/provenance validation remains mandatory in either case.
+
 Codex uses [non-interactive structured output](https://learn.chatgpt.com/docs/non-interactive-mode),
 an ephemeral read-only session, no tool execution and a bounded timeout.
 Authentication stays local; the supplied transcript context is sent to the
@@ -86,7 +122,7 @@ Publication requires a private `knowledge_review.v1` with:
 ```text
 decision: accept
 reviewer, reviewed_at, method
-artifact_sha256: {relative L2/L4 artifact path: exact SHA-256}
+artifact_sha256: {logical L2/L4 path, e.g. SYN1/level2.json: exact SHA-256}
 accepted_case_ids: explicitly reviewed global case IDs
 accepted_principle_ids: explicitly reviewed eligible L4 IDs, possibly empty
 unresolved_critical_issues: []
@@ -114,4 +150,7 @@ The provider's schema subset omits `uniqueItems`; full local validation still
 rejects duplicate IDs. A known disabled-tool-host notice is allowlisted, but
 real error events fail closed even if a result file exists.
 No neural embeddings, vector database, web tools, self-improving principles or
-automatic semantic approval are implemented. Full-corpus scheduling is separate.
+automatic semantic approval are implemented. Updates are explicit batches, not
+an autonomous scheduler. L4 still receives the selected case corpus under the
+configured context cap; it fails on overflow rather than truncating. Large-corpus
+partitioned consolidation requires a separate measured design and validation.

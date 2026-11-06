@@ -55,6 +55,7 @@ def citation(case: dict) -> dict:
         raise ValueError("Case citation/source episode mismatch.")
     return {"episode_id": case["episode_id"], "record_id": case["record_id"], "regions": regions,
             "source_raw_sha256": evidence["source_raw_sha256"],
+            "knowledge_artifact_sha256": case["knowledge_artifact_sha256"],
             "label": f"Source: {case['episode_id']}, " + "; ".join(timestamp(r["start"]) + "-" + timestamp(r["end"]) for r in regions) + f", record {case['record_id']}"}
 
 

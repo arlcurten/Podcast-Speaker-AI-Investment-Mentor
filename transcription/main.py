@@ -12,6 +12,10 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Private-data transcription and pre-extraction quality gate.")
     commands = parser.add_subparsers(dest="command", required=True)
     commands.add_parser("doctor", help="Check CUDA libraries/dependencies without downloading or loading a model")
+    sub = commands.add_parser("catalog-diff", help="Read-only catalog delta; never download or delete episodes")
+    sub.add_argument("--before", required=True, type=Path)
+    sub.add_argument("--after", required=True, type=Path)
+    sub.add_argument("--output", type=Path, help="Optional new private diff report")
     sub = commands.add_parser("cache-model", help="Explicit managed model download; default dry-run, no inference")
     sub.add_argument("--config", required=True, type=Path)
     sub.add_argument("--execute", action="store_true")
@@ -60,7 +64,11 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
     load_project_dotenv()
     try:
-        if args.command == "doctor":
+        if args.command == "catalog-diff":
+            from .catalog import compare_catalogs
+            result = compare_catalogs(args.before, args.after, args.output)
+            code = 0
+        elif args.command == "doctor":
             from .environment import doctor
 
             result = doctor()
