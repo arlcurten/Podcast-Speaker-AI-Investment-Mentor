@@ -251,6 +251,18 @@ def ensure_cuda_if_requested(device: str) -> None:
         raise RuntimeError(f"CUDA requested but nvidia-smi failed: {err or out}")
 
 
+def serialize_segment(segment: Any, segment_id: int, word_timestamps: bool = False) -> dict[str, Any]:
+    item = {"segment_id": segment_id, "start": float(segment.start), "end": float(segment.end), "text": segment.text}
+    # ASR diagnostics help prioritize review; they are not calibrated accuracy scores.
+    for key in ("avg_logprob", "no_speech_prob", "compression_ratio"):
+        value = getattr(segment, key, None)
+        item[key] = float(value) if type(value) in (int, float) and math.isfinite(value) else None
+    if word_timestamps:
+        item["words"] = [{"word": w.word, "start": w.start, "end": w.end, "probability": w.probability}
+                         for w in (getattr(segment, "words", None) or [])]
+    return item
+
+
 def transcribe_audio(audio: Path, cfg: dict[str, Any], episode: dict[str, Any]) -> tuple[list[dict[str, Any]], dict[str, Any]]:
     ensure_cuda_if_requested(str(cfg.get("device")))
     try:
@@ -280,11 +292,7 @@ def transcribe_audio(audio: Path, cfg: dict[str, Any], episode: dict[str, Any]) 
         out = []
         for idx, seg in enumerate(segments):
             peak_rss = max(peak_rss, process.memory_info().rss)
-            item = {"segment_id": idx, "start": float(seg.start), "end": float(seg.end), "text": seg.text}
-            if cfg.get("word_timestamps"):
-                item["words"] = [{"word": w.word, "start": w.start, "end": w.end, "probability": w.probability}
-                                 for w in (getattr(seg, "words", None) or [])]
-            out.append(item)
+            out.append(serialize_segment(seg, idx, bool(cfg.get("word_timestamps"))))
     finally:
         vram.stop()
     total_seconds = time.perf_counter() - start

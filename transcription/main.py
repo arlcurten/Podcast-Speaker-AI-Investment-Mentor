@@ -31,6 +31,13 @@ def main(argv: list[str] | None = None) -> int:
     sub.add_argument("--input", required=True, type=Path)
     sub.add_argument("--output", required=True, type=Path)
     sub.add_argument("--review", type=Path)
+    sub = commands.add_parser("review-packet", help="Private listening candidates; never automatic acceptance")
+    sub.add_argument("--input", required=True, type=Path)
+    sub.add_argument("--output", required=True, type=Path)
+    sub.add_argument("--audio", type=Path, help="Optional existing audio; hash only, no decoding or model")
+    sub.add_argument("--samples", type=int, default=8)
+    sub.add_argument("--context-seconds", type=float, default=12.0)
+    sub.add_argument("--segment-id", type=int, action="append", help="Explicit raw segment ID to include")
     args = parser.parse_args(argv)
     load_project_dotenv()
     try:
@@ -43,6 +50,12 @@ def main(argv: list[str] | None = None) -> int:
             from .prepare import prepare
 
             result = prepare(private_path(args.input), private_path(args.output), private_path(args.review) if args.review else None)
+            code = 0
+        elif args.command == "review-packet":
+            from .review import create_review_packet
+
+            result = create_review_packet(args.input, args.output, audio=args.audio, sample_count=args.samples,
+                                          context_seconds=args.context_seconds, segment_ids=args.segment_id)
             code = 0
         else:
             from . import batch

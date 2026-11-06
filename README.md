@@ -12,7 +12,9 @@ They remain available for comparison, not as the new production pipeline.
 The rebuild starts with working [`transcription/`](transcription/README.md):
 private episode-manifest input, exact matching, single/batch faster-whisper
 worker, checkpoint/resume, raw validation, normalization and a pre-extraction
-quality gate. GPU execution has **not** been validated in this rebuild.
+quality gate with private review queues. Automated integrity checks and
+source-content review are separate. GPU execution has **not** been validated
+in this rebuild.
 
 No new `knowledge/` or `mentor_agent/` placeholder is created yet. The archived
 Mentor remains runnable while its replacement is developed in later stages.

@@ -39,6 +39,7 @@ python3 -m transcription batch-resume --config "$BATCH_CONFIG"
 python3 -m transcription batch-resume --config "$BATCH_CONFIG" --retry-failed
 python3 -m transcription batch-validate --config "$BATCH_CONFIG"
 python3 -m transcription validate-transcript --input "$RAW_TRANSCRIPT" --episode EP57
+python3 -m transcription review-packet --input "$RAW_TRANSCRIPT" --output "$REVIEW_PACKET" --audio "$EXISTING_AUDIO" --samples 8
 python3 -m transcription validate-transcript --input "$RAW_TRANSCRIPT" --review "$QUALITY_REVIEW" --require-ready
 python3 -m transcription prepare --input "$RAW_TRANSCRIPT" --output "$NORMALIZED_OUTPUT" --review "$QUALITY_REVIEW"
 ```
@@ -85,6 +86,26 @@ Structural checks cover episode identity, nonempty text, unique IDs,
 finite/ordered timestamps and duration bounds. They do not measure word error
 rate or certify names, numbers, negation, attribution or omissions.
 
+`review-packet` writes a small private listening queue with source IDs,
+timestamps, context and transcript/terminology hashes. It combines distributed
+coverage with ASR metric and terminology signals; `--segment-id` can include
+a known concern. `--samples` (1-32) and `--context-seconds` (0-60) bound the
+queue, not the amount of episode content certified. Short recordings may yield
+fewer samples. This is quality sampling, not semantic segmentation.
+
+The command performs no model calls, decoding or audio listening. Optional
+`--audio` hashes an existing file; without a hash in the original transcript,
+the association is explicitly unverified. Packets always remain
+`pending_audio_review` and cannot serve as acceptance reviews. CLI stdout
+contains metadata only; private packets contain source excerpts.
+
+Python checks structure and chooses candidates. An Agent/reviewer inspects
+meaning, conditions and attribution; ambiguous words require source-audio
+verification. There is no automatic Agent judge here. ASR thresholds are
+triage heuristics, not calibrated error probabilities; high-confidence output
+can still be wrong. Candidate counts are segment hits, not confirmed errors
+or independent incidents. Sample review is not a whole-episode accuracy claim.
+
 Without review, validation reports `review_required` and
 `ready_for_extraction: false`. `--require-ready` exits nonzero until accepted.
 Keep this compact review privately; never manufacture approval:
@@ -107,6 +128,11 @@ need re-review. Coverage warnings need inspection, not automatic retranscription
 
 `prepare` preserves raw IDs and text in a merged reading view, applies OpenCC,
 and retains terminology corrections as annotations, not replacement claims.
+Matching checks both raw and normalized text, retaining dictionary status,
+context notes and the matching view. Even human-reviewed dictionary entries
+are suggestions requiring verification in the new context, not global edits.
+New worker outputs retain `avg_logprob`, `no_speech_prob` and
+`compression_ratio` when available; missing/nonfinite metrics are `null`.
 `transcription_normalized.v1` metadata carries input/review hashes and readiness.
 It can prepare a pending-review view, but that is not accepted evidence. No
 active extraction consumer exists yet. New outputs never overwrite old ones.

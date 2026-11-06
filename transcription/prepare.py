@@ -8,6 +8,31 @@ from pathlib import Path
 from .common import TERMINOLOGY, atomic_write_json, private_path, read_json, sha256_file, utc_now
 from .quality import quality_gate
 
+
+def load_annotation_terms() -> list[dict[str, str]]:
+    with TERMINOLOGY.open(encoding="utf-8", newline="") as stream:
+        return [r for r in csv.DictReader(stream, delimiter="\t")
+                if r.get("type") in {"alias", "correction"}
+                and r.get("status") in {"active", "human_reviewed"} and r.get("source_text")]
+
+
+def annotate_terms(text: str, normalized: str, terms: list[dict[str, str]], converter: Any) -> list[dict[str, Any]]:
+    annotations = []
+    for row in terms:
+        views = []
+        if row["source_text"].casefold() in text.casefold():
+            views.append("raw_text")
+        if converter.convert(row["source_text"]).casefold() in normalized.casefold():
+            views.append("normalized_text_zh_tw")
+        if views:
+            annotations.append({
+                "source_text": row["source_text"], "suggested_text": row["target_text"],
+                "type": row["type"], "status": row["status"], "notes": row.get("notes", ""),
+                "matched_views": views, "context_verification_required": True,
+            })
+    return annotations
+
+
 def join_segment_texts(texts: list[Any]) -> str:
     return " ".join(str(text).strip() for text in texts if str(text).strip())
 
@@ -63,10 +88,7 @@ def prepare(source: Path, output: Path, review: Path | None = None) -> dict[str,
     except ImportError as exc:
         raise RuntimeError("Install transcription/requirements.txt for OpenCC normalization.") from exc
     converter = opencc.OpenCC("s2twp")
-    with TERMINOLOGY.open(encoding="utf-8", newline="") as stream:
-        terms = [r for r in csv.DictReader(stream, delimiter="\t")
-                 if r.get("type") in {"alias", "correction"}
-                 and r.get("status") in {"active", "human_reviewed"} and r.get("source_text")]
+    terms = load_annotation_terms()
     segments = merge_segments(payload["segments"], max_gap=1.2, max_duration=25.0, max_chars=220)
     mapped = [sid for seg in segments for sid in seg["source_segment_ids"]]
     if mapped != [seg["segment_id"] for seg in payload["segments"]]:
@@ -74,12 +96,12 @@ def prepare(source: Path, output: Path, review: Path | None = None) -> dict[str,
     rows = []
     for seg in segments:
         text = seg["text"]
+        normalized = converter.convert(text)
         rows.append({
             "merged_id": seg["merged_id"], "start": seg["start"], "end": seg["end"],
-            "raw_text": text, "normalized_text_zh_tw": converter.convert(text),
+            "raw_text": text, "normalized_text_zh_tw": normalized,
             "source_segment_ids": seg["source_segment_ids"],
-            "terminology_annotations": [{"source_text": r["source_text"], "suggested_text": r["target_text"], "type": r["type"]}
-                                        for r in terms if r["source_text"] in text],
+            "terminology_annotations": annotate_terms(text, normalized, terms, converter),
         })
     result = {
         "schema_version": "transcription_normalized.v1",
@@ -88,6 +110,7 @@ def prepare(source: Path, output: Path, review: Path | None = None) -> dict[str,
             "source_raw_sha256": quality["transcript_sha256"],
             "source_raw_filename": source.name,
             "terminology_sha256": sha256_file(TERMINOLOGY),
+            "annotation_matching_version": "normalized_suggestions.v2",
             "normalization": "OpenCC s2twp; terminology annotations only",
             "opencc_version": version("opencc-python-reimplemented"),
             "merge_parameters": {"max_gap": 1.2, "max_duration": 25.0, "max_chars": 220},
