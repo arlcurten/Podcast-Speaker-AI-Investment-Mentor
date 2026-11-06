@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import copy
 import json
+from itertools import combinations
 from pathlib import Path
 
 import pytest
@@ -21,7 +22,15 @@ def case(eid, n):
             "uncertainty": ["Outcome remains uncertain"], "contradictions": [],
             "preferred_actions": ["Wait"], "decision_preferences": ["Accept missed upside"],
             "view_change_conditions": ["New contrary evidence"], "speaker_behavior": ["Revises on contrary evidence"],
-            "tags": ["evidence", "risk"], "domains": ["investment"], "merged_ids": [n - 1]}
+            "tags": ["evidence", "risk"], "domains": ["investment"], "merged_ids": [n - 1],
+            "decision_context": {"kind": "hypothetical_scenario", "description": f"Fictional decision {eid} context {n}",
+                                 "event_reference": None, "event_time": None}}
+
+
+def independent_pairs(refs):
+    return [{"record_ids": list(pair), "relationship": "independent", "basis": "distinct_decision_scenarios",
+             "explanation": "Separate fictional decisions, not repeat narrations of one event"}
+            for pair in combinations(refs, 2)]
 
 
 def principle(pid, refs):
@@ -36,6 +45,7 @@ def principle(pid, refs):
                                   "switch_conditions": ["Bounded risk experiment"]},
             "falsification_conditions": ["Repeated unconditional entries with unbounded downside"],
             "evidence_summary": "Two separate synthetic decision contexts",
+            "context_relationships": independent_pairs(refs),
             "proposed_assessment": {"evidence_strength": "high", "speaker_specificity": "medium",
                                     "condition_clarity": "high", "contradiction_severity": "none", "rationale": "Synthetic contexts"}}
 
@@ -48,12 +58,17 @@ class FakeModel:
         eid = (context.get("episode") or {}).get("episode_id")
         if "threads" in props:
             stage = "level1"
-            result = {"episode_id": eid, "episode_summary": "Synthetic investing discussion", "threads": [
+            result = {"episode_id": eid, "episode_summary": "Synthetic investing discussion", "excluded_regions": [], "threads": [
                 {"thread_id": f"{eid}:T{n}", "title": f"Context {n}", "summary": "Independent synthetic context",
-                 "domains": ["investment"], "merged_ids": [n - 1], "related_threads": []} for n in [1, 2]]}
+                 "domains": ["investment"], "merged_ids": [0] if n == 1 else [1, 2], "related_threads": []} for n in [1, 2]]}
         elif "cases" in props:
             stage = "level2"
             result = {"episode_id": eid, "cases": [case(eid, n) for n in [1, 2]]}
+            result["cases"][1]["merged_ids"] = [1, 2]
+            result["thread_dispositions"] = [
+                {"thread_id": f"{eid}:T{n}", "status": "covered", "record_ids": [f"{eid}:R{n}"],
+                 "explanation": "Case includes the context and its Q&A qualification", "unextracted_regions": []}
+                for n in [1, 2]]
         elif "strategy" in props:
             stage = "level3"
             p = principle(f"{eid}:P1", [f"{eid}:R1", f"{eid}:R2"])
@@ -64,7 +79,8 @@ class FakeModel:
             p = principle("CROSS:P1", ["SYN1:R1", "SYN2:R1"])
             result = {"consolidation_reason": "Independent synthetic episodes", "principles": [
                 {**p, "derived_from": ["SYN1:P1", "SYN2:P1"], "shared_decision_logic": "Comparable evidence before exposure",
-                 "context_differences": ["Different years"], "principle_evolution": []}]}
+                 "context_differences": ["Different fictional decisions"], "principle_evolution": [],
+                 "counterevidence_dispositions": []}]}
         self.calls.append(stage)
         return result, {"provider": "mock", "model": "synthetic", "usage": None, "cost_usd": None}
 
@@ -165,11 +181,13 @@ def test_single_case_same_context_and_generic_constraints(cfg):
     assert q["principle_type"] == "case_derived_hypothesis"
     assert not q["eligible_for_level4"]
     p["supporting_records"].append("SYN1:R2")
+    p["context_relationships"] = independent_pairs(p["supporting_records"])
     cases["SYN1:R2"]["thread_ids"] = cases["SYN1:R1"]["thread_ids"]
     q = qualify(p, cases, "level3")
     assert q["provenance"]["independent_source_context_count"] == 1
     assert q["confidence"]["overall"] == "low"
     p["supporting_records"] = ["SYN1:R1", "SYN2:R1"]
+    p["context_relationships"] = independent_pairs(p["supporting_records"])
     p["derived_from"] = p["supporting_records"]
     p["proposed_assessment"]["speaker_specificity"] = "low"
     q = qualify(p, cases, "level4")
@@ -187,6 +205,7 @@ def test_invalid_principle_provenance_fails_structurally(cfg):
     p = {**principle("CROSS:P1", ["SYN1:R1", "SYN1:R2"]), "derived_from": ["SYN1:R1"]}
     with pytest.raises(ValueError, match="two independent"): qualify(p, cases, "level4")
     p["supporting_records"] = ["SYN1:R1", "SYN2:R1"]
+    p["context_relationships"] = independent_pairs(p["supporting_records"])
     p["derived_from"] = ["INELIGIBLE:P1"]
     with pytest.raises(ValueError, match="ineligible"): qualify(p, cases, "level4")
     p["episode_id"] = "SYN1"

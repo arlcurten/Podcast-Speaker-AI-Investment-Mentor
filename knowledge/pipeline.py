@@ -14,6 +14,7 @@ import yaml
 from transcription.common import atomic_write_json, private_path, child_path, sha256_file, safe_id, utc_now
 from .schemas import VERSION, schema, validate_proposal
 from .provenance import load_source, digest, evidence, case_catalog, qualify
+from .coverage import coverage
 
 PROMPTS = Path(__file__).parent / "prompts"
 STAGES = ("level1", "level2", "level3", "level4")
@@ -111,6 +112,8 @@ def checked_artifact(cfg, source_map, stage, source, upstream, path, expected_sh
     artifact = json.loads(payload)
     if not isinstance(artifact, dict):
         raise ValueError("Knowledge artifact must be a JSON object.")
+    if artifact.get("schema_version") != VERSION:
+        raise ValueError("Incompatible knowledge schema; preserve old outputs and regenerate with a new run_id without reuse_artifacts.")
     pinned_prompt = artifact.get("generation_prompt")
     if pinned_prompt is not None and (not isinstance(pinned_prompt, str) or not pinned_prompt.strip()):
         raise ValueError("Malformed pinned generation prompt.")
@@ -179,12 +182,18 @@ def derive(stage: str, content: dict, source: dict | None, upstream: list[dict])
             if any(r not in thread_ids for r in refs):
                 raise ValueError("Unresolved Level 1 thread reference.")
             resolved[row[key]] = evidence(row["merged_ids"], source)
+        qualifications["coverage"] = coverage(stage, content, source, upstream[0]["content"] if upstream else None)
+        if stage == "level1" and content["excluded_regions"]:
+            warnings.append("Excluded source regions require semantic review; full accounting is not proof of completeness.")
+        if stage == "level2" and any(d["unextracted_regions"] for d in content["thread_dispositions"]):
+            warnings.append("Unextracted thread regions require source-grounded coverage review.")
         if not rows:
             warnings.append("No reasoning cases were extracted; this episode cannot support Mentor claims.")
     else:
         cases = case_catalog([a for a in upstream if a["stage"] == "level2"])
-        eligible = {p["principle_id"]: p for a in upstream if a["stage"] == "level3"
-                    for p in a["content"]["principles"] if a["qualification"][p["principle_id"]]["eligible_for_level4"]}
+        provisional = {p["principle_id"]: {**p, **a["qualification"][p["principle_id"]]}
+                       for a in upstream if a["stage"] == "level3" for p in a["content"]["principles"]}
+        eligible = {pid: p for pid, p in provisional.items() if p["eligible_for_level4"]}
         ids = [p["principle_id"] for p in content["principles"]]
         prefix = source["episode_id"] if source else "CROSS"
         if len(ids) != len(set(ids)) or any(not re.fullmatch(re.escape(prefix) + ":P[0-9]+", i) for i in ids):
@@ -193,7 +202,7 @@ def derive(stage: str, content: dict, source: dict | None, upstream: list[dict])
             raise ValueError("Bypass must be used exactly when no provisional principles are returned.")
         names = set()
         for p in content["principles"]:
-            qualified = qualify(p, cases, stage, eligible)
+            qualified = qualify(p, cases, stage, eligible, provisional)
             qualifications[p["principle_id"]] = {k: v for k, v in qualified.items() if k not in p or v != p[k]}
             name = re.sub(r"\W", "", p["core_preference"]).casefold()
             if name in names:
@@ -203,6 +212,11 @@ def derive(stage: str, content: dict, source: dict | None, upstream: list[dict])
             names.add(name)
             if qualified["genericness_status"] != "specific":
                 warnings.append(f"Abstraction quality needs review: {p['principle_id']}")
+            if qualified["provenance"]["unknown_context_pairs"] or qualified["provenance"]["overridden_independence_pairs"]:
+                warnings.append(f"Source independence is uncertain or constrained: {p['principle_id']}")
+            accounting = qualified["counterevidence_accounting"]
+            if accounting.get("context_excluded") or accounting.get("unresolved"):
+                warnings.append(f"Counterevidence disposition requires semantic review: {p['principle_id']}")
     return resolved, qualifications, warnings
 
 
@@ -221,6 +235,12 @@ def context(stage: str, source: dict | None, upstream: list[dict]) -> dict:
         result["eligible_provisional_principles"] = [
             {**p, **a["qualification"][p["principle_id"]]} for a in upstream if a["stage"] == "level3"
             for p in a["content"]["principles"] if a["qualification"][p["principle_id"]]["eligible_for_level4"]]
+        result["upstream_counterevidence"] = [
+            {"source_principle_id": p["principle_id"], "supporting_records": p["supporting_records"],
+             "decision_context": p["decision_context"], "conditions": p["conditions"],
+             "counterexamples": p["counterexamples"], "contradictions": p["contradictions"]}
+            for a in upstream if a["stage"] == "level3" for p in a["content"]["principles"]
+            if p["counterexamples"] or p["contradictions"]]
     return result
 
 

@@ -13,3 +13,12 @@ Preserve conditions, uncertainty and exceptions; search for conflicts rather
 than cherry-picking support. If the evidence cannot supply a trade-off, bypass
 or return a cautious hypothesis, not generic advice. proposed_assessment is a
 qualitative proposal; deterministic code constrains confidence and eligibility.
+
+Provide one context_relationships entry for every unordered pair of supporting
+record IDs. Explain from actual case contexts whether they refer to the same
+event/retelling, distinct events/decision scenarios, or unknown independence.
+Different record IDs, threads, episode dates or wording are not sufficient proof.
+Use unknown/insufficient_information when ambiguous; general statements cannot
+establish independent events. Known overlap/same-thread/same-event evidence is
+conservatively grouped by code. A multi-record case_derived_hypothesis is still
+ineligible; never rename it recurring just to pass a gate.

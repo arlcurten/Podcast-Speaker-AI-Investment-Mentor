@@ -89,7 +89,7 @@ def test_transport_removes_only_unsupported_uniqueness_keyword():
     assert original["properties"]["threads"]["items"]["properties"]["merged_ids"]["uniqueItems"]
     assert "uniqueItems" not in projected["properties"]["threads"]["items"]["properties"]["merged_ids"]
     assert projected["additionalProperties"] is False
-    duplicate = {"episode_id": "SYN", "episode_summary": "Synthetic", "threads": [
+    duplicate = {"episode_id": "SYN", "episode_summary": "Synthetic", "excluded_regions": [], "threads": [
         {"thread_id": "SYN:T1", "title": "Synthetic", "summary": "Synthetic", "domains": ["investment"],
          "merged_ids": [0, 0], "related_threads": []}]}
     with pytest.raises(ValueError, match="uniqueItems"):

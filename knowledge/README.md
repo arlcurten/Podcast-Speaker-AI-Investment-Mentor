@@ -3,6 +3,10 @@
 Working, versioned L1-L4 extraction from **accepted** private transcript versions.
 No imports from the archive. This is not transcription or the online Mentor.
 
+Active artifact contract: **`knowledge.v2`**. Structural validation accounts for
+source coverage, context independence and upstream counterevidence. It does not
+certify semantic completeness or replace the source-grounded publication review.
+
 ```text
 raw + normalized + source-hash-bound content review
 -> L1 episode navigation -> L2 historical cases
@@ -68,8 +72,9 @@ dependency: retain the old run and source files when backing up a newer release.
 Publication still requires a fresh hash-bound review of the selected corpus,
 including conflicts with new evidence. A successful update never activates
 itself. Select the new descriptor via `MENTOR_RELEASE` and restart the service;
-rollback selects the retained old descriptor. New artifacts capture their
-generation prompt so later prompt edits do not invalidate reviewed serving
+rollback within the same supported schema selects the retained old descriptor.
+Cross-schema rollback also needs the corresponding earlier code revision.
+New artifacts capture their generation prompt so later prompt edits do not invalidate reviewed serving
 releases. Earlier artifacts without that snapshot require the matching prompt
 revision. Schema/provenance validation remains mandatory in either case.
 
@@ -92,20 +97,52 @@ acceptance; upgrading those versions requires a new derived version.
 
 L2 is evidence authority. Host/listener/guest/unknown attribution is explicit;
 listener/guest assertions cannot establish the host's principles. L1 guides
-navigation, not final claims. L3 supports `principle_extraction`,
+navigation, not final claims. L1 accounts for every merged segment in a thread
+or an explained `excluded_regions` entry, without overlap between the two.
+L2 cases must cite evidence contained in their declared threads. Every L1 thread
+has a `thread_dispositions` entry with case IDs or an explicit omission reason;
+remaining regions are accounted for as `unextracted_regions`. Exclusions produce
+review warnings, not automatic semantic approval. Ads/logistics need not become
+investment cases. A wrong map requires a revised L1 in a new run, not a fabricated
+case/thread association. L3 supports `principle_extraction`,
 `light_principle_grouping`, `bypass`. No episode must produce a principle.
 
 Principles preserve trade-offs, accepted costs, conditions, switch conditions,
 exceptions, counterexamples, contradictions, distinctive behavior and
 falsification criteria. Single-record L3 becomes a hypothesis, not a recurring
-principle. L4 requires at least two unique supporting episodes/contexts; L3
-hypotheses cannot enter `derived_from`. Their original cases can participate
-only alongside genuinely independent evidence.
+principle. Multi-record hypotheses are also ineligible. L4 requires at least two
+supporting episodes; online eligibility additionally requires at least two
+independent contexts. Weak/unknown-independence candidates remain explicitly
+ineligible for review. L3 hypotheses cannot enter `derived_from`. Their original
+cases can participate only alongside genuinely independent evidence.
 
 Raw case counts, unique episodes/threads, overlapping regions and conservative
-independent-context components are computed. Same-thread or overlapping records
-within an episode count as one context. Different dates alone do not prove
-different market regimes. Principles are never additional evidence items.
+independent-context components are computed. L2 `decision_context` distinguishes
+historical events, hypothetical scenarios, general statements and unknowns;
+event identity/time are nullable source claims, not invented global IDs.
+L3/L4 `context_relationships` assess each supporting-case pair as same context,
+independent or unknown, with a basis and explanation. Different episodes/dates
+are not an independence basis. General/unknown statements cannot assert distinct
+decisions. Same-thread/overlapping evidence and a shared explicit event identity
+override claimed independence. Retellings and unknown pairs are conservatively
+connected; connected groups count once. This may undercount uncertain contexts.
+Pairwise accounting is for a principle's small evidence set, not all corpus pairs.
+
+These are deterministic constraints on **proposed** semantic relationships,
+not automated proof of event identity. Different wording for the same event can
+still be mislabeled and must be checked in review. Calendar years are reported
+only as publication coverage, not verified market regimes. Principles never
+add evidence to these counts.
+
+L4 must explicitly account for counterexamples/contradictions from every L3
+whose support overlaps its own, including ineligible L3 and direct-case derivation.
+`counterevidence_dispositions` records each upstream link as `retained`,
+`context_excluded` with a scope justification, or `unresolved`. Retained/unresolved
+links must appear in the corresponding L4 evidence list. Unresolved links lower
+confidence and block online eligibility. Explained scope exclusions need review,
+not automatic contradiction labeling. Link counts and unique record counts are
+separate, never additional independent evidence. Known counterevidence is also
+included in L4 input even when its L3 abstraction is ineligible.
 
 Confidence is multidimensional. Computable coverage constrains model proposals;
 `overall=high` is unavailable in this version. Specificity and semantic
@@ -128,13 +165,29 @@ accepted_principle_ids: explicitly reviewed eligible L4 IDs, possibly empty
 unresolved_critical_issues: []
 ```
 
-Review must actually compare claims/conditions/attribution with source evidence.
+Review must actually compare claims/conditions/attribution with source evidence,
+inspect excluded regions and unextracted topics, verify event independence, and
+review counterevidence scope exclusions. Complete ID accounting cannot detect a
+case that cites the right region but misrepresents or omits its reasoning.
 Schema/citation checks do not establish semantic entailment. The release is a
 small private descriptor, not another corpus copy. It pins source config,
 review/artifact hashes and selected IDs; selected principles require both their
-support and counterevidence in the release. Old flat-confidence outputs are not
-silently upgraded. Archived data stays untouched; regenerate a new version only
+support and counterevidence (including context-excluded sources for audit) in the
+release. Old flat-confidence outputs are not silently upgraded. Archived data
+stays untouched; regenerate a new version only
 after source acceptance.
+
+## Schema Migration
+
+`knowledge.v1` artifacts lack these required coverage/independence/disposition
+fields and are **not** silently upgraded or accepted by the v2 loader. Keep old
+outputs, reviews and releases unchanged. For migration, create a private config
+with a new `run_id`, the same accepted raw/normalized/review inputs when still
+valid, and no `reuse_artifacts` pointing to v1. Run `plan`, regenerate L1-L4,
+validate, then perform a fresh hash-bound semantic review before publishing a
+new release. This does not require re-transcription. `knowledge_config.v1`,
+review and release descriptor envelopes are unchanged; their hashes pin the new
+v2 artifacts. Do not reuse an old acceptance as approval of regenerated content.
 
 ## Validation and Limits
 

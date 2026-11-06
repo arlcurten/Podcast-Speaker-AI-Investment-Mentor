@@ -24,6 +24,9 @@ review-bound publication. [`mentor_agent/`](mentor_agent/README.md) implements
 bounded local evidence retrieval, structured applicability/answers and a
 loopback HTTP service. Their deterministic tests use synthetic data; this is
 not approval of real transcripts or a claim of live answer-quality validation.
+The `knowledge.v2` contract adds explicit source/topic coverage, conservative
+event-independence accounting and traceable counterevidence dispositions.
+Older generated knowledge requires a new version and review, not silent migration.
 Incremental-update code is also prepared: read-only catalog deltas, hash-pinned
 reuse of old knowledge, explicit source replacement, resumable new stages and
 reviewed release switching/rollback. No automatic corpus expansion is running.

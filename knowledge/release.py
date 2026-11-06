@@ -97,8 +97,9 @@ def load_release_payload(data: dict) -> tuple[dict, dict]:
         if not p["eligible_for_online_reasoning"] or p["runtime_mode_recommendation"] != "principle_assisted":
             raise ValueError("An ineligible principle cannot enter the online release.")
         refs = p["supporting_records"] + [x["record_id"] for x in p["counterexamples"] + p["contradictions"]]
+        refs += [x["record_id"] for x in p["counterevidence_dispositions"]]
         if any(ref not in cases for ref in refs):
-            raise ValueError("Release must include supporting AND counter/exception evidence for selected principles.")
+            raise ValueError("Release must include supporting AND counter/exception evidence, including context-excluded sources for review.")
     return cases, principles
 
 
