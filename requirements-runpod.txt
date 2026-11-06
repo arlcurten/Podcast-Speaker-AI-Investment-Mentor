@@ -1,4 +1,5 @@
-# Python 3.12 / Linux x86_64 worker baseline; no Torch, extraction or Agent stack.
+# Python 3.12 / Linux x86_64 resolved worker environment; no Torch or Agent stack.
+# Installation/import/CUDA diagnostics verified locally, not a cloud-image ASR claim.
 faster-whisper==1.2.1
 ctranslate2==4.8.0
 av==17.1.0
@@ -7,3 +8,28 @@ requests==2.34.2
 psutil==7.2.2
 nvidia-cublas-cu12==12.8.4.1
 nvidia-cudnn-cu12==9.19.0.56
+
+# Transitive dependencies pinned to the isolated worker validation environment.
+anyio==4.16.0
+certifi==2026.10.23
+charset-normalizer==3.5.2
+click==8.5.0
+filelock==4.2.9
+flatbuffers==25.12.19
+fsspec==2026.9.0
+h11==0.16.0
+hf-xet==1.8.0
+httpcore2==2.16.0
+httpx2==2.16.0
+huggingface-hub==2.4.0
+idna==3.20
+numpy==2.5.4
+onnxruntime==1.31.1
+packaging==26.3
+protobuf==7.36.2
+setuptools==84.2.1
+tokenizers==0.23.3
+tqdm==4.70.1
+truststore==0.10.5
+typing-extensions==4.16.0
+urllib3==2.8.0

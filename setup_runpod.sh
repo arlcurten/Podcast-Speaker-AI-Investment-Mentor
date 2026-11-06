@@ -14,20 +14,27 @@ command -v nvidia-smi >/dev/null || { echo "GPU driver not visible; select a GPU
 nvidia-smi
 : "${WORKER_VENV:?Set WORKER_VENV to a worker-volume virtual environment path}"
 : "${HF_HOME:?Set HF_HOME to an external worker-volume model cache path}"
-python3 - "$WORKER_VENV" "$HF_HOME" <<'PY'
-import shutil
+: "${PIPELINE_DATA_ROOT:?Set PIPELINE_DATA_ROOT to an external worker-volume data path}"
+
+check_storage() {
+python3 - "$WORKER_VENV" "$HF_HOME" "$PIPELINE_DATA_ROOT" "${WORKER_HOST_ROOT:-}" "$1" <<'PY'
+import json
 import sys
-from pathlib import Path
-from transcription.common import private_path
-from transcription.storage import existing_parent
-for value in sys.argv[1:]:
-    path = private_path(value)
-    if shutil.disk_usage(existing_parent(path)).free < 35_000_000_000:
-        raise SystemExit("Need 35 GB free before environment/model-cache preparation")
+from transcription.environment import setup_storage_check
+try:
+    result = setup_storage_check(*sys.argv[1:4], host_root=sys.argv[4] or None,
+                                 reserve_bytes=int(sys.argv[5]))
+except (ValueError, RuntimeError, OSError) as exc:
+    raise SystemExit(f"Worker setup storage check failed: {exc}") from None
+print(json.dumps(result))
 PY
+}
+
+check_storage 10000000000
 
 python3 -m venv "$WORKER_VENV"
 "$WORKER_VENV/bin/python" -m pip install --no-cache-dir -r requirements-runpod.txt
+check_storage 0
 "$WORKER_VENV/bin/python" -m pip check
 bash scripts/transcription_worker.sh doctor
 

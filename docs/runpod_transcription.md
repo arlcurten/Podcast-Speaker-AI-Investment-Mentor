@@ -11,7 +11,8 @@ Start with one 24 GB CUDA GPU (L4/A5000/3090/4090 class), not a multi-GPU node.
 This is capacity guidance, not a measured speed/cost ranking. Choose using
 availability and the displayed hourly price; record that price privately.
 Use Linux x86_64, Python 3.12 and a CUDA-12-capable NVIDIA driver. The worker
-pins faster-whisper/CTranslate2 and installs cuBLAS 12/cuDNN 9 Python wheels.
+pins the resolved Python dependency set, including faster-whisper/CTranslate2,
+and installs cuBLAS 12/cuDNN 9 Python wheels.
 See [upstream runtime requirements](https://github.com/SYSTRAN/faster-whisper#gpu).
 System ffmpeg/ffprobe remain required by our audio-inspection wrapper.
 
@@ -47,6 +48,19 @@ Install ffmpeg and Python venv support with the image's package manager first
 if setup reports they are missing. Setup does not change drivers, download a
 model, fetch podcast audio, or call any LLM. CUDA library paths are configured
 by `scripts/transcription_worker.sh` before Python starts.
+
+Setup shares `PIPELINE_DATA_ROOT/storage_budget.json` with the worker; it checks
+all installation/cache/output filesystems before installation and again after.
+It reserves 10 GB of installation headroom in addition to the 25 GB free-space
+minimum and never resets an existing growth budget. This is admission control,
+not a hard filesystem quota on pip or other processes. When validating setup on
+WSL, explicitly set `WORKER_HOST_ROOT` to the confirmed Windows backing-drive
+mount, matching private batch `storage.host_root`. Linux Pods normally leave it
+unset. A nonempty `WORKER_VENV` that is not a virtual environment is rejected.
+
+The isolated Python 3.12 installation, dependency imports, CUDA libraries and
+compute-type diagnostics have passed locally without loading Whisper. That
+does not prove a clean Pod image works or measure cloud transcription speed.
 
 ## Single-Episode Smoke
 
