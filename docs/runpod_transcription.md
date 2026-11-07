@@ -103,6 +103,44 @@ explicit with a 6 GB admission reserve; the upstream downloader is not an OS
 quota. Record GPU, package/model revision, timings and peak device memory from
 raw metadata. Billing estimates remain null without a supplied hourly rate.
 
+## Bounded Batching Comparison
+
+Do not start a corpus run to tune throughput. Reuse one regression episode and
+the same audio SHA-256, pinned model revision, GPU type, package versions,
+precision, language, beam and VAD settings. Keep the baseline unchanged.
+Copy its config privately; give the candidate a **new batch ID and transcript
+root**, then set `inference_mode: batched` and `inference_batch_size: 4`.
+Leave `audio_policy: keep` for the comparison so audio can be reviewed/reused.
+
+```bash
+bash scripts/transcription_worker.sh batch-plan --config "$CANDIDATE_CONFIG" --dry-run --max-episodes 1
+# Explicit paid execution, only after provisioning and reviewing the plan:
+bash scripts/transcription_worker.sh batch-run --config "$CANDIDATE_CONFIG" --max-episodes 1
+bash scripts/transcription_worker.sh batch-validate --config "$CANDIDATE_CONFIG"
+bash scripts/transcription_worker.sh batch-resume --config "$CANDIDATE_CONFIG" --max-episodes 1
+python3 -m transcription compare-transcripts --baseline "$BASELINE_RAW" --candidate "$CANDIDATE_RAW" --output "$PRIVATE_COMPARISON"
+```
+
+Batched means concurrent chunks within one episode, not four simultaneous
+episode jobs. Do not launch multiple processes against the same checkpoint/audio
+workspace. Start with size 4, consider 8 only after memory/quality review, and
+never infer linear speedup from spare VRAM. Batch size changes require another
+version; there is no automatic OOM fallback. The comparison tool is read-only
+except for its optional new private report and does not load Whisper.
+
+The batched decoder differs from sequential decoding, not just scheduling.
+Timestamp generation is explicit, but chunk boundaries and error-recovery
+behavior can change. Review omissions, proper names, numbers, negation and
+timestamp alignment against audio before selecting a faster configuration.
+Deterministic tests do not establish real GPU speed or content quality.
+
+Only transcript JSON, metadata and checkpoint/report files are transferred by
+the bundle below. Audio and model caches stay on the worker. Use small batches,
+verify the local import before terminating the Pod, and keep only a bounded
+working set of audio. `delete_on_success` deletes after worker validation and
+checkpoint completion, **not after local sync**; use `keep` until synced for
+smoke/quality runs or when source retention is required.
+
 ## Verified Transfer
 
 After the batch stops, export all completed transcripts and allowlisted batch

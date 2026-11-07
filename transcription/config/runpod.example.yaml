@@ -13,6 +13,10 @@ device: cuda
 compute_type: float16
 language: zh
 beam_size: 5
+# Candidate: batched / 4 in a NEW private batch ID and transcript_root.
+# Reuse the baseline model/revision and review quality before promotion.
+inference_mode: sequential
+inference_batch_size: 1
 vad: {enabled: true, min_silence_duration_ms: 500}
 condition_on_previous_text: false
 word_timestamps: false

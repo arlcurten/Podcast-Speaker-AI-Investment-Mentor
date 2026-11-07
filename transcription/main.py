@@ -12,6 +12,10 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Private-data transcription and pre-extraction quality gate.")
     commands = parser.add_subparsers(dest="command", required=True)
     commands.add_parser("doctor", help="Check CUDA libraries/dependencies without downloading or loading a model")
+    sub = commands.add_parser("compare-transcripts", help="Compare two existing runs of the same audio; no inference or quality approval")
+    sub.add_argument("--baseline", required=True, type=Path)
+    sub.add_argument("--candidate", required=True, type=Path)
+    sub.add_argument("--output", type=Path, help="Optional new private comparison report")
     sub = commands.add_parser("catalog-diff", help="Read-only catalog delta; never download or delete episodes")
     sub.add_argument("--before", required=True, type=Path)
     sub.add_argument("--after", required=True, type=Path)
@@ -43,6 +47,8 @@ def main(argv: list[str] | None = None) -> int:
         sub.add_argument("--dry-run", action="store_true")
         sub.add_argument("--retry-failed", action="store_true")
         sub.add_argument("--device", choices=["cpu", "cuda"])
+        sub.add_argument("--inference-mode", choices=["sequential", "batched"])
+        sub.add_argument("--inference-batch-size", type=int)
         for flag in ("output-root", "audio-root", "transcript-root", "compute-type"):
             sub.add_argument(f"--{flag}")
     sub = commands.add_parser("validate-transcript")
@@ -64,7 +70,12 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
     load_project_dotenv()
     try:
-        if args.command == "catalog-diff":
+        if args.command == "compare-transcripts":
+            from .compare import compare_transcripts
+
+            result = compare_transcripts(args.baseline, args.candidate, args.output)
+            code = 0
+        elif args.command == "catalog-diff":
             from .catalog import compare_catalogs
             result = compare_catalogs(args.before, args.after, args.output)
             code = 0

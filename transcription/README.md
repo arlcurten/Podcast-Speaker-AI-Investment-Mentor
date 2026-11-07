@@ -20,6 +20,7 @@ Ambiguous numbering fails by default; `--quarantine-ambiguous` preserves bad
 metadata separately and excludes it from runnable episodes. Legacy JSON/JSONL
 episode manifests remain readable. The current deployment is a sequential local
 worker; a remote GPU is optional, never provisioned by this package.
+Episodes stay sequential even with opt-in batched inference inside one episode.
 
 ## Setup and Commands
 
@@ -52,6 +53,8 @@ Real commands above are opt-in, not instructions to run automatically.
 `batch-plan` and any `--dry-run` do not download, initialize models or write
 outputs. Supported overrides include `--episode-file`, `--device`,
 `--compute-type`, `--audio-root`, `--transcript-root`, `--output-root`.
+`--inference-mode sequential|batched` and `--inference-batch-size` configure
+within-episode decoding, not simultaneous episode workers.
 Only listed episodes run; numeric IDs never fall back to substring matching.
 
 `catalog-diff` compares existing snapshots without network/model calls. It lists
@@ -95,6 +98,40 @@ overwriting older raw data. Both default to dry-run. The shell sync wrapper
 calls this formal importer; the old helper is archived under `legacy/scripts/`.
 See [GPU setup and transfer](../docs/runpod_transcription.md). No batch or sync
 command performs Git operations.
+
+## Single-GPU Batching
+
+The default remains `inference_mode: sequential`, `inference_batch_size: 1`.
+An experimental candidate uses `batched` with size `4`; accepted sizes are 1-32,
+not a promise that they fit every GPU. Only one episode/model is active at a
+time. The worker does not prefetch an entire corpus or run parallel batches.
+
+The batched decoder requires VAD enabled and previous-text conditioning disabled.
+Timestamp tokens are explicitly enabled; optional word timestamps, source IDs
+and ASR diagnostics remain available. Unlike sequential decoding, upstream
+batched decoding does not use temperature fallback or the same silence/log-probability
+rejection thresholds. See the pinned [upstream implementation](https://github.com/SYSTRAN/faster-whisper/blob/v1.2.1/faster_whisper/transcribe.py).
+This is a candidate decoding change, not an automatic quality-preserving speedup.
+
+Changing mode or size requires a **new batch ID and transcript root**; it cannot
+reuse a sequential checkpoint. Existing sequential fingerprints remain compatible.
+Mode, size, decoding caveats and performance metadata are recorded per run.
+OOM or other errors do not silently change mode/size; preserve the failed job,
+select a smaller size in a new private version and retry explicitly.
+
+Compare two existing same-audio runs without model calls:
+
+```bash
+python3 -m transcription compare-transcripts --baseline "$BASELINE_RAW" --candidate "$CANDIDATE_RAW" --output "$PRIVATE_COMPARISON"
+```
+
+The command verifies episode/audio identity and raw structure, reports timings,
+memory, timestamp spans, text/segment counts and settings differences. It withholds
+the speedup ratio when model/hardware/package/decoding-control metadata differ
+or are missing. Reports contain no transcript text and never approve extraction.
+Run `review-packet` for both versions and listen to comparable time regions;
+matching text or a high final timestamp is not a word-error-rate measurement.
+Full comparison reports remain private. No Git or cloud actions are performed.
 
 ## Local Storage Safety
 

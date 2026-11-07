@@ -54,9 +54,11 @@ def load_batch_config(path: Path, overrides: argparse.Namespace | None = None) -
             ("transcript_root", "transcript_root"),
             ("device", "device"),
             ("compute_type", "compute_type"),
+            ("inference_mode", "inference_mode"),
+            ("inference_batch_size", "inference_batch_size"),
         ]:
             value = getattr(overrides, attr, None)
-            if value:
+            if value is not None:
                 cfg[key] = value
     cfg.setdefault("batch_id", "transcription_batch")
     cfg.setdefault("episode_ids", [])
@@ -67,6 +69,8 @@ def load_batch_config(path: Path, overrides: argparse.Namespace | None = None) -
     cfg.setdefault("beam_size", 5)
     cfg.setdefault("condition_on_previous_text", False)
     cfg.setdefault("word_timestamps", False)
+    cfg.setdefault("inference_mode", "sequential")
+    cfg.setdefault("inference_batch_size", 1)
     cfg.setdefault("vad", {"enabled": True, "min_silence_duration_ms": 500})
     cfg.setdefault("audio_policy", "delete_on_success")
     cfg.setdefault("retry_count", 2)
@@ -91,7 +95,25 @@ def load_batch_config(path: Path, overrides: argparse.Namespace | None = None) -
         raise ValueError("hourly_rate_usd must be null or a nonnegative finite number.")
     if not isinstance(cfg["vad"], dict) or type(cfg["beam_size"]) is not int or cfg["beam_size"] < 1:
         raise ValueError("vad must be a mapping and beam_size a positive integer.")
+    inference_settings(cfg)
     return cfg
+
+
+def inference_settings(cfg: dict[str, Any]) -> dict[str, Any]:
+    mode = cfg.get("inference_mode", "sequential")
+    size = cfg.get("inference_batch_size", 1)
+    if mode not in ("sequential", "batched"):
+        raise ValueError("inference_mode must be sequential or batched.")
+    if type(size) is not int or not 1 <= size <= 32:
+        raise ValueError("inference_batch_size must be an integer between 1 and 32.")
+    if mode == "sequential" and size != 1:
+        raise ValueError("Sequential inference requires inference_batch_size: 1.")
+    if mode == "batched":
+        if cfg.get("condition_on_previous_text", False) is not False:
+            raise ValueError("Batched inference requires condition_on_previous_text: false; upstream ignores this option.")
+        if (cfg.get("vad") or {}).get("enabled", True) is not True:
+            raise ValueError("Batched inference requires vad.enabled: true for long audio.")
+    return {"inference_mode": mode, "inference_batch_size": size}
 
 
 def resolve_paths(cfg: dict[str, Any]) -> BatchPaths:
@@ -132,6 +154,7 @@ def update_job(checkpoint: dict[str, Any], path: Path, episode_id: str, patch: d
 
 
 def config_fingerprint(cfg: dict[str, Any]) -> dict[str, Any]:
+    inference = inference_settings(cfg)
     return {
         "schema_version": "transcription_raw.v1",
         "terminology_sha256": sha256_file(TERMINOLOGY),
@@ -144,6 +167,8 @@ def config_fingerprint(cfg: dict[str, Any]) -> dict[str, Any]:
         "condition_on_previous_text": cfg.get("condition_on_previous_text"),
         "word_timestamps": cfg.get("word_timestamps"),
         **({"model_revision": cfg["model_revision"]} if cfg.get("model_revision") else {}),
+        # Preserve sequential checkpoints, but never skip across decoder modes/sizes.
+        **({**inference, "batched_profile": "timestamped_v1"} if inference["inference_mode"] == "batched" else {}),
     }
 
 
@@ -226,7 +251,8 @@ def plan(cfg: dict[str, Any], *, max_episodes: int | None = None) -> dict[str, A
             "existing_status": status,
             "action": action,
         })
-    return {"batch_id": cfg["batch_id"], "jobs": jobs, "checkpoint_path": str(paths.checkpoint_path)}
+    return {"batch_id": cfg["batch_id"], "jobs": jobs, "checkpoint_path": str(paths.checkpoint_path),
+            **inference_settings(cfg)}
 
 
 def validate_audio(path: Path) -> dict[str, Any]:
@@ -274,10 +300,13 @@ def serialize_segment(segment: Any, segment_id: int, word_timestamps: bool = Fal
 
 def transcribe_audio(audio: Path, cfg: dict[str, Any], episode: dict[str, Any],
                      storage: StorageGuard | None = None) -> tuple[list[dict[str, Any]], dict[str, Any]]:
+    inference = inference_settings(cfg)
     ensure_cuda_if_requested(str(cfg.get("device")))
     try:
         from faster_whisper import WhisperModel
         from faster_whisper.utils import download_model
+        if inference["inference_mode"] == "batched":
+            from faster_whisper import BatchedInferencePipeline
         import psutil
     except Exception as exc:
         raise RuntimeError(f"Missing transcription dependency: {exc}") from exc
@@ -294,8 +323,9 @@ def transcribe_audio(audio: Path, cfg: dict[str, Any], episode: dict[str, Any],
                                         revision=cfg.get("model_revision"))
         model = WhisperModel(model_path, device=str(cfg["device"]), compute_type=str(cfg["compute_type"]),
                              local_files_only=True)
+        decoder = BatchedInferencePipeline(model=model) if inference["inference_mode"] == "batched" else model
         model_load_seconds = time.perf_counter() - model_load_start
-        segments, info = model.transcribe(
+        segments, info = decoder.transcribe(
             str(audio),
             language=cfg.get("language"),
             vad_filter=bool((cfg.get("vad") or {}).get("enabled", True)),
@@ -304,6 +334,9 @@ def transcribe_audio(audio: Path, cfg: dict[str, Any], episode: dict[str, Any],
             initial_prompt=terminology_prompt(),
             condition_on_previous_text=bool(cfg.get("condition_on_previous_text", False)),
             word_timestamps=bool(cfg.get("word_timestamps", False)),
+            # The batched decoder defaults to text-only tokens, unlike WhisperModel.
+            without_timestamps=False,
+            **({"batch_size": inference["inference_batch_size"]} if inference["inference_mode"] == "batched" else {}),
         )
         out = []
         for idx, seg in enumerate(segments):
@@ -328,6 +361,10 @@ def transcribe_audio(audio: Path, cfg: dict[str, Any], episode: dict[str, Any],
         "condition_on_previous_text": cfg.get("condition_on_previous_text"),
         "word_timestamps": cfg.get("word_timestamps"),
         "detected_language": getattr(info, "language", None),
+        **inference,
+        "decoding_profile": "timestamped_v1" if inference["inference_mode"] == "batched" else "sequential_default_v1",
+        "decoding_caveats": (["Batched decoding uses independent VAD chunks and does not apply sequential temperature fallback or silence/log-probability rejection thresholds. Re-review content and timestamps."]
+                             if inference["inference_mode"] == "batched" else []),
         "language_probability": getattr(info, "language_probability", None),
         "audio_duration_seconds": duration,
         "model_load_seconds": model_load_seconds,

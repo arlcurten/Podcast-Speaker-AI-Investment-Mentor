@@ -12,6 +12,9 @@ compute_type: int8_float16
 local_files_only: true
 language: zh
 beam_size: 5
+# One episode at a time; batched mode parallelizes chunks inside that episode.
+inference_mode: sequential
+inference_batch_size: 1
 vad:
   enabled: true
   min_silence_duration_ms: 500
