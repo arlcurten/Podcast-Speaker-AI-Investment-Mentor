@@ -199,18 +199,27 @@ def test_identical_replacement_never_schedules_paid_regeneration(cfg, tmp_path):
         pipeline.extend(cfg, changes, "same", tmp_path / "same-config.json", replace_existing=True)
 
 
-def test_prompt_edit_blocks_extraction_reuse_but_not_reviewed_release(cfg, tmp_path, monkeypatch):
+@pytest.mark.parametrize("stage", ["level2", "level3", "level4"])
+def test_prompt_edit_blocks_extraction_reuse_but_not_reviewed_release(cfg, tmp_path, monkeypatch, stage):
     review = acceptance(cfg, tmp_path)
     release = tmp_path / "release.json"
     publish(cfg, review, release)
+    root = Path(cfg["output_root"]) / cfg["run_id"]
+    artifacts = {path: sha256_file(path) for path in root.rglob("level*.json")}
     prompts = tmp_path / "changed-prompts"
     prompts.mkdir()
     for p in pipeline.PROMPTS.glob("*.md"):
-        (prompts / p.name).write_text(p.read_text() + "\nChanged future extraction policy.\n")
+        text = p.read_text(encoding="utf-8")
+        if p.stem == stage:
+            text += "\nSynthetic prompt revision: preserve unknown outcomes.\n"
+        (prompts / p.name).write_text(text, encoding="utf-8")
     monkeypatch.setattr(pipeline, "PROMPTS", prompts)
+    model = FakeModel()
     with pytest.raises(ValueError, match="incompatible"):
-        pipeline.run(cfg, dry_run=True)
+        pipeline.run(cfg, backend=model)
+    assert not model.calls
     assert len(load_release(release)[0]) == 4
+    assert all(sha256_file(path) == checksum for path, checksum in artifacts.items())
     with pytest.raises(ValueError, match="never new extraction"):
         pipeline.run(cfg, allow_pinned_prompts=True, backend=FakeModel())
 

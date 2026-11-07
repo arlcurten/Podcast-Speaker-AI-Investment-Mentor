@@ -151,6 +151,29 @@ single-case, major-conflict or weak patterns cannot enter online reasoning.
 L3 is always episode-local and not independently runtime-eligible. Eligible L4
 is at most `principle_assisted`, never `principle_guided`.
 
+### Decision Process, Not Outcome Ranking
+
+The [trajectory-informed memory paper](https://arxiv.org/abs/2603.10600)
+studies guidance extracted from agent execution histories, evaluated on AppWorld,
+not podcast interpretation. We borrow attention to decisions and corrections,
+not its success-prioritized conflict resolution or inferred outcome labels.
+
+Our L2 prompt uses existing fields to preserve the initial assumption/action,
+new signal, stated explanation and revised action, with evidence for both ends.
+Reported results stay attributed in `claims`; unstated results/causes stay in
+`uncertainty`. Revision is not proof of successful recovery. L3/L4 must retain
+decision-changing conditions and cannot rank a preference by narrated profit.
+One event and its correction still count as one context, not repeated evidence.
+No schema change, extra model pass or automatic learning loop is introduced.
+
+Changed prompts require a new run ID; never rewrite artifacts or reuse their
+acceptance as approval of a new extraction. Already reviewed releases keep their
+pinned prompts. Synthetic tests check field/evidence transport and conservative
+accounting, not whether a model faithfully extracts a real decision. Before
+claiming a quality gain, compare the same accepted sources with the prior prompts,
+review omitted revisions and unsupported causal/outcome claims, and test transfer
+on held-out decisions. Retellings of the same event must not cross that split.
+
 ## Publication Review
 
 Every generated artifact is initially `semantic_review_status: pending`.
@@ -169,6 +192,10 @@ Review must actually compare claims/conditions/attribution with source evidence,
 inspect excluded regions and unextracted topics, verify event independence, and
 review counterevidence scope exclusions. Complete ID accounting cannot detect a
 case that cites the right region but misrepresents or omits its reasoning.
+For revision cases, compare the original decision, new signal and correction
+against all cited regions. Check that reported results remain attributed,
+unknown results remain unknown, and profit/loss has not substituted for process
+evidence. Do not mistake a source-grounded causal explanation for causal proof.
 Schema/citation checks do not establish semantic entailment. The release is a
 small private descriptor, not another corpus copy. It pins source config,
 review/artifact hashes and selected IDs; selected principles require both their

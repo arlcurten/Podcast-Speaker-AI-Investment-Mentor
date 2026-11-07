@@ -27,3 +27,20 @@ hypothetical_scenario, general_statement or unknown. event_reference and
 event_time are nullable: use a recognizable source-grounded event identity/date
 only when actually stated, not an invented ID or the episode publication date.
 A repeated story is the same underlying event even if told in another episode.
+
+Extract decision episodes, not just the speaker's final position. When the source
+describes a revision, preserve the original assumption/action, the new signal,
+the speaker's stated reason for changing course, and the revised action in
+reasoning_steps. Keep its trigger in view_change_conditions and its limits in
+conditions/exceptions. Cite both the original and resumed discussion regions;
+do not split one decision's revision into independent supporting observations.
+Failures, abandoned decisions and corrections can be useful cases even without
+a successful outcome. Do not impose a success/recovery category or case quota.
+
+Separate the speaker's causal explanation from independently verified causality.
+An explicitly reported result belongs in claims with attribution; a hypothetical
+result remains hypothetical. If the result or cause is unstated, keep that gap
+in uncertainty instead of inventing a complete chain. A changed position does
+not prove a successful recovery. Profit does not prove sound reasoning, and loss
+does not prove the preference was wrong. Never infer results from later market
+knowledge, confident narration, or the extraction model's own reasoning.

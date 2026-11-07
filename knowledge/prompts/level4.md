@@ -33,3 +33,12 @@ include in that evidence list), or unresolved (retain the link; blocks runtime
 eligibility). Do not mechanically call every scope difference a contradiction,
 and never erase a known conflict to preserve the principle. Cases remain the
 only evidence; disposition links are not additional independent observations.
+
+Consolidate comparable decision processes, not winning stories. Do not prefer a
+profitable case over a conflicting case simply because its reported outcome is
+better, and do not use self-reported success as independent validation. Preserve
+source uncertainty about results and causal explanations. Check both cases'
+available information at decision time; avoid hindsight. Remove incidental names
+only when doing so preserves horizon, position size, risk constraints and other
+decision-changing conditions. If those conditions differ, keep scoped variants
+or explain the difference rather than flattening them into one universal tip.

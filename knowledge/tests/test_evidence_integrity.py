@@ -10,6 +10,7 @@ from knowledge.release import publish
 from knowledge.schemas import VERSION, schema, validate_proposal
 from knowledge.tests.test_pipeline import cfg, FakeModel, case, principle
 from transcription.common import atomic_write_json, read_json, sha256_file
+from transcription.prepare import prepare
 
 
 @pytest.fixture
@@ -276,3 +277,76 @@ def test_release_retains_excluded_counterevidence_for_audit(cfg, tmp_path):
     review["accepted_case_ids"].append("SYN1:R2")
     atomic_write_json(review_path, review)
     assert publish(cfg, review_path, tmp_path / "release.json")["principle_count"] == 1
+
+
+def test_interrupted_decision_revision_preserves_both_regions_and_unknown_result(cfg, tmp_path):
+    """Hand-authored extraction checks transport, not model semantic quality."""
+    entry = cfg["episodes"][0]
+    raw = read_json(Path(entry["raw"]))
+    texts = [
+        "Fictional host: In the inventory decision last year I assumed the supplier's new counts "
+        "were comparable to its old counts, and added a bounded position.",
+        "Fictional programme logistics: the next recording will be on a different day.",
+        "Fictional host returning to that inventory decision: the supplier then disclosed a new "
+        "counting definition. I had treated incomparable counts as confirmation. I stopped adding "
+        "and reduced the position while checking comparable observations. This explanation is my "
+        "own interpretation; I have not reported the eventual profit or loss.",
+    ]
+    for segment, text in zip(raw["segments"], texts):
+        segment["text"] = text
+    raw_path, review_path, norm_path = [tmp_path / f"revision-{kind}.json" for kind in ("raw", "review", "normalized")]
+    atomic_write_json(raw_path, raw)
+    review = read_json(Path(entry["review"]))
+    review["transcript_sha256"] = sha256_file(raw_path)
+    atomic_write_json(review_path, review)
+    prepare(raw_path, norm_path, review_path)
+    source = pipeline.load_source(raw_path, norm_path, review_path)
+    l1 = {"episode_id": "SYN1", "episode_summary": "Synthetic interrupted decision revision",
+          "threads": [{"thread_id": "SYN1:T1", "title": "Inventory decision and correction",
+                       "summary": "One event revisited", "domains": ["investment"],
+                       "merged_ids": [0, 2], "related_threads": []}],
+          "excluded_regions": [{"merged_ids": [1], "category": "logistics", "reason": "Recording schedule only"}]}
+    pipeline.derive("level1", l1, source, [])
+    row = case("SYN1", 1)
+    row.update(title="Synthetic inventory revision", merged_ids=[0, 2],
+               claims=["Host reports adding, then reducing a bounded position"],
+               reasoning_steps=["Assumed count comparability and added", "Supplier disclosed a definition change",
+                                "Host attributes revision to that comparability error", "Stopped adding and reduced"],
+               assumptions=["Counts were comparable"], conditions=["Same inventory decision"],
+               preferred_actions=["Stop adding; reduce while verifying comparability"],
+               decision_preferences=["Require comparable observations"],
+               view_change_conditions=["Supplier discloses changed counting definition"],
+               speaker_behavior=["Reports correcting an earlier assumption"],
+               risks=[], exceptions=[], contradictions=[],
+               uncertainty=["Eventual profit or loss not reported", "Causal explanation is the host's interpretation"],
+               decision_context={"kind": "historical_event", "description": "Inventory decision last year",
+                                 "event_reference": "Inventory decision", "event_time": None})
+    l2 = {"episode_id": "SYN1", "cases": [row], "thread_dispositions": [
+        {"thread_id": "SYN1:T1", "status": "covered", "record_ids": [row["record_id"]],
+         "explanation": "Initial decision and resumed correction retained", "unextracted_regions": []}]}
+    resolved, _, _ = pipeline.derive("level2", l2, source, [{"stage": "level1", "content": l1}])
+    upstream = [{"stage": "level2", "content": l2, "evidence": resolved,
+                 "source": {"publication_date": source["publication_date"]}}]
+    context = pipeline.context("level3", source, upstream)
+    forwarded = context["cases"][0]
+    assert all(forwarded[key] == value for key, value in row.items())
+    assert resolved[row["record_id"]]["source_segment_ids"] == [0, 2]
+    assert [r["merged_ids"] for r in forwarded["evidence"]["timestamp_regions"]] == [[0], [2]]
+    p = {**principle("SYN1:P1", [row["record_id"]]), "episode_id": "SYN1"}
+    qualified = qualify(p, {row["record_id"]: forwarded}, "level3")
+    assert qualified["provenance"]["independent_source_context_count"] == 1
+    assert qualified["principle_type"] == "case_derived_hypothesis"
+    assert not qualified["eligible_for_level4"]
+
+
+@pytest.mark.parametrize("result", ["a profit", "a loss", "no known outcome"])
+def test_narrated_outcomes_do_not_override_context_independence(cases, result):
+    for rid in ("SYN1:R1", "SYN2:R1"):
+        cases[rid]["decision_context"].update(kind="historical_event", event_reference="Same fictional trade")
+    before = qualify(cross(), cases, "level4")
+    for rid in ("SYN1:R1", "SYN2:R1"):
+        cases[rid]["claims"].append(f"Host reports {result}; not independently verified")
+    after = qualify(cross(), cases, "level4")
+    assert after["confidence"] == before["confidence"]
+    assert after["provenance"]["independent_source_context_count"] == 1
+    assert not after["eligible_for_online_reasoning"]

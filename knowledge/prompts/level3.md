@@ -22,3 +22,12 @@ Use unknown/insufficient_information when ambiguous; general statements cannot
 establish independent events. Known overlap/same-thread/same-event evidence is
 conservatively grouped by code. A multi-record case_derived_hypothesis is still
 ineligible; never rename it recurring just to pass a gate.
+
+Treat a case's initial decision and later correction as one trajectory, not two
+independent successes. Compare the stated decision process, not merely reported
+returns: a profitable anecdote cannot raise confidence or erase a loss-bearing
+counterexample. Preserve unknown outcomes and speaker-attributed explanations;
+do not promote them into verified causal rules. A correction can motivate a
+conditional pattern without proving that the correction worked. Generalize
+incidental names only; retain decision-changing horizons, position sizes,
+information availability and risk constraints in the principle's scope.
