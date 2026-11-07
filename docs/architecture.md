@@ -1,14 +1,19 @@
 # Architecture
 
+> Historical design reference for the archived implementations in `legacy/`.
+> The active rebuild and four-stage sequence are documented in the root README.
+> Do not treat past implementation status here as completion of the new pipeline.
+
+
 This document describes the long-term architecture for the Podcast Speaker AI Investment Mentor.
 
 Current boundary:
 
-- Phase 1 Transcription POC is complete and preserved in `legacy_segment_poc/`.
-- Phase 2 Semantic Extraction POC is implemented in `semantic_analysis_poc/` for the current pilot episodes.
-- `legacy_mentor_rag_poc/` is a working deterministic case-only RAG baseline.
-- Offline Level 3/Level 4 principle extraction is implemented as a POC in `semantic_analysis_poc/`.
-- `mentor_agent/` is the implemented and validated first formal runtime for principle-plus-case Reasoning Mentor.
+- Phase 1 Transcription POC is complete and preserved in `legacy/legacy_segment_poc/`.
+- Phase 2 Semantic Extraction POC is implemented in `legacy/semantic_analysis_poc/` for the current pilot episodes.
+- `legacy/legacy_mentor_rag_poc/` is a working deterministic case-only RAG baseline.
+- Offline Level 3/Level 4 principle extraction is implemented as a POC in `legacy/semantic_analysis_poc/`.
+- `legacy/mentor_agent/` is the implemented and validated first formal runtime for principle-plus-case Reasoning Mentor.
 
 ## Target Flow
 
@@ -89,7 +94,7 @@ Level 2 cases remain the source of truth. Principles are abstractions and must n
 
 ## Mentor Agent Boundary
 
-`legacy_mentor_rag_poc/` is a completed case-only baseline:
+`legacy/legacy_mentor_rag_poc/` is a completed case-only baseline:
 
 ```text
 query
@@ -101,7 +106,7 @@ domain filtering and context assembly
 LLM answer with citations
 ```
 
-The formal `mentor_agent/` uses offline principles and cases:
+The formal `legacy/mentor_agent/` uses offline principles and cases:
 
 ```text
 query / scenario analysis

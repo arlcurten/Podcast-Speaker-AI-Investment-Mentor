@@ -1,6 +1,11 @@
 # Reasoning Mentor Architecture
 
-This document defines the principle-plus-case Reasoning Mentor architecture. Offline Level 3/Level 4 principle extraction is implemented as a POC, and `mentor_agent/` implements the first formal online runtime over the current private four-episode corpus.
+> Historical design reference for the archived implementations in `legacy/`.
+> The active rebuild and four-stage sequence are documented in the root README.
+> Do not treat past implementation status here as completion of the new pipeline.
+
+
+This document defines the principle-plus-case Reasoning Mentor architecture. Offline Level 3/Level 4 principle extraction is implemented as a POC, and `legacy/mentor_agent/` implements the first formal online runtime over the current private four-episode corpus.
 
 ## POC Responsibilities
 

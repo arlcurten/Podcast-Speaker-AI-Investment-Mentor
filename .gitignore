@@ -251,3 +251,25 @@ legacy_segment_poc/reports/legacy/
 private_data/
 consultant-ai-agent-private/
 *_private_data/
+
+# Archived and active workflow outputs remain external/private.
+legacy/**/data/
+legacy/**/reports/
+transcription/data/
+transcription/outputs/
+transcription/reports/
+knowledge/data/
+knowledge/outputs/
+knowledge/reports/
+mentor_agent/data/
+mentor_agent/outputs/
+mentor_agent/reports/
+*.mp3
+*.wav
+*.m4a
+*.part
+*.safetensors
+*.ckpt
+*.pem
+credentials*.json
+*.lock.tmp

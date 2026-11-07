@@ -1,0 +1,7 @@
+-r transcription/requirements.txt
+jsonschema==4.26.0
+fastapi==0.162.0
+uvicorn==0.54.0
+pytest>=8.0,<9
+httpx==0.28.1
+# GPU workers use requirements-runpod.txt separately; no duplicate Torch stack.

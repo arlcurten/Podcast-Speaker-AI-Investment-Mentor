@@ -1,0 +1,15 @@
+schema_version: knowledge_config.v1
+run_id: accepted_corpus_v1
+output_root: ${PIPELINE_DATA_ROOT}/knowledge
+# Set KNOWLEDGE_MODEL_ID to a model available to your Codex login.
+model: null
+reasoning_effort: medium
+timeout_seconds: 1800
+max_input_chars: 180000
+max_calls: 13
+retry_count: 0
+episodes:
+  - episode_id: EP674
+    raw: ${PODCAST_DATA_ROOT}/transcripts/raw/reviewed_v1/EP674/raw_transcript.json
+    normalized: ${PODCAST_DATA_ROOT}/transcripts/normalized/reviewed_v1/EP674.json
+    review: ${PIPELINE_DATA_ROOT}/transcription/quality/reviewed_v1/EP674_review.json

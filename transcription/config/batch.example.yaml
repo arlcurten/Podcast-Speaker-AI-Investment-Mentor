@@ -1,0 +1,37 @@
+# Copy to a private config before using real episode IDs or source URLs.
+# Example regression only; no automatic catalog discovery or full-corpus run.
+batch_id: regression_v1
+episode_ids: [EP57]
+manifest_path: ${PODCAST_DATA_ROOT}/episode_metadata/catalog_v1.json
+output_root: ${PIPELINE_DATA_ROOT}/transcription/batches
+audio_root: ${PODCAST_DATA_ROOT}/audio/transcription_work
+transcript_root: ${PODCAST_DATA_ROOT}/transcripts/raw/regression_v1
+model_name: large-v3-turbo
+device: cuda
+compute_type: int8_float16
+local_files_only: true
+language: zh
+beam_size: 5
+# One episode at a time; batched mode parallelizes chunks inside that episode.
+inference_mode: sequential
+inference_batch_size: 1
+vad:
+  enabled: true
+  min_silence_duration_ms: 500
+condition_on_previous_text: false
+word_timestamps: false
+audio_policy: delete_on_success
+retry_count: 1
+download_timeout_seconds: 60
+skip_existing: true
+cost:
+  hourly_rate_usd: null
+storage:
+  # On WSL, set this in your private config to the Windows backing-drive mount.
+  # Empty is permitted only on native Linux, where output filesystem space is used.
+  host_root: null
+  budget_file: ${PIPELINE_DATA_ROOT}/storage_budget.json
+  minimum_free_bytes: 25000000000
+  max_growth_bytes: 60000000000
+  max_audio_bytes: 2000000000
+  max_download_bytes: 500000000

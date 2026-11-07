@@ -1,5 +1,8 @@
 # Conflict Handling Validation Public Summary
 
+> Historical aggregate for the archived baseline, not a result of the rebuild.
+
+
 This is a public-safe aggregate summary of a focused `mentor_agent` conflict-handling validation run.
 The full traces, complete model responses, detailed review notes, and private evidence remain in the private repository.
 

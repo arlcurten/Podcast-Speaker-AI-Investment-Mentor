@@ -1,0 +1,67 @@
+#!/usr/bin/env python3
+from __future__ import annotations
+
+import argparse
+import runpy
+import sys
+
+
+COMMANDS = {
+    # Inspect local OS, CPU, RAM, GPU, CUDA, ffmpeg, and ffprobe availability.
+    "inspect-env": "modules.source.inspect_environment",
+
+    # Fetch the podcast RSS feed and build episode manifests.
+    "fetch-rss": "modules.source.fetch_rss",
+
+    #!! Download one explicitly selected episode audio file from the manifest.
+    "download": "modules.source.download_episode",
+
+    #!! Run faster-whisper transcription for an episode or partial clip.
+    "transcribe": "modules.transcript.transcribe_episode",
+
+    #!! Merge adjacent raw ASR segments and automatically validate source mapping.
+    "merge": "modules.transcript.merge_transcript_segments",
+
+    #!! Build Traditional Chinese normalized transcript layers from raw and merged text.
+    "normalize": "modules.transcript.normalize_transcript",
+
+    # Build the minimal deterministic topic/classification/routing POC output.
+    "topic-review-poc": "modules.segmentation.build_topic_segments",
+
+    # Build the historical Local POC report from existing artifacts.
+    "poc-report": "modules.build_reports.build_poc_report",
+
+    # Plan a RunPod-ready transcription batch without downloading audio or loading Whisper.
+    "batch-plan": "modules.batch.transcription_batch",
+
+    # Run a checkpointed transcription batch. Use --dry-run for deterministic validation.
+    "batch-run": "modules.batch.transcription_batch",
+
+    # Show checkpoint status for a configured transcription batch.
+    "batch-status": "modules.batch.transcription_batch",
+
+    # Resume a checkpointed transcription batch without rerunning completed episodes.
+    "batch-resume": "modules.batch.transcription_batch",
+
+    # Validate checkpoint and output status for a transcription batch.
+    "batch-validate": "modules.batch.transcription_batch",
+}
+
+
+def main() -> int:
+    if len(sys.argv) > 1 and sys.argv[1] in COMMANDS:
+        command = sys.argv[1]
+        rest = sys.argv[2:]
+        sys.argv = [command, *rest]
+        runpy.run_module(COMMANDS[command], run_name="__main__")
+        return 0
+    parser = argparse.ArgumentParser(description="Local POC modular entrypoint.")
+    parser.add_argument("command", choices=sorted(COMMANDS))
+    args, rest = parser.parse_known_args()
+    sys.argv = [args.command, *rest]
+    runpy.run_module(COMMANDS[args.command], run_name="__main__")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

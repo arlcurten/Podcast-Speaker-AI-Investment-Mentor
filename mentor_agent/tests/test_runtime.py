@@ -1,271 +1,179 @@
 from __future__ import annotations
 
-import os
-import subprocess
-import sys
+import copy
 from pathlib import Path
 
-from mentor_agent.modules.guards import validate_citations
-from mentor_agent.modules.guards import current_market_guard
-from mentor_agent.modules.guards import run_guards
-from mentor_agent.modules.query import analyze_query_deterministic
-from mentor_agent.modules.runtime import MentorRuntime, compact_case, normalize_assessment, postprocess_conflict_classification
-from mentor_agent.modules.routing import candidate_route, final_route_from_assessment_with_config
+import pytest
+import yaml
+from fastapi.testclient import TestClient
+
+from knowledge.tests.test_pipeline import cfg
+from knowledge.tests.test_release import acceptance
+from knowledge.release import publish
+from mentor_agent.runtime import Mentor, load_config, finalize_route, validate_answer, compact_case
+from mentor_agent.retrieval import KnowledgeIndex
+from mentor_agent.service import create_app
 
 
-PROJECT_ROOT = Path(__file__).resolve().parents[2]
-PRIVATE_PIPELINE = PROJECT_ROOT.parent / "AI-Investment-Mentor-private" / "pipeline_data"
+class FakeMentor:
+    def __init__(self, *, rejected=False, unresolved=False, current=False, empty=False, corrupt=False):
+        self.rejected, self.unresolved, self.current, self.empty, self.corrupt = rejected, unresolved, current, empty, corrupt
+        self.calls = []
+    def complete(self, prompt, context, schema):
+        props = schema["properties"]
+        if "query_type" in props:
+            self.calls.append("analysis")
+            result = {"query_type": "scenario", "scenario_facts": ["Synthetic uncertain opportunity"],
+                      "decision_being_asked": "Wait or take bounded exposure", "target_domains": ["investment"],
+                      "missing_information": ["Downside limit"], "current_data_required": self.current,
+                      "search_terms": ["evidence risk wait"] if not self.empty else ["zxqv"],
+                      "principle_ids": [] if self.empty else ["CROSS:P1"]}
+        elif "selected_route" in props:
+            self.calls.append("applicability")
+            ids = [c["record_id"] for c in context["cases"]]
+            result = {"selected_route": "principle_assisted", "applicable_principles": [] if self.rejected else ["CROSS:P1"],
+                      "rejected_principles": [{"principle_id": "CROSS:P1", "reason": "Different decision context"}] if self.rejected else [],
+                      "supporting_cases": ids, "conflicting_evidence": [], "context_differences": [], "exceptions_triggered": [],
+                      "unresolved_conflicts": [{"record_ids": ids[:2], "issue": "Synthetic opposing actions under unclear conditions", "missing_information": ["Time horizon"], "severity": "major"}] if self.unresolved else [],
+                      "missing_information": [], "current_data_required": self.current, "confidence": "medium",
+                      "conditional_conclusion": "If comparable evidence is missing, limit conclusions", "route_reasons": ["Synthetic evidence"]}
+        else:
+            self.calls.append("answer")
+            ids = [c["record_id"] for c in context["cases"]]
+            result = {"conditional_answer": "If evidence is comparable, consider bounded exposure; otherwise wait.",
+                      "historical_evidence": [{"statement": "Synthetic cases accept missed upside for better evidence", "record_ids": ids if not self.corrupt else ["MISSING:R1"]}],
+                      "interpretation": "A conditional framework, not a permanent speaker policy.", "conditions_and_risks": ["Evidence comparability"],
+                      "conflicts_and_exceptions": ["Bounded experiments differ from unconditional entry"],
+                      "missing_information": ["Downside limit"], "current_data_limitation": "No current data verified."}
+        return result, {"provider": "mock", "cost_usd": None}
 
 
-def private_available() -> bool:
-    return (PRIVATE_PIPELINE / "semantic_analysis" / "outputs" / "cross_episode" / "level4_principles.json").exists()
+@pytest.fixture
+def mentor_setup(cfg, tmp_path):
+    review = acceptance(cfg, tmp_path)
+    release = tmp_path / "release.json"
+    publish(cfg, review, release)
+    settings = yaml.safe_load((Path(__file__).parents[1] / "config/default.yaml").read_text())
+    settings["release"] = str(release)
+    path = tmp_path / "mentor.yaml";path.write_text(yaml.safe_dump(settings))
+    return load_config(path)
 
 
-def test_query_analysis_current_market_guard() -> None:
-    qa = analyze_query_deterministic("現在適合買台積電嗎？")
-    assert qa.current_data_requirement is True
-    assert qa.historical_or_conceptual_or_current == "current"
+def test_principle_assisted_and_compact_source_links(mentor_setup):
+    model = FakeMentor();mentor = Mentor(mentor_setup, backend=model)
+    result = mentor.ask("Uncertain evidence: wait or add exposure?")
+    assert result["route"] == "principle_assisted"
+    assert model.calls == ["analysis", "applicability", "answer"]
+    assert result["guards"][0]["status"] == "passed"
+    assert all(c["regions"] and c["record_id"].startswith("SYN") for c in result["citations"])
+    assert all(len(c["knowledge_artifact_sha256"]) == 64 for c in result["citations"])
+    compact = compact_case(result["retrieval"]["cases"][0])
+    assert all(k in compact for k in ("conditions", "assumptions", "exceptions", "contradictions", "evidence"))
+    assert "lexical_score" not in compact and "raw_text" not in compact
 
 
-def test_missing_private_data_path_error(monkeypatch) -> None:
-    monkeypatch.delenv("PIPELINE_DATA_ROOT", raising=False)
-    try:
-        MentorRuntime(use_llm=False)
-    except RuntimeError as exc:
-        assert "PIPELINE_DATA_ROOT" in str(exc)
-    else:
-        raise AssertionError("expected missing PIPELINE_DATA_ROOT error")
+def test_rejected_principle_really_downgrades(mentor_setup):
+    result = Mentor(mentor_setup, backend=FakeMentor(rejected=True)).ask("evidence wait")
+    assert result["route"] == "case_only"
+    assert result["assessment"]["applicable_principles"] == []
 
 
-def test_load_level2_and_level4_when_private_available(monkeypatch) -> None:
-    if not private_available():
-        return
-    monkeypatch.setenv("PIPELINE_DATA_ROOT", str(PRIVATE_PIPELINE))
-    runtime = MentorRuntime(use_llm=False)
-    validation = runtime.validate_data()
-    assert validation["ok"] is True
-    assert validation["cases"]["record_count"] >= 30
-    assert validation["principles"]["principle_count"] >= 1
-    assert validation["principles"]["eligible_principle_count"] >= 1
+def test_unresolved_conflict_preserved_with_both_sides_and_no_answer_call(mentor_setup):
+    model = FakeMentor(unresolved=True)
+    result = Mentor(mentor_setup, backend=model).ask("evidence wait")
+    assert result["route"] == "insufficient_evidence"
+    assert result["assessment"]["confidence"] == "low"
+    assert "answer" not in model.calls
+    assert len(result["citations"]) == 2
+    assert "Time horizon" in result["answer"]["missing_information"]
 
 
-def test_principle_assisted_candidate_route(monkeypatch) -> None:
-    if not private_available():
-        return
-    monkeypatch.setenv("PIPELINE_DATA_ROOT", str(PRIVATE_PIPELINE))
-    runtime = MentorRuntime(use_llm=False)
-    result = runtime.retrieve("他在面對市場敘事和數據不一致時，會怎麼判斷？")
-    route = candidate_route(result["query_analysis"], result["principle_candidates"], result["case_candidates"], runtime.config)
-    assert route["candidate_route"] in {"principle_assisted", "case_only"}
+def test_no_evidence_does_not_generate_speaker_answer(mentor_setup):
+    model = FakeMentor(empty=True)
+    result = Mentor(mentor_setup, backend=model).ask("zxqv")
+    assert result["route"] == "insufficient_evidence"
+    assert model.calls == ["analysis"]
+    assert result["citations"] == []
 
 
-def test_principle_context_mismatch_downgrades_to_case_only(monkeypatch) -> None:
-    if not private_available():
-        return
-    monkeypatch.setenv("PIPELINE_DATA_ROOT", str(PRIVATE_PIPELINE))
-    runtime = MentorRuntime(use_llm=False)
-    result = runtime.ask("如果我很怕踏空，但股價已經漲一段了，他的歷史案例比較支持忍住還是追上去？")
-    assert result["selected_route"] == "case_only"
-    assert result["selected_principles"] == []
+def test_current_data_guard_and_missing_information(mentor_setup):
+    result = Mentor(mentor_setup, backend=FakeMentor()).ask("Should I enter now at today's price?")
+    assert result["analysis"]["current_data_required"]
+    assert result["assessment"]["current_data_required"]
+    assert "not a current buy/sell" in result["answer"]["current_data_limitation"]
+    assert "Downside limit" in result["answer"]["missing_information"]
 
 
-def test_conflict_query_preserves_potential_conflict_candidates(monkeypatch) -> None:
-    if not private_available():
-        return
-    monkeypatch.setenv("PIPELINE_DATA_ROOT", str(PRIVATE_PIPELINE))
-    runtime = MentorRuntime(use_llm=False)
-    result = runtime.retrieve("他在不同市場情境下有沒有出現看似矛盾的操作想法？哪些條件會讓這些想法不矛盾？")
-    roles = {case["evidence_role_candidate"] for case in result["case_candidates"]}
-    assert "potential_conflict" in roles
-    assert all("conflict_signal_score" in case for case in result["case_candidates"])
+def test_unknown_citation_fails_closed(mentor_setup):
+    result = Mentor(mentor_setup, backend=FakeMentor(corrupt=True)).ask("evidence wait")
+    assert result["route"] == "insufficient_evidence"
+    assert result["answer"]["historical_evidence"] == []
 
 
-def test_exception_query_preserves_exception_candidates(monkeypatch) -> None:
-    if not private_available():
-        return
-    monkeypatch.setenv("PIPELINE_DATA_ROOT", str(PRIVATE_PIPELINE))
-    runtime = MentorRuntime(use_llm=False)
-    result = runtime.retrieve("如果供應鏈風險是真的，這是重視數據原則的例外嗎？")
-    roles = {case["evidence_role_candidate"] for case in result["case_candidates"]}
-    assert "exception" in roles or "potential_conflict" in roles
+def test_parse_failure_retry_is_bounded(mentor_setup):
+    class Broken(FakeMentor):
+        def complete(self, *args):
+            self.calls.append("broken")
+            return {}, {"usage": {"input_tokens": 1}}
+    model = Broken();result = Mentor(mentor_setup, backend=model).ask("evidence")
+    assert len(model.calls) == 2
+    assert len(result["calls"]) == 2
+    assert result["route"] == "insufficient_evidence"
 
 
-def test_no_conflict_control_does_not_force_conflict_role(monkeypatch) -> None:
-    if not private_available():
-        return
-    monkeypatch.setenv("PIPELINE_DATA_ROOT", str(PRIVATE_PIPELINE))
-    runtime = MentorRuntime(use_llm=False)
-    result = runtime.retrieve("他如何看待追高？")
-    roles = [case["evidence_role_candidate"] for case in result["case_candidates"]]
-    assert roles.count("potential_conflict") <= 1
+def test_no_llm_retrieval_and_loopback_api(mentor_setup):
+    model = FakeMentor();mentor = Mentor(mentor_setup, backend=model)
+    assert mentor.ask("evidence wait", no_llm=True)["route"] == "insufficient_evidence"
+    assert not model.calls
+    client = TestClient(create_app(mentor), base_url="http://127.0.0.1")
+    assert client.get("/health").json()["case_count"] == 4
+    response = client.post("/ask", json={"query": "evidence wait"})
+    assert response.status_code == 200
+    assert response.json()["route"] == "principle_assisted"
+    assert response.json()["release_sha256"] == mentor.release_hash
+    assert "retrieval" not in response.json()
+    assert client.post("/ask", json={"query": ""}).status_code == 422
+    assert client.get("/health", headers={"host": "external.example"}).status_code == 400
 
 
-def test_no_cases_insufficient_evidence() -> None:
-    qa = analyze_query_deterministic("完全沒有資料的問題")
-    route = candidate_route(qa.to_dict(), [], [], {"routing": {"min_cases_for_case_only": 1}})
-    assert route["candidate_route"] == "insufficient_evidence"
+def test_candidate_roles_preserve_conflict_and_exception_not_synonyms(mentor_setup):
+    mentor = Mentor(mentor_setup, backend=FakeMentor())
+    cases, principles = copy.deepcopy(mentor.index.cases), copy.deepcopy(mentor.index.principles)
+    principles["CROSS:P1"]["contradictions"] = [{"record_id": "SYN1:R2", "explanation": "Potential opposing preference"}]
+    principles["CROSS:P1"]["counterexamples"] = [{"record_id": "SYN2:R2", "explanation": "Bounded exception"}]
+    index = KnowledgeIndex(cases, principles, mentor_setup["retrieval"])
+    result = index.select("evidence wait", {"search_terms": [], "target_domains": ["investment"], "principle_ids": ["CROSS:P1"]})
+    hits = {c["record_id"]: c for c in result["cases"]}
+    assert "potential_conflict" in hits["SYN1:R2"]["retrieval"]["roles"]
+    assert "exception" in hits["SYN2:R2"]["retrieval"]["roles"]
+    assert "potential_conflict" not in hits["SYN2:R2"]["retrieval"]["roles"]
+    assert "supporting" in hits["SYN1:R1"]["retrieval"]["roles"]
+    mismatch = index.select("evidence wait", {"search_terms": [], "target_domains": ["career"], "principle_ids": ["CROSS:P1"]})
+    assert not mismatch["principles"]
 
 
-def test_unknown_company_phrase_marks_insufficient(monkeypatch) -> None:
-    if not private_available():
-        return
-    monkeypatch.setenv("PIPELINE_DATA_ROOT", str(PRIVATE_PIPELINE))
-    runtime = MentorRuntime(use_llm=False)
-    result = runtime.ask("他對一家節目沒有談過、我也沒有提供產業和財務資訊的新創公司，會給什麼明確投資建議？")
-    assert result["selected_route"] == "insufficient_evidence"
+def test_conflict_answer_cannot_drop_one_side(mentor_setup):
+    result = Mentor(mentor_setup, backend=FakeMentor()).ask("evidence wait")
+    assessment, answer = result["assessment"], result["answer"]
+    ids = [c["record_id"] for c in result["retrieval"]["cases"]][:2]
+    assessment["conflicting_evidence"] = [{"record_ids": ids}]
+    answer["historical_evidence"][0]["record_ids"] = ids[:1]
+    with pytest.raises(ValueError, match="side citation"):
+        validate_answer(answer, assessment, result["retrieval"]["cases"], mentor_setup)
+    answer["historical_evidence"][0]["record_ids"] = ids
+    assert len(validate_answer(answer, assessment, result["retrieval"]["cases"], mentor_setup)) == 2
 
 
-def test_unresolved_conflict_downgrades_principle_route() -> None:
-    assessment = {
-        "selected_route": "principle_assisted",
-        "unresolved_conflicts": [{"record_ids": ["A", "B"]}],
-        "confidence": "medium",
-    }
-    route = final_route_from_assessment_with_config(
-        assessment,
-        "principle_assisted",
-        {"routing": {"downgrade_principle_on_unresolved_conflict": True}},
-    )
-    assert route == "case_only"
+def test_context_difference_alone_does_not_downgrade(mentor_setup):
+    result = Mentor(mentor_setup, backend=FakeMentor()).ask("evidence wait")
+    result["assessment"]["context_differences"] = [{"record_ids": ["SYN1:R1", "SYN2:R1"]}]
+    assert finalize_route(result["analysis"], result["retrieval"], result["assessment"], 1) == "principle_assisted"
+    result["assessment"]["unresolved_conflicts"] = [{"record_ids": ["SYN1:R1", "SYN2:R1"], "severity": "minor", "missing_information": []}]
+    assert finalize_route(result["analysis"], result["retrieval"], result["assessment"], 1) == "case_only"
 
 
-def test_low_confidence_unresolved_conflict_can_be_insufficient() -> None:
-    assessment = {
-        "selected_route": "case_only",
-        "unresolved_conflicts": [{"record_ids": ["A", "B"]}],
-        "confidence": "low",
-    }
-    route = final_route_from_assessment_with_config(
-        assessment,
-        "case_only",
-        {"routing": {"downgrade_case_only_on_low_confidence_conflict": True}},
-    )
-    assert route == "insufficient_evidence"
-
-
-def test_career_query_not_treated_as_investment_scenario() -> None:
-    qa = analyze_query_deterministic("如果我在職涯上想去高薪但壓力大的公司，他的歷史內容能給什麼判斷框架？")
-    assert qa.query_type == "non_investment_domain"
-    assert "career" in qa.target_domains
-
-
-def test_citation_rejects_non_retrieved_record(monkeypatch) -> None:
-    if not private_available():
-        return
-    monkeypatch.setenv("PIPELINE_DATA_ROOT", str(PRIVATE_PIPELINE))
-    runtime = MentorRuntime(use_llm=False)
-    cases = runtime._retrieve(analyze_query_deterministic("他如何看待追高？"))[1]
-    check = validate_citations("引用 EP999-reasoning-999", cases)
-    assert check["ok"] is False
-
-
-def test_compact_case_keeps_conflict_fields(monkeypatch) -> None:
-    if not private_available():
-        return
-    monkeypatch.setenv("PIPELINE_DATA_ROOT", str(PRIVATE_PIPELINE))
-    runtime = MentorRuntime(use_llm=False)
-    cases = runtime._retrieve(analyze_query_deterministic("他在不同市場情境下有沒有矛盾？"))[1]
-    compact = compact_case(cases[0])
-    for key in [
-        "evidence_role_candidate",
-        "role_reason",
-        "conditions",
-        "assumptions",
-        "exceptions",
-        "contradictions",
-        "decisions_or_preferences",
-        "actions_or_avoided_actions",
-        "citations",
-    ]:
-        assert key in compact
-
-
-def test_missing_conflict_fields_are_safely_filled() -> None:
-    fallback = {
-        "selected_route": "case_only",
-        "conflicting_evidence": [],
-        "resolved_context_differences": [],
-        "unresolved_conflicts": [],
-        "exceptions_triggered": [],
-        "candidate_principles": [],
-        "applicable_principles": [],
-        "rejected_principles": [],
-        "missing_information": [],
-        "supporting_cases": [],
-        "conflict_resolution": "fallback",
-        "confidence_impact": "none",
-    }
-    out = normalize_assessment({"selected_route": "case_only"}, fallback)
-    assert out["conflicting_evidence"] == []
-    assert out["resolved_context_differences"] == []
-    assert out["unresolved_conflicts"] == []
-
-
-def test_exception_only_conflict_is_reclassified(monkeypatch) -> None:
-    if not private_available():
-        return
-    monkeypatch.setenv("PIPELINE_DATA_ROOT", str(PRIVATE_PIPELINE))
-    runtime = MentorRuntime(use_llm=False)
-    cases = runtime._retrieve(analyze_query_deterministic("這是原則的例外嗎？"))[1]
-    cases[0].evidence_role_candidate = "exception"
-    assessment = {
-        "conflicting_evidence": [{"record_ids": [cases[0].item_id], "why_they_conflict": "model overclassified exception"}],
-        "exceptions_triggered": [],
-        "conflict_resolution": "",
-    }
-    out = postprocess_conflict_classification(assessment, [cases[0]])
-    assert out["conflicting_evidence"] == []
-    assert out["exceptions_triggered"]
-
-
-def test_current_market_guard_accepts_clear_limitation() -> None:
-    check = current_market_guard(
-        {"current_data_requirement": True},
-        "目前無法提供即時買賣建議，因本系統無當前股價、財報或市場數據。",
-    )
-    assert check["ok"] is True
-
-
-def test_insufficient_evidence_does_not_require_citation() -> None:
-    checks = run_guards(
-        "目前已載入的 podcast evidence 不足以支撐 speaker-specific 結論。",
-        {"current_data_requirement": False},
-        [],
-        {"selected_route": "insufficient_evidence"},
-    )
-    assert checks["checks"]["citations"]["ok"] is True
-
-
-def test_runtime_falls_back_when_model_cites_unretrieved_record(monkeypatch) -> None:
-    if not private_available():
-        return
-    monkeypatch.setenv("PIPELINE_DATA_ROOT", str(PRIVATE_PIPELINE))
-    runtime = MentorRuntime(use_llm=False)
-    # Directly exercise guard condition that triggers runtime fallback in live mode.
-    cases = runtime._retrieve(analyze_query_deterministic("市場修正時應該加碼嗎？"))[1]
-    check = validate_citations("引用不存在的 EP999-reasoning-999", cases)
-    assert check["ok"] is False
-
-
-def test_public_sample_not_referenced_by_runtime() -> None:
-    for path in (PROJECT_ROOT / "mentor_agent").rglob("*.py"):
-        if path.name.startswith("test_"):
-            continue
-        assert "sample_outputs" not in path.read_text(encoding="utf-8")
-
-
-def test_cli_smoke(monkeypatch) -> None:
-    if not private_available():
-        return
-    env = os.environ.copy()
-    env["PIPELINE_DATA_ROOT"] = str(PRIVATE_PIPELINE)
-    proc = subprocess.run(
-        [sys.executable, "-m", "mentor_agent", "--no-llm", "inspect-query", "--query", "他如何看待追高？"],
-        cwd=PROJECT_ROOT,
-        env=env,
-        text=True,
-        capture_output=True,
-        check=False,
-    )
-    assert proc.returncode == 0
-    assert "query_type" in proc.stdout
+def test_unconditional_speaker_claim_rejected(mentor_setup):
+    result = Mentor(mentor_setup, backend=FakeMentor()).ask("evidence wait")
+    result["answer"]["interpretation"] = "speaker always buys"
+    with pytest.raises(ValueError, match="Unconditional"):
+        validate_answer(result["answer"], result["assessment"], result["retrieval"]["cases"], mentor_setup)
