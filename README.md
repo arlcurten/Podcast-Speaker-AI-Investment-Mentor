@@ -1,110 +1,157 @@
 # Podcast Speaker AI Investment Mentor
 
-Build an evidence-grounded Mentor from historical podcast reasoning, not a
-trading system or an unconditional imitation of the speaker.
+Turn podcast transcripts into historical reasoning cases and a Mentor that
+answers with conditions, risks and source citations.
 
-## Current Work
+## Usage
 
-Previous implementations are frozen under [`legacy/`](legacy/README.md).
-Their original snapshot is tagged `archive/pre-rebuild-2026-11-05` (`1919bbc`).
-They remain available for comparison, not as the new production pipeline.
+### Setup
 
-The rebuild starts with working [`transcription/`](transcription/README.md):
-private episode-manifest input, exact matching, single/batch faster-whisper
-worker, checkpoint/resume, raw validation, normalization and a pre-extraction
-quality gate with private review queues. Automated integrity checks and
-source-content review are separate. Worker execution, source accuracy and
-corpus acceptance are distinct validation gates; passing timestamps and
-no-work resume does not approve transcript content.
-
-Host-aware disk limits, immutable RSS catalogs and checksum-bound GPU-worker
-transfer bundles are implemented. Cloud execution requires explicit approval;
-run records and full outputs remain private. Sequential decoding is the default;
-batched decoding remains an opt-in experiment, not an automatic throughput upgrade.
-[`knowledge/`](knowledge/README.md) implements resumable L1-L4 construction and
-review-bound publication. [`mentor_agent/`](mentor_agent/README.md) implements
-bounded local evidence retrieval, structured applicability/answers and a
-loopback HTTP service. Their deterministic tests use synthetic data; this is
-not approval of real transcripts or a claim of live answer-quality validation.
-The `knowledge.v2` contract adds explicit source/topic coverage, conservative
-event-independence accounting and traceable counterevidence dispositions.
-Older generated knowledge requires a new version and review, not silent migration.
-Incremental-update code is also prepared: read-only catalog deltas, hash-pinned
-reuse of old knowledge, explicit source replacement, resumable new stages and
-reviewed release switching/rollback. Transcript acquisition does not automatically
-approve source quality, run extraction or publish a new knowledge release.
-
-## End-to-End Plan
-
-1. **Transcript foundation:** acquire/locate audio, transcribe, normalize with
-   source mapping, inspect content quality. Reuse qualified transcripts;
-   re-transcribe only where justified. Structural validity is not ASR accuracy.
-2. **Knowledge construction:** compare proposed Codex extraction with the
-   archived baseline on the same input. Then produce versioned L1 navigation,
-   L2 cases, optional provisional L3 and revisable cross-episode L4. Only
-   quality-accepted source versions enter extraction.
-3. **Usable Mentor and serving:** local evidence search and bounded verification
-   with OpenRouter reasoning, conditional answers and citations. Deliver on a
-   small validated corpus first; no full-corpus requirement.
-4. **Expansion and continuing updates:** after the service is usable, add
-   backlog/new episodes and validate incremental knowledge/index refresh with
-   regression checks. This is separate from serving, not its prerequisite.
-
-L2 cases remain the evidence authority; principles are abstractions, not
-additional evidence. Preserve conditions, uncertainty, conflicts and historical
-context. No live-data tools or current investment claims are implied.
-
-## Commands
+Python 3.10+ on Linux/WSL:
 
 ```bash
+python3 -m venv .venv
+source .venv/bin/activate
 python3 -m pip install -r requirements.txt
-python3 -m transcription --help
-python3 -m transcription batch-plan --config transcription/config/batch.example.yaml --dry-run
-python3 -m transcription validate-transcript --input "$RAW_TRANSCRIPT" --require-ready
-python3 -m transcription prepare --input "$RAW_TRANSCRIPT" --output "$NORMALIZED_OUTPUT"
+cp -n .env.example .env
+```
+
+Configure the ignored `.env`:
+
+| Variable | Purpose |
+| --- | --- |
+| `PODCAST_DATA_ROOT` | Private episode metadata, audio and transcripts |
+| `PIPELINE_DATA_ROOT` | Private pipeline outputs, knowledge and releases |
+| `PRIVATE_DOCS_ROOT` | Private reviews and internal documents |
+| `KNOWLEDGE_MODEL_ID` | Model available to the locally authenticated Codex CLI |
+| `OPENROUTER_API_KEY` | Credential for online Mentor reasoning |
+| `MENTOR_MODEL_ID` | Optional override of the configured Mentor model |
+| `MENTOR_RELEASE` | Path to a reviewed knowledge release descriptor |
+
+Data paths must be outside this repository. Complete artifacts stay private;
+public samples are not runtime inputs. See [private data setup](docs/private_data_setup.md).
+
+### Transcribe and Prepare
+
+Copy a [batch config](transcription/config/batch.example.yaml) or
+[GPU worker config](transcription/config/runpod.example.yaml) into private storage
+and select the episodes. GPU installation, model caching and output transfer:
+[RunPod guide](docs/runpod_transcription.md).
+
+The shell variables below refer to your private configs and artifact paths;
+set them before running the commands.
+
+```bash
+python3 -m transcription batch-plan --config "$BATCH_CONFIG" --dry-run
+python3 -m transcription batch-run --config "$BATCH_CONFIG"
+python3 -m transcription batch-status --config "$BATCH_CONFIG"
+python3 -m transcription batch-resume --config "$BATCH_CONFIG"
+python3 -m transcription batch-validate --config "$BATCH_CONFIG"
+
+# After reviewing the exact transcript version:
+python3 -m transcription validate-transcript --input "$RAW_TRANSCRIPT" --review "$QUALITY_REVIEW" --require-ready
+python3 -m transcription prepare --input "$RAW_TRANSCRIPT" --review "$QUALITY_REVIEW" --output "$NORMALIZED_OUTPUT"
+```
+
+Completed episodes are skipped on resume. Retry failures explicitly with
+`batch-resume --retry-failed`. Structural validation does not approve transcript
+accuracy; [source review](transcription/README.md#quality-gate) is required before extraction.
+
+### Build Knowledge
+
+Sign in to Codex CLI and create a private copy of
+[the extraction config](knowledge/config/example.yaml), pointing to accepted
+raw transcripts, normalized views and their reviews.
+
+```bash
+python3 -m knowledge plan --config "$KNOWLEDGE_CONFIG"
+python3 -m knowledge run --config "$KNOWLEDGE_CONFIG" --through level4
+python3 -m knowledge validate --config "$KNOWLEDGE_CONFIG"
+# Publish only after source-grounded semantic review:
+python3 -m knowledge publish --config "$KNOWLEDGE_CONFIG" --review "$KNOWLEDGE_REVIEW" --output "$MENTOR_RELEASE"
+```
+
+Only configured episodes are processed. Set `MENTOR_RELEASE` in `.env` to the
+published descriptor. [Extraction, review and updates](knowledge/README.md).
+
+### Use the Mentor
+
+```bash
+python3 -m mentor_agent --no-llm validate-data
+python3 -m mentor_agent retrieve --query "When should I change a position?"
+python3 -m mentor_agent ask --query "Evidence is incomplete. Should I wait or use a small position?"
+python3 -m mentor_agent serve --port 8765
+```
+
+The local API exposes `/health`, `/docs` and `POST /ask` at
+`http://127.0.0.1:8765`. `retrieve` makes no model calls; `ask` uses OpenRouter.
+Add `--json --output "$PRIVATE_TRACE"` to an `ask --query` command to save
+diagnostics privately. [Mentor configuration and API](mentor_agent/README.md).
+
+### Tests
+
+```bash
 python3 -m pytest -q
 ```
 
-The example plan requires a configured private episode manifest. A structural
-check without a source-bound quality review reports
-`ready_for_extraction: false`. `prepare` never rewrites raw or prior outputs.
-Real download/transcription is explicit, never part of tests or dry-run.
-The default tests cover active code only. Archived regressions remain available
-with `python3 -m pytest -q legacy` in an environment with the archive's own
-dependencies; new application installation does not pull in old retrieval stacks.
+Default tests use synthetic data and mocked inference; no GPU or API key is required.
 
-## Repository Layout
+## File Structure
 
 ```text
-transcription/     active worker, preparation, quality gate and synthetic tests
-knowledge/         offline extraction, evidence qualification, reviewed releases
-mentor_agent/      local retrieval, structured reasoning, CLI and loopback API
-legacy/           frozen transcription, extraction and two Mentor baselines
-docs/             public policies, setup and labeled historical designs
-sample_outputs/   curated demonstration artifacts, never production inputs
-reports/public/   aggregate historical evaluation summaries
+transcription/       acquisition, Whisper worker, normalization, quality gate
+knowledge/           L1-L4 extraction, schemas, prompts, release validation
+mentor_agent/        retrieval, applicability, answers, local HTTP API
+legacy/              frozen implementations and comparison baselines
+docs/                setup, architecture and artifact policies
+scripts/             worker setup and output-sync helpers
+config/              shared data-path examples
+sample_outputs/      synthetic or reviewed public demonstration artifacts
+reports/public/      curated aggregate reports
+requirements.txt     local pipeline and service dependencies
+requirements-runpod.txt  GPU worker dependencies
 ```
 
-New code does not import the archive. Reviewed utilities are promoted into the
-active namespace with their own tests. Full data is not moved with source code.
+Active modules contain their own configs, tests and README. Complete data,
+model outputs and reviews live separately in the private repository.
 
-## Data Boundary
+## System Architecture
 
-**Private repo = canonical source of truth. Public repo = curated showcase.**
-Complete audio/transcripts, semantic outputs, reviews and runtime reports stay
-outside this repository. Public files are code, schemas, prompts, templates,
-docs and synthetic/redacted/aggregate artifacts only.
+```mermaid
+flowchart TD
+    subgraph worker["Transcription worker: local GPU or RunPod"]
+        catalog["Episode catalog + batch config"] --> audio["Download / reuse audio"]
+        audio --> whisper["faster-whisper: sequential decoding"]
+        whisper --> raw["Raw transcript + timestamps + checkpoint"]
+    end
 
-Configure `PODCAST_DATA_ROOT`, `PIPELINE_DATA_ROOT` and `PRIVATE_DOCS_ROOT` through
-environment variables or the ignored root `.env`. No private URLs, credentials
-or real local paths belong in tracked config. Public samples cannot be selected
-as production sources or destinations.
+    raw --> privateRaw["Validated transfer / save to private storage"]
+    privateRaw --> prepare["Source-content review + normalization"]
 
-- [Private data setup](docs/private_data_setup.md)
-- [Public artifacts policy and index](docs/public_artifacts.md)
-- [Transcription workflow and quality review](transcription/README.md)
-- [RunPod reference and worker setup](docs/runpod_transcription.md)
-- [Archived architecture](docs/reasoning_mentor_architecture.md)
+    subgraph offline["Offline knowledge: Codex CLI + deterministic validation"]
+        prepare --> l1["L1: episode semantic map"]
+        l1 --> l2["L2: reasoning cases + source evidence"]
+        l2 --> l3["L3: provisional episode principles, or bypass"]
+        l2 --> l4["L4: cross-episode candidate principles"]
+        l3 --> l4
+        l2 --> release["Semantic review + versioned private release"]
+        l4 --> release
+    end
 
-Live web/market tools, portfolio integration, memory, neural
-embedding infrastructure, UI and deployment remain out of scope.
+    subgraph online["Local Mentor: CLI / loopback HTTP API"]
+        question["User question"] --> analysis["Scenario and search analysis"]
+        analysis --> retrieval["Local case / principle retrieval"]
+        release --> retrieval
+        retrieval --> applicability["Applicability: conditions, conflicts, exceptions"]
+        applicability --> route["principle_assisted / case_only / insufficient_evidence"]
+        route --> answer["Conditional answer or fallback + citation guards"]
+    end
+
+    llm["OpenRouter: remote LLM"] -.-> analysis
+    llm -.-> applicability
+    llm -.-> answer
+```
+
+**L2 cases are evidence; L4 principles are revisable abstractions, not extra
+evidence.** Codex and OpenRouter receive selected context remotely; local
+storage does not mean local LLM inference. No live-market tools or trading execution.
