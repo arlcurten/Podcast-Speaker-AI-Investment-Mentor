@@ -6,6 +6,7 @@ import fcntl
 import json
 import math
 import os
+import re
 import shutil
 import time
 from dataclasses import dataclass
@@ -272,7 +273,7 @@ def download_audio(episode: dict[str, Any], dest: Path, timeout: int, retries: i
     if storage:
         storage.admit_download()
     result = stream_download(str(url), dest, timeout=timeout, retries=retries,
-                             **({"max_bytes": storage.max_download_bytes, "check_space": storage.check} if storage else {}))
+                             **({"max_bytes": storage.max_download_bytes, "check_space": storage.check_progress} if storage else {}))
     return {**result, **validate_audio(dest)}
 
 
@@ -300,6 +301,9 @@ def serialize_segment(segment: Any, segment_id: int, word_timestamps: bool = Fal
 
 def transcribe_audio(audio: Path, cfg: dict[str, Any], episode: dict[str, Any],
                      storage: StorageGuard | None = None) -> tuple[list[dict[str, Any]], dict[str, Any]]:
+    worker_code_commit = os.environ.get("TRANSCRIPTION_CODE_COMMIT")
+    if worker_code_commit is not None and not re.fullmatch(r"[0-9a-f]{40}", worker_code_commit):
+        raise ValueError("TRANSCRIPTION_CODE_COMMIT must identify the deployed 40-character Git commit.")
     inference = inference_settings(cfg)
     ensure_cuda_if_requested(str(cfg.get("device")))
     try:
@@ -325,6 +329,8 @@ def transcribe_audio(audio: Path, cfg: dict[str, Any], episode: dict[str, Any],
                              local_files_only=True)
         decoder = BatchedInferencePipeline(model=model) if inference["inference_mode"] == "batched" else model
         model_load_seconds = time.perf_counter() - model_load_start
+        if storage:
+            storage.check(64_000_000)
         segments, info = decoder.transcribe(
             str(audio),
             language=cfg.get("language"),
@@ -341,7 +347,7 @@ def transcribe_audio(audio: Path, cfg: dict[str, Any], episode: dict[str, Any],
         out = []
         for idx, seg in enumerate(segments):
             if storage and idx % 25 == 0:
-                storage.check(64_000_000)
+                storage.check_progress(64_000_000)
             peak_rss = max(peak_rss, process.memory_info().rss)
             out.append(serialize_segment(seg, idx, bool(cfg.get("word_timestamps"))))
     finally:
@@ -351,6 +357,7 @@ def transcribe_audio(audio: Path, cfg: dict[str, Any], episode: dict[str, Any],
     metadata = {
         "episode_id": episode.get("episode_id"),
         "backend": "faster-whisper",
+        "worker_code_commit": worker_code_commit,
         "model": cfg.get("model_name"),
         "model_revision": Path(model_path).name if Path(model_path).parent.name == "snapshots" else cfg.get("model_revision"),
         "device": cfg.get("device"),

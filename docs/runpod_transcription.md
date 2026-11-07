@@ -74,6 +74,12 @@ When changing from a previously used host-free-space budget, preserve that
 budget and its failed-run record; use the separate volume budget filename.
 Never reset or enlarge a budget just to bypass a real capacity limit.
 
+The worker reserves bounded stage writes before proceeding. Within a download
+or in-memory decode, live free-space checks do not repeatedly traverse the
+environment/model cache. Full allocated-usage checks still run at stage
+boundaries and before output writes. Keep one job per owned workspace; do not
+run unrelated installers or writers during the admitted stage.
+
 Verify the isolated Python 3.12 installation, dependency imports, CUDA libraries
 and compute-type diagnostics on each new worker image. Passing local checks
 does not prove that image works or measure cloud transcription speed.

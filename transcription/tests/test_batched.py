@@ -99,6 +99,40 @@ def test_batched_error_does_not_fall_back_to_sequential(tmp_path, decoder, monke
     assert decoder[-1][0] == "monitor_stop"
 
 
+def test_inference_storage_admission_is_not_repeated_per_segment(tmp_path, decoder, monkeypatch):
+    from transcription import storage
+
+    def transcribe(*args, **kwargs):
+        return (SimpleNamespace(start=i, end=i + 0.5, text="synthetic") for i in range(101)), SimpleNamespace(language="zh")
+    monkeypatch.setattr(sys.modules["faster_whisper"].WhisperModel, "transcribe", transcribe)
+    monkeypatch.setattr(storage.shutil, "disk_usage", lambda _: SimpleNamespace(free=100_000_000_000))
+    monkeypatch.setattr(storage, "is_wsl", lambda: False)
+    scans = []
+    monkeypatch.setattr(storage, "volume_bytes", lambda _: scans.append(1) or 1_000_000)
+    guard = storage.StorageGuard({"shared_volume_root": str(tmp_path), "volume_capacity_bytes": 80_000_000_000},
+                                 audio_root=tmp_path / "audio", write_roots=[tmp_path], budget_file=tmp_path / "budget.json")
+    scans.clear()
+    segments, metadata = batch.transcribe_audio(tmp_path / "synthetic.mp3",
+                          {"model_name": "synthetic", "device": "cuda", "compute_type": "float16"}, {}, guard)
+    assert len(scans) == 1
+    assert len(segments) == 101
+    assert segments[-1]["segment_id"] == 100 and segments[-1]["start"] == 100
+    assert metadata["inference_mode"] == "sequential"
+
+
+def test_deployed_code_revision_is_recorded_without_changing_decoder(tmp_path, decoder, monkeypatch):
+    monkeypatch.setenv("TRANSCRIPTION_CODE_COMMIT", "a" * 40)
+    _, meta = batch.transcribe_audio(tmp_path / "synthetic.mp3",
+                    {"model_name": "synthetic", "device": "cuda", "compute_type": "float16"}, {})
+    assert meta["worker_code_commit"] == "a" * 40
+    assert any(name == "sequential" for name, _ in decoder)
+    monkeypatch.setenv("TRANSCRIPTION_CODE_COMMIT", "not-a-commit")
+    decoder.clear()
+    with pytest.raises(ValueError, match="Git commit"):
+        batch.transcribe_audio(tmp_path / "synthetic.mp3", {}, {})
+    assert not decoder
+
+
 @pytest.mark.parametrize("settings", [
     {"inference_mode": "unknown"}, {"inference_batch_size": 0}, {"inference_batch_size": True},
     {"inference_batch_size": 4.0}, {"inference_batch_size": 33}, {"inference_batch_size": 4},

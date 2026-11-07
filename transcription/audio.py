@@ -42,7 +42,7 @@ def download(url: str, dest: Path, timeout: int, retries: int, *, max_bytes: int
                             if written > max_bytes:
                                 raise ValueError("Streaming audio exceeds configured download byte limit.")
                             if check_space:
-                                check_space(len(chunk) + 64_000_000)
+                                check_space(written + 64_000_000)
                             fh.write(chunk)
                 if content_length and content_length.isdigit() and not response.headers.get("Content-Encoding"):
                     if part.stat().st_size != int(content_length):

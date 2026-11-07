@@ -164,6 +164,16 @@ writes must stay inside that volume. This option is prohibited on WSL and does
 not replace the Windows host-space safeguards. See the GPU setup guide for
 matching installation and runtime settings.
 
+On shared volumes, full usage scans happen at stage boundaries and before
+output writes, not per download chunk or decoded segment. Downloads reserve
+their capped maximum up front and report cumulative bytes against that
+reservation; decoding holds segments in memory. Progress checks still read
+live filesystem free space. This requires exclusive workspace ownership and
+does not replace an OS quota against unrelated writers. WSL continues to check
+actual host free space and growth on every progress check.
+An orchestrator may set `TRANSCRIPTION_CODE_COMMIT` to the immutable deployed
+40-character Git revision; raw metadata records it, or null when unknown.
+
 ## Quality Gate
 
 Structural checks cover episode identity, nonempty text, unique IDs,

@@ -77,6 +77,7 @@ def volume_bytes(root: Path) -> int:
 class StorageGuard:
     def __init__(self, settings: dict[str, Any], *, audio_root: Path, write_roots: list[Path], budget_file: Path):
         self.settings = settings
+        self._progress_reserve_bytes: int | None = None
         self.audio_root = audio_root
         self.write_roots = write_roots
         self.budget_file = private_path(settings.get("budget_file") or budget_file)
@@ -154,6 +155,9 @@ class StorageGuard:
             atomic_write_json(self.budget_file, self.budget, overwrite=False)
 
     def check(self, reserve_bytes: int = 0) -> dict[str, Any]:
+        self._progress_reserve_bytes = None
+        if type(reserve_bytes) is not int or reserve_bytes < 0:
+            raise ValueError("Storage reservation must be a nonnegative integer byte count.")
         free = shutil.disk_usage(self.host_root).free
         if self.shared_volume_root:
             used = volume_bytes(self.shared_volume_root)
@@ -177,7 +181,31 @@ class StorageGuard:
                           volume_capacity_bytes=self.volume_capacity_bytes, volume_available_bytes=available)
         else:
             result["host_growth_bytes"] = growth
+        self._progress_reserve_bytes = reserve_bytes
         return result
+
+    def check_progress(self, reserve_bytes: int = 0) -> dict[str, Any]:
+        """Check live free space within a previously admitted, bounded stage.
+
+        Shared-volume stages have exclusive workspace ownership. Downloads are
+        capped and report cumulative bytes; decoding holds segments in memory.
+        New stages/writes still need check(), which rescans allocated usage.
+        """
+        if type(reserve_bytes) is not int or reserve_bytes < 0:
+            raise ValueError("Storage reservation must be a nonnegative integer byte count.")
+        if not self.shared_volume_root:
+            # Keep the actual Windows backing-drive growth check on every call.
+            return self.check(reserve_bytes)
+        if self._progress_reserve_bytes is None or reserve_bytes > self._progress_reserve_bytes:
+            raise StorageLimitError("Progress exceeds its admitted storage reservation; perform a full check first.")
+        free = shutil.disk_usage(self.host_root).free
+        if free - reserve_bytes < self.minimum_free_bytes:
+            raise StorageLimitError("Host free space reached the safety reserve; stop and free space before retrying.")
+        for root in self.write_roots:
+            if shutil.disk_usage(existing_parent(root)).free - reserve_bytes < self.minimum_free_bytes:
+                raise StorageLimitError("An output filesystem reached the free-space safety reserve.")
+        return {"host_free_bytes": free, "admitted_reserve_bytes": self._progress_reserve_bytes,
+                "allocated_volume_rescanned": False}
 
     def admit_download(self) -> None:
         self.check(self.max_download_bytes + 64_000_000)

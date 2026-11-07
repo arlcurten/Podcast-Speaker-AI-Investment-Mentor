@@ -189,3 +189,74 @@ def test_volume_measurement_includes_nested_files_without_following_external_lin
     (root / "external").symlink_to(outside, target_is_directory=True)
     assert storage.volume_bytes(root) < before + 100_000
     assert before >= 4096
+
+
+def test_progress_requires_full_shared_volume_admission(shared_guard):
+    guard, _ = shared_guard
+    with pytest.raises(storage.StorageLimitError, match="reservation"):
+        guard.check_progress(64_000_000)
+    guard.check(64_000_000)
+    assert guard.check_progress(64_000_000)["allocated_volume_rescanned"] is False
+    with pytest.raises(storage.StorageLimitError, match="reservation"):
+        guard.check_progress(64_000_001)
+
+
+def test_progress_does_not_rescan_environment_but_next_stage_does(shared_guard, monkeypatch):
+    guard, state = shared_guard
+    calls = []
+    def measure(_):
+        calls.append(state["used"])
+        return state["used"]
+    monkeypatch.setattr(storage, "volume_bytes", measure)
+    guard.admit_download()
+    for written in range(1, 101):
+        guard.check_progress(written * 1_000_000 + 64_000_000)
+    assert len(calls) == 1
+    state["used"] = 16_000_000_000
+    with pytest.raises(storage.StorageLimitError, match="growth budget"):
+        guard.check(64_000_000)
+    assert len(calls) == 2
+    with pytest.raises(storage.StorageLimitError, match="reservation"):
+        guard.check_progress(1)
+
+
+def test_progress_retains_shared_pool_free_space_floor(shared_guard):
+    guard, state = shared_guard
+    guard.check(64_000_000)
+    state["free"] = 24_000_000_000
+    with pytest.raises(storage.StorageLimitError, match="safety reserve"):
+        guard.check_progress(64_000_000)
+
+
+def test_progress_retains_host_growth_limit(guard, monkeypatch):
+    guard.check(64_000_000)
+    monkeypatch.setattr(storage.shutil, "disk_usage", lambda _: SimpleNamespace(free=39_000_000_000))
+    with pytest.raises(storage.StorageLimitError, match="growth budget"):
+        guard.check_progress(64_000_000)
+
+
+def test_download_reports_cumulative_bytes_and_keeps_size_cap(tmp_path, monkeypatch):
+    class Response:
+        status_code = 200
+        headers = {"Content-Type": "audio/mpeg"}
+        def __enter__(self): return self
+        def __exit__(self, *args): pass
+        def raise_for_status(self): pass
+        def iter_content(self, **kwargs): yield b"12345"; yield b"67890"
+
+    monkeypatch.setattr(audio.requests, "get", lambda *a, **kw: Response())
+    monkeypatch.setattr(audio, "inspect", lambda _: {})
+    checks = []
+    dest = tmp_path / "synthetic.mp3"
+    audio.download("https://example.invalid/synthetic", dest, 1, 1, max_bytes=10, check_space=checks.append)
+    assert checks == [64_000_005, 64_000_010]
+    assert dest.read_bytes() == b"1234567890"
+
+
+@pytest.mark.parametrize("value", [-1, True, 1.5])
+def test_invalid_progress_reservations_fail_closed(shared_guard, value):
+    guard, _ = shared_guard
+    with pytest.raises(ValueError, match="nonnegative integer"):
+        guard.check(value)
+    with pytest.raises(ValueError, match="nonnegative integer"):
+        guard.check_progress(value)
