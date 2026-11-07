@@ -69,4 +69,3 @@ Use `--json` on `ask`, `retrieve`, or `compare` for full diagnostics.
 - No live web, news, market data, portfolio context, persistent memory, UI, deployment, MCP, or multi-agent orchestration.
 - Citation validation checks existence and retrieved-set membership; it is not full semantic entailment.
 - Current-market questions are answered only as historical reasoning frameworks unless external tools are added later.
-

@@ -13,12 +13,14 @@ The rebuild starts with working [`transcription/`](transcription/README.md):
 private episode-manifest input, exact matching, single/batch faster-whisper
 worker, checkpoint/resume, raw validation, normalization and a pre-extraction
 quality gate with private review queues. Automated integrity checks and
-source-content review are separate. The rebuild's one local GPU regression
-completed with valid timestamps and no-work resume. Source accuracy is still
-under review; a clean RunPod image has not been exercised.
+source-content review are separate. Worker execution, source accuracy and
+corpus acceptance are distinct validation gates; passing timestamps and
+no-work resume does not approve transcript content.
 
 Host-aware disk limits, immutable RSS catalogs and checksum-bound GPU-worker
-transfer bundles are implemented. No cloud resource was rented.
+transfer bundles are implemented. Cloud execution requires explicit approval;
+run records and full outputs remain private. Sequential decoding is the default;
+batched decoding remains an opt-in experiment, not an automatic throughput upgrade.
 [`knowledge/`](knowledge/README.md) implements resumable L1-L4 construction and
 review-bound publication. [`mentor_agent/`](mentor_agent/README.md) implements
 bounded local evidence retrieval, structured applicability/answers and a
@@ -29,7 +31,8 @@ event-independence accounting and traceable counterevidence dispositions.
 Older generated knowledge requires a new version and review, not silent migration.
 Incremental-update code is also prepared: read-only catalog deltas, hash-pinned
 reuse of old knowledge, explicit source replacement, resumable new stages and
-reviewed release switching/rollback. No automatic corpus expansion is running.
+reviewed release switching/rollback. Transcript acquisition does not automatically
+approve source quality, run extraction or publish a new knowledge release.
 
 ## End-to-End Plan
 
@@ -103,5 +106,5 @@ as production sources or destinations.
 - [RunPod reference and worker setup](docs/runpod_transcription.md)
 - [Archived architecture](docs/reasoning_mentor_architecture.md)
 
-Live web/market tools, portfolio integration, memory, full corpus, neural
+Live web/market tools, portfolio integration, memory, neural
 embedding infrastructure, UI and deployment remain out of scope.

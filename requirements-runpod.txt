@@ -1,5 +1,5 @@
 # Python 3.12 / Linux x86_64 resolved worker environment; no Torch or Agent stack.
-# Installation/import/CUDA diagnostics verified locally, not a cloud-image ASR claim.
+# Pin the worker dependencies; each new image still requires a GPU smoke check.
 faster-whisper==1.2.1
 ctranslate2==4.8.0
 av==17.1.0

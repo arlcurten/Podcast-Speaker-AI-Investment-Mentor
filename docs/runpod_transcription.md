@@ -25,9 +25,9 @@ backing-drive mount must still be configured explicitly.
 Stopping/deleting has different consequences for container, volume and network
 storage; consult [RunPod storage lifetimes](https://docs.runpod.io/pods/storage/types).
 
-Clone the public repository at the reviewed rebuild commit. If local commits
-are not yet on the remote, transfer a clean Git bundle rather than accidentally
-running the archived main-branch worker. Never copy `.env` or a home directory.
+Clone the public repository and pin the reviewed worker commit. Record that
+commit with the run; a moving branch name does not identify the deployed code.
+Never copy `.env` or a home directory.
 No private Git credentials are required: transfer only the selected private
 episode metadata and batch config using SSH/scp/rsync.
 
@@ -74,9 +74,9 @@ When changing from a previously used host-free-space budget, preserve that
 budget and its failed-run record; use the separate volume budget filename.
 Never reset or enlarge a budget just to bypass a real capacity limit.
 
-The isolated Python 3.12 installation, dependency imports, CUDA libraries and
-compute-type diagnostics have passed locally without loading Whisper. That
-does not prove a clean Pod image works or measure cloud transcription speed.
+Verify the isolated Python 3.12 installation, dependency imports, CUDA libraries
+and compute-type diagnostics on each new worker image. Passing local checks
+does not prove that image works or measure cloud transcription speed.
 
 ## Single-Episode Smoke
 
@@ -199,5 +199,5 @@ audio or terminate the Pod through its console. Volume/network storage can
 continue billing after compute stops. Check the console; the scripts cannot
 confirm shutdown or billing. Never terminate a Pod before securing outputs.
 
-Local deterministic tests and a local GPU run do not certify a clean RunPod
-image. Rental, clean-image setup and GPU smoke remain explicit user-run checks.
+Local deterministic tests do not certify a new RunPod image. Rental, clean-image
+setup and GPU smoke remain explicit, separately authorized validation steps.
