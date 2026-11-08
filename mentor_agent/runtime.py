@@ -230,8 +230,13 @@ class Mentor:
                 return self.fallback(result, "No sufficient relevant host-attributed historical cases were retrieved.")
             result["candidate_route"] = "principle_assisted" if retrieval["principles"] else "case_only"
             compact = [compact_case(c) for c in retrieval["cases"]]
+            # This flag governs L3 promotion, not the eligibility of a released L4.
+            # Keep the offline diagnostic intact, but do not ask the online model
+            # to interpret it as a contradictory runtime permission.
+            online_principles = [{k: v for k, v in p.items() if k != "eligible_for_level4"}
+                                 for p in retrieval["principles"]]
             assessment = self.call("applicability", {"query": query, "analysis": analysis,
-                                   "principles": retrieval["principles"], "cases": compact}, ASSESSMENT, result["calls"])
+                                   "principles": online_principles, "cases": compact}, ASSESSMENT, result["calls"])
             result["assessment"] = assessment
             result["route"] = finalize_route(analysis, retrieval, assessment, self.settings["minimum_host_cases"])
             if result["route"] == "insufficient_evidence":

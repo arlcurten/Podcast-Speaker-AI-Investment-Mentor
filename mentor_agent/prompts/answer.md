@@ -15,3 +15,6 @@ prices, news, permanent speaker rules, guaranteed outcomes or personalized
 buy/sell directions. State that live facts are unavailable where relevant.
 Keep the full answer compact, about 400-800 Chinese characters. Empty arrays
 are acceptable only when genuinely inapplicable, not to hide contrary evidence.
+For missing_information return only NEW gaps beyond assessment.missing_information.
+The runtime adds the assessed gaps verbatim. Do not copy, paraphrase or summarize
+them again in this array; an empty array is correct when there are no new gaps.

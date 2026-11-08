@@ -261,3 +261,34 @@ def test_each_stage_retries_at_most_once(mentor_setup):
     assert result["route"] == "principle_assisted"
     assert model.calls == ["analysis", "analysis", "applicability", "applicability", "answer", "answer"]
     assert [c["attempt"] for c in result["calls"]] == [1, 2, 1, 2, 1, 2]
+
+
+def test_online_principles_do_not_expose_l3_promotion_flag(mentor_setup):
+    class CaptureModel(FakeMentor):
+        def complete(self, prompt, context, schema):
+            if "principles" in context:
+                self.assessment_principles = context["principles"]
+            return super().complete(prompt, context, schema)
+
+    model = CaptureModel()
+    result = Mentor(mentor_setup, backend=model).ask("evidence wait")
+    assert result["route"] == "principle_assisted"
+    for actual, diagnostic in zip(model.assessment_principles, result["retrieval"]["principles"]):
+        assert diagnostic["eligible_for_level4"] is False
+        assert actual == {k: v for k, v in diagnostic.items() if k != "eligible_for_level4"}
+        assert actual["eligible_for_online_reasoning"] is True
+        assert actual["runtime_mode_recommendation"] == "principle_assisted"
+
+
+def test_empty_new_gaps_do_not_discard_prior_missing_information(mentor_setup):
+    class AdditionalGapsOnly(FakeMentor):
+        def complete(self, prompt, context, schema):
+            result, metadata = super().complete(prompt, context, schema)
+            if "selected_route" in result or "conditional_answer" in result:
+                result["missing_information"] = []
+            return result, metadata
+
+    result = Mentor(mentor_setup, backend=AdditionalGapsOnly()).ask("evidence wait")
+    assert result["analysis"]["missing_information"]
+    assert result["assessment"]["missing_information"] == result["analysis"]["missing_information"]
+    assert result["answer"]["missing_information"] == result["analysis"]["missing_information"]

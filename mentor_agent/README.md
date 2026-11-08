@@ -107,6 +107,8 @@ counterexamples. Duplicate controls do not conflate different contexts/episodes.
 
 Potential-conflict/exception roles are candidate signals, not contradiction
 proof. Applicability compares actual conditions and may reject the principle.
+Offline L3-promotion flags stay in diagnostics, not the online L4 context;
+passing release eligibility still does not establish query applicability.
 Unresolved conflict reduces confidence and can downgrade the route. A major
 conflict plus missing information prevents directional synthesis. Both sides
 retain source citations, including the non-directional fallback.
@@ -115,6 +117,8 @@ Historical claims cite episode, record ID, source hash and separate timestamp
 regions. Final answers must cite the assessed supporting cases as well as every
 classified conflict/context/exception side. The answer character budget is
 checked after adding required missing-information and current-data warnings.
+Later model stages request only additional information gaps; code retains
+earlier gaps. This avoids asking for repeated paraphrases, not semantic deduplication.
 If answer validation fails, the non-directional fallback retains citations to
 classified differences, not the rejected historical claims.
 Model interpretation, missing scenario information and unavailable
