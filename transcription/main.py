@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import json
 import sys
+import zipfile
 from pathlib import Path
 
 from .common import load_project_dotenv, private_path
@@ -11,6 +12,21 @@ from .common import load_project_dotenv, private_path
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Private-data transcription and pre-extraction quality gate.")
     commands = parser.add_subparsers(dest="command", required=True)
+    for name in ("snapshot-create", "snapshot-verify", "snapshot-restore", "snapshot-protect", "corpus-review"):
+        sub = commands.add_parser(name, help="Private raw preservation/review; no inference")
+        if name == "snapshot-create":
+            sub.add_argument("--selection", required=True, type=Path)
+        else:
+            sub.add_argument("--snapshot", required=True, type=Path)
+        if name in {"snapshot-create", "snapshot-protect", "corpus-review"}:
+            sub.add_argument("--root", required=True, type=Path)
+        if name in {"snapshot-create", "snapshot-restore", "corpus-review"}:
+            sub.add_argument("--output", required=True, type=Path)
+        if name in {"snapshot-create", "snapshot-restore"}:
+            sub.add_argument("--execute", action="store_true", help="Default is read-only dry-run")
+            sub.add_argument("--storage-config", type=Path)
+        if name == "snapshot-protect":
+            sub.add_argument("--execute", action="store_true", help="Required before making source files read-only")
     commands.add_parser("doctor", help="Check CUDA libraries/dependencies without downloading or loading a model")
     sub = commands.add_parser("compare-transcripts", help="Compare two existing runs of the same audio; no inference or quality approval")
     sub.add_argument("--baseline", required=True, type=Path)
@@ -70,7 +86,26 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
     load_project_dotenv()
     try:
-        if args.command == "compare-transcripts":
+        if args.command.startswith("snapshot-") or args.command == "corpus-review":
+            from .snapshot import create_snapshot, verify_snapshot, restore_snapshot, protect_raw_sources
+            from .batch import load_batch_config
+            settings = load_batch_config(args.storage_config).get("storage") if getattr(args, "storage_config", None) else None
+            if args.command == "snapshot-create":
+                result = create_snapshot(args.selection, args.root, args.output, execute=args.execute, storage=settings)
+            elif args.command == "snapshot-restore":
+                result = restore_snapshot(args.snapshot, args.output, execute=args.execute, storage=settings)
+            elif args.command == "snapshot-protect":
+                if not args.execute:
+                    raise ValueError("Source permission changes require explicit --execute.")
+                result = protect_raw_sources(args.snapshot, args.root)
+            elif args.command == "corpus-review":
+                from .review import scan_corpus
+                result = scan_corpus(args.snapshot, args.root, args.output)
+            else:
+                manifest = verify_snapshot(args.snapshot)
+                result = {"valid": True, "file_count": len(manifest["files"]), "content_review_accepted": False}
+            code = 0
+        elif args.command == "compare-transcripts":
             from .compare import compare_transcripts
 
             result = compare_transcripts(args.baseline, args.candidate, args.output)
@@ -141,7 +176,7 @@ def main(argv: list[str] | None = None) -> int:
             else:
                 result = batch.validate_batch_outputs(cfg)
             code = 1 if result.get("valid") is False or result.get("status_counts", {}).get("failed") else 0
-    except (ValueError, KeyError, RuntimeError, OSError) as exc:
+    except (ValueError, KeyError, RuntimeError, OSError, zipfile.BadZipFile) as exc:
         # Do not render external-service exceptions or environment values here.
         print(f"{type(exc).__name__}: {exc}" if args.command not in {"batch-run", "batch-resume"} else f"Batch setup failed ({type(exc).__name__}); check private paths, config and checkpoint compatibility.", file=sys.stderr)
         return 2

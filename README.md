@@ -48,6 +48,11 @@ python3 -m transcription batch-status --config "$BATCH_CONFIG"
 python3 -m transcription batch-resume --config "$BATCH_CONFIG"
 python3 -m transcription batch-validate --config "$BATCH_CONFIG"
 
+# Preserve raw versions before derived processing (private JSON selection).
+python3 -m transcription snapshot-create --selection "$RAW_SELECTION" --root "$PRIVATE_ROOT" --output "$SNAPSHOT" --storage-config "$LOCAL_STORAGE_CONFIG" --execute
+python3 -m transcription snapshot-verify --snapshot "$SNAPSHOT"
+python3 -m transcription corpus-review --snapshot "$SNAPSHOT" --root "$PRIVATE_ROOT" --output "$TRIAGE_REPORT"
+
 # After reviewing the exact transcript version:
 python3 -m transcription validate-transcript --input "$RAW_TRANSCRIPT" --review "$QUALITY_REVIEW" --require-ready
 python3 -m transcription prepare --input "$RAW_TRANSCRIPT" --review "$QUALITY_REVIEW" --output "$NORMALIZED_OUTPUT"
@@ -56,6 +61,8 @@ python3 -m transcription prepare --input "$RAW_TRANSCRIPT" --review "$QUALITY_RE
 Completed episodes are skipped on resume. Retry failures explicitly with
 `batch-resume --retry-failed`. Structural validation does not approve transcript
 accuracy; [source review](transcription/README.md#quality-gate) is required before extraction.
+Snapshots are checksum-bound, read-only copies, not hard links. Restore into a
+new directory only; see [preservation and recovery](transcription/README.md#raw-preservation).
 
 ### Build Knowledge
 

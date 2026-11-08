@@ -117,6 +117,48 @@ calls this formal importer; the old helper is archived under `legacy/scripts/`.
 See [GPU setup and transfer](../docs/runpod_transcription.md). No batch or sync
 command performs Git operations.
 
+## Raw Preservation
+
+Keep raw versions, rejected decoder outputs and paired provenance in private
+storage. A `transcript_snapshot_selection.v1` JSON contains an explicit `files`
+list: `path` relative to the supplied private root, `sha256`, `size_bytes`,
+`role` (`raw`, `rejected`, `metadata`), optional `episode_id`, and boolean
+`active`. Select at most one raw version per active episode; historical and
+rejected versions remain backed up but are not review inputs.
+
+```bash
+python3 -m transcription snapshot-create --selection "$RAW_SELECTION" --root "$PRIVATE_ROOT" --output "$SNAPSHOT" --storage-config "$LOCAL_STORAGE_CONFIG"
+# Add --execute after inspecting the dry-run.
+python3 -m transcription snapshot-verify --snapshot "$SNAPSHOT"
+python3 -m transcription snapshot-restore --snapshot "$SNAPSHOT" --output "$NEW_RESTORE_DIR" --storage-config "$LOCAL_STORAGE_CONFIG" --execute
+python3 -m transcription snapshot-protect --snapshot "$SNAPSHOT" --root "$PRIVATE_ROOT" --execute
+python3 -m transcription corpus-review --snapshot "$SNAPSHOT" --root "$PRIVATE_ROOT" --output "$NEW_TRIAGE_REPORT"
+```
+
+Storage config uses the existing batch `storage` section, including the real
+host-drive check on WSL. The snapshot is a compressed ZIP, manifest and checksum
+receipt, verified before publication. No audio, symlinks or non-JSON files are
+accepted; files are explicitly selected, never a copy of the whole private
+workspace. The current safety cap is 2 GB uncompressed per snapshot. Existing
+snapshots and restore directories are never overwritten. Test a complete
+restore into a new temporary directory before relying on a snapshot.
+
+`snapshot-protect` first verifies source hashes, then makes raw/rejected files
+read-only. This prevents ordinary accidental writes, not an owner deliberately
+changing permissions or replacing a file. A same-device snapshot is not disaster
+recovery; copy the verified snapshot and checksum receipt to an independently
+confirmed private backup destination. Never publish it in the public repository.
+
+`corpus-review` reuses ASR review signals plus repetition, long-segment and
+recovery flags. It emits a private listening-priority queue, not an error-rate
+estimate or passing review. Counts cover all segments; the queue retains at most
+16 separated candidate regions per episode, prioritizing explicit recovery,
+repetition and duration flags over probability flags alone.
+Recovery annotations remain visible in listening
+packets. `prepare` without `--review` can produce an unaccepted reading draft;
+it remains `ready_for_extraction: false`. A genuinely accepted source review
+requires a new normalized version before knowledge extraction. Raw is unchanged.
+
 ## Single-GPU Batching
 
 The default remains `inference_mode: sequential`, `inference_batch_size: 1`.
