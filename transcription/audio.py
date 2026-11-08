@@ -2,7 +2,9 @@ from __future__ import annotations
 
 import json
 import logging
+import math
 import shutil
+import subprocess
 import threading
 import time
 from importlib.metadata import version
@@ -124,6 +126,7 @@ class VramMonitor:
         self.sampling_interval_seconds = sampling_interval_seconds
         self.baseline_mb: float | None = None
         self.peak_mb: float | None = None
+        self.sampling_failures = 0
         self.measurement_scope = "total-device memory.used; includes other GPU processes"
         self._stop = threading.Event()
         self._thread: threading.Thread | None = None
@@ -148,16 +151,25 @@ class VramMonitor:
             time.sleep(self.sampling_interval_seconds)
 
     def _sample_total_used_mb(self) -> float | None:
-        code, out, _ = run_command(
-            ["nvidia-smi", "--query-gpu=memory.used", "--format=csv,noheader,nounits"],
-            timeout=5,
-        )
+        try:
+            code, out, _ = run_command(
+                ["nvidia-smi", "--query-gpu=memory.used", "--format=csv,noheader,nounits"],
+                timeout=5,
+            )
+        except (OSError, subprocess.TimeoutExpired):
+            self.sampling_failures += 1
+            return None
         if code != 0:
+            self.sampling_failures += 1
             return None
         values: list[float] = []
         for line in out.splitlines():
             try:
-                values.append(float(line.strip()))
+                value = float(line.strip())
+                if math.isfinite(value) and value >= 0:
+                    values.append(value)
             except ValueError:
                 continue
+        if not values:
+            self.sampling_failures += 1
         return max(values) if values else None

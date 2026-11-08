@@ -8,6 +8,7 @@ import math
 import os
 import re
 import shutil
+import subprocess
 import time
 from dataclasses import dataclass
 from pathlib import Path
@@ -381,6 +382,7 @@ def transcribe_audio(audio: Path, cfg: dict[str, Any], episode: dict[str, Any],
         "peak_ram_mb": round(peak_rss / 1024 / 1024, 2),
         "peak_vram_mb": vram.peak_mb,
         "vram_measurement_scope": vram.measurement_scope,
+        "vram_sampling_failures": getattr(vram, "sampling_failures", None),
         "gpu_model": gpu_model(),
         "package_versions": {"faster_whisper": pkg("faster-whisper"), "ctranslate2": pkg("ctranslate2"), "torch": pkg("torch")},
         "hourly_rate_usd": (cfg.get("cost") or {}).get("hourly_rate_usd"),
@@ -395,7 +397,11 @@ def transcribe_audio(audio: Path, cfg: dict[str, Any], episode: dict[str, Any],
 def gpu_model() -> str | None:
     if not shutil.which("nvidia-smi"):
         return None
-    code, out, _ = run_command(["nvidia-smi", "--query-gpu=name", "--format=csv,noheader"], timeout=5)
+    try:
+        code, out, _ = run_command(["nvidia-smi", "--query-gpu=name", "--format=csv,noheader"], timeout=5)
+    except (OSError, subprocess.TimeoutExpired):
+        # Optional telemetry must not discard a successfully decoded episode.
+        return None
     return out.splitlines()[0].strip() if code == 0 and out else None
 
 
