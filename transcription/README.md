@@ -83,6 +83,22 @@ a published transcript whose metadata/checkpoint was interrupted without a
 model call. Invalid existing output is preserved and blocks that job; it is
 never silently overwritten. Failed jobs need explicit `--retry-failed`.
 
+Rejected decoder output is quarantined under the batch directory as
+`rejected/<episode>.attempt-<n>.rejected.json` when JSON serialization and disk
+space allow. Checkpoint errors include a source-independent validation reason
+and the saved payload checksum. Quarantine files are not completed transcripts
+and are excluded from successful transfer bundles; preserve them separately
+when investigating a worker failure. Retry attempts never overwrite them.
+
+An explicitly inspected failure can use `quality.recover_padding_tail` offline
+with the rejected file's expected episode and SHA-256. It only quarantines one
+final segment starting in the last audio second, ending 1-30 seconds beyond the
+audio, with `no_speech_prob >= 0.8`. Other structural errors still fail. Publish
+the returned payload in a **new version** and retain the rejected source. The
+excluded segment remains verbatim in recovery metadata; retained text, IDs and
+timestamps do not change. This is not a batch default, silence certification or
+content approval. The final audio region still requires review before extraction.
+
 Atomic checkpoints use temporary files, fsync and rename. A local file lock
 prevents simultaneous workers for the same batch. There is no distributed
 locking. A crash during transcription restarts that episode, not the batch;

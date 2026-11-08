@@ -4,7 +4,7 @@ import math
 from pathlib import Path
 from typing import Any
 
-from .common import read_json, sha256_file, utc_now
+from .common import private_path, read_json, sha256_file, utc_now
 
 
 class TranscriptValidationError(ValueError):
@@ -62,6 +62,8 @@ def validate_payload(payload: Any, expected_episode: str | None = None) -> dict[
         warnings.append("Language metadata missing.")
     if not metadata.get("model"):
         warnings.append("Model metadata missing.")
+    if metadata.get("source_recovery"):
+        warnings.append("Recovered decoder tail requires source-audio review; see source_recovery metadata.")
     return {
         "episode_id": episode, "segment_count": len(segments), "last_timestamp": last_end,
         "audio_duration_seconds": duration, "warnings": warnings,
@@ -75,6 +77,63 @@ def validate_transcript(path: Path, expected_episode: str | None = None) -> dict
     except (ValueError, OSError) as exc:
         raise ValueError("Invalid or missing transcript JSON.") from exc
     return validate_payload(payload, expected_episode)
+
+
+def recover_padding_tail(path: Path, expected_episode: str, expected_sha256: str) -> dict[str, Any]:
+    """Explicit recovery of one padding-like tail, not transcript quality approval.
+
+    Return a new payload; never overwrite the rejected decoder output. Callers
+    must publish into a new output version and retain the rejected source.
+    """
+    path = private_path(path)
+    digest = sha256_file(path)
+    if digest != expected_sha256:
+        raise ValueError("Rejected output checksum mismatch.")
+    payload = read_json(path)
+    try:
+        validate_payload(payload, expected_episode)
+    except TranscriptValidationError:
+        pass
+    else:
+        raise ValueError("Valid output does not need tail recovery.")
+    metadata = payload.get("metadata", {}) if isinstance(payload, dict) else {}
+    segments = payload.get("segments", []) if isinstance(payload, dict) else []
+    if not isinstance(metadata, dict):
+        raise ValueError("Tail recovery requires transcript metadata.")
+    duration = metadata.get("audio_duration_seconds")
+    if (type(duration) not in (int, float) or not math.isfinite(duration) or duration <= 0
+            or not isinstance(segments, list) or len(segments) < 2
+            or not isinstance(segments[-1], dict)):
+        raise ValueError("Tail recovery requires valid duration and retained speech segments.")
+    tail = segments[-1]
+    start, end, silence = (tail.get(k) for k in ("start", "end", "no_speech_prob"))
+    if (any(type(v) not in (int, float) or not math.isfinite(v) for v in (start, end, silence))
+            or not duration - 1 <= start <= duration
+            or not duration + 1 < end <= duration + 30
+            or not 0.8 <= silence <= 1):
+        raise ValueError("Tail does not meet bounded padding-recovery criteria; inspect or retranscribe.")
+    if type(tail.get("segment_id")) is not int or tail["segment_id"] < 0:
+        raise ValueError("Invalid tail segment identity.")
+    if any(s.get("segment_id") == tail["segment_id"] for s in segments[:-1] if isinstance(s, dict)):
+        raise ValueError("Duplicate tail segment identity.")
+    if metadata.get("source_recovery"):
+        raise ValueError("Repeated tail recovery is not supported.")
+    recovered = {**payload, "segments": segments[:-1], "metadata": {
+        **metadata,
+        "source_recovery": {
+            "method": "quarantine_padding_tail.v1",
+            "rejected_output_sha256": digest,
+            "excluded_segments": [tail],
+            "recovered_at": utc_now(),
+            "content_review_accepted": False,
+            "warning": "One out-of-audio, high-no-speech tail quarantined; review final audio region. Text and retained source IDs/timestamps are unchanged.",
+        },
+    }}
+    validate_payload(recovered, expected_episode)
+    # Guard against a source changing between checksum and read.
+    if sha256_file(path) != digest:
+        raise ValueError("Rejected output changed during recovery.")
+    return recovered
 
 
 def quality_gate(path: Path, expected_episode: str | None = None, review_path: Path | None = None) -> dict[str, Any]:
