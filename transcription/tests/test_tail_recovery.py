@@ -78,3 +78,18 @@ def test_valid_output_unchanged_and_recursive_recovery_rejected(tmp_path):
     with pytest.raises(ValueError, match="Repeated"):
         recover(tmp_path, source)
     assert read_json(tmp_path / "rejected.json") == before
+
+
+def test_explicit_inspected_lead_override_is_bounded_and_audited(tmp_path):
+    source = payload()
+    source["segments"][-1]["start"] = 98.78
+    path = tmp_path / "rejected.json"
+    atomic_write_json(path, source)
+    digest = sha256_file(path)
+    with pytest.raises(ValueError, match="criteria"):
+        recover_padding_tail(path, "EP1", digest)
+    result = recover_padding_tail(path, "EP1", digest, maximum_tail_lead_seconds=1.3)
+    assert result["metadata"]["source_recovery"]["maximum_tail_lead_seconds"] == 1.3
+    for limit in (0, 2.01, True, float("nan")):
+        with pytest.raises(ValueError, match="at most two seconds"):
+            recover_padding_tail(path, "EP1", digest, maximum_tail_lead_seconds=limit)

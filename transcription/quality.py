@@ -79,12 +79,17 @@ def validate_transcript(path: Path, expected_episode: str | None = None) -> dict
     return validate_payload(payload, expected_episode)
 
 
-def recover_padding_tail(path: Path, expected_episode: str, expected_sha256: str) -> dict[str, Any]:
+def recover_padding_tail(path: Path, expected_episode: str, expected_sha256: str, *,
+                         maximum_tail_lead_seconds: float = 1.0) -> dict[str, Any]:
     """Explicit recovery of one padding-like tail, not transcript quality approval.
 
     Return a new payload; never overwrite the rejected decoder output. Callers
     must publish into a new output version and retain the rejected source.
     """
+    if (type(maximum_tail_lead_seconds) not in (int, float)
+            or not math.isfinite(maximum_tail_lead_seconds)
+            or not 0 < maximum_tail_lead_seconds <= 2):
+        raise ValueError("Explicit tail-recovery lead must be greater than zero and at most two seconds.")
     path = private_path(path)
     digest = sha256_file(path)
     if digest != expected_sha256:
@@ -108,7 +113,7 @@ def recover_padding_tail(path: Path, expected_episode: str, expected_sha256: str
     tail = segments[-1]
     start, end, silence = (tail.get(k) for k in ("start", "end", "no_speech_prob"))
     if (any(type(v) not in (int, float) or not math.isfinite(v) for v in (start, end, silence))
-            or not duration - 1 <= start <= duration
+            or not duration - maximum_tail_lead_seconds <= start <= duration
             or not duration + 1 < end <= duration + 30
             or not 0.8 <= silence <= 1):
         raise ValueError("Tail does not meet bounded padding-recovery criteria; inspect or retranscribe.")
@@ -122,6 +127,7 @@ def recover_padding_tail(path: Path, expected_episode: str, expected_sha256: str
         **metadata,
         "source_recovery": {
             "method": "quarantine_padding_tail.v1",
+            "maximum_tail_lead_seconds": maximum_tail_lead_seconds,
             "rejected_output_sha256": digest,
             "excluded_segments": [tail],
             "recovered_at": utc_now(),

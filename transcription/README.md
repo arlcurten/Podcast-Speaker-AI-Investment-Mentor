@@ -93,7 +93,9 @@ when investigating a worker failure. Retry attempts never overwrite them.
 An explicitly inspected failure can use `quality.recover_padding_tail` offline
 with the rejected file's expected episode and SHA-256. It only quarantines one
 final segment starting in the last audio second, ending 1-30 seconds beyond the
-audio, with `no_speech_prob >= 0.8`. Other structural errors still fail. Publish
+audio, with `no_speech_prob >= 0.8`. A specifically inspected case may explicitly
+set `maximum_tail_lead_seconds` up to two seconds; that override is recorded in
+recovery metadata, not enabled by batch processing. Other errors still fail. Publish
 the returned payload in a **new version** and retain the rejected source. The
 excluded segment remains verbatim in recovery metadata; retained text, IDs and
 timestamps do not change. This is not a batch default, silence certification or
