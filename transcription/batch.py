@@ -19,7 +19,7 @@ from .common import (find_episode, load_manifest, run_command, sha256_file, utc_
                      atomic_write_json, read_json, private_path, child_path, safe_id, TERMINOLOGY)
 from .audio import download as stream_download, inspect as inspect_audio, VramMonitor, pkg
 from .common import terminology_prompt
-from .quality import validate_transcript
+from .quality import TranscriptValidationError, validate_transcript
 from .storage import StorageGuard, StorageLimitError
 
 
@@ -399,11 +399,22 @@ def gpu_model() -> str | None:
     return out.splitlines()[0].strip() if code == 0 and out else None
 
 
-def write_transcript(paths: BatchPaths, episode_id: str, segments: list[dict[str, Any]], metadata: dict[str, Any], episode: dict[str, Any]) -> None:
+def write_transcript(paths: BatchPaths, episode_id: str, segments: list[dict[str, Any]], metadata: dict[str, Any], episode: dict[str, Any], *, attempt: int = 1) -> None:
     from .quality import validate_payload
 
     payload = {"schema_version": "transcription_raw.v1", "metadata": {**metadata, "source_episode_metadata": episode}, "segments": segments}
-    validate_payload(payload, episode_id)
+    try:
+        validate_payload(payload, episode_id)
+    except TranscriptValidationError:
+        # Quarantine decoder output for diagnosis; it is never a completed raw file.
+        rejected = child_path(paths.checkpoint_path.parent, "rejected",
+                              f"{episode_id}.attempt-{attempt}.rejected.json")
+        try:
+            atomic_write_json(rejected, payload, overwrite=False)
+        except (OSError, ValueError):
+            # Non-JSON numbers or a full disk must not hide the validation cause.
+            pass
+        raise
     atomic_write_json(transcript_path(paths, episode_id), payload, overwrite=False)
     atomic_write_json(run_metadata_path(paths, episode_id), payload["metadata"], overwrite=False)
 
@@ -411,6 +422,13 @@ def write_transcript(paths: BatchPaths, episode_id: str, segments: list[dict[str
 def record_failure(checkpoint: dict[str, Any], paths: BatchPaths, episode_id: str, stage: str, exc: Exception, attempt: int, retryable: bool) -> None:
     # Third-party exceptions can contain authenticated URLs; never persist them.
     failure = {"episode_id": episode_id, "stage": stage, "error_type": exc.__class__.__name__, "message": f"{stage} failed ({type(exc).__name__}); verify inputs/settings before retry.", "attempt": attempt, "timestamp": utc_now(), "retryable": retryable}
+    if isinstance(exc, TranscriptValidationError):
+        failure["validation_detail"] = str(exc)
+        rejected = child_path(paths.checkpoint_path.parent, "rejected",
+                              f"{episode_id}.attempt-{attempt}.rejected.json")
+        failure["rejected_output_saved"] = rejected.is_file()
+        if rejected.is_file():
+            failure["rejected_output_sha256"] = sha256_file(rejected)
     update_job(checkpoint, paths.checkpoint_path, episode_id, {"status": "failed", "stage": stage, "last_error": failure})
 
 
@@ -488,7 +506,7 @@ def run_job(cfg: dict[str, Any], paths: BatchPaths, checkpoint: dict[str, Any], 
             if storage:
                 storage.check(64_000_000)
             update_job(checkpoint, paths.checkpoint_path, episode_id, {"status": "transcribing", "stage": "transcription_completed", "segment_count": len(segments)})
-            write_transcript(paths, episode_id, segments, metadata, episode)
+            write_transcript(paths, episode_id, segments, metadata, episode, attempt=previous_attempt + attempt)
             validation = validate_transcript(transcript_path(paths, episode_id), episode_id)
             update_job(checkpoint, paths.checkpoint_path, episode_id, {"status": "transcribing", "stage": "output_validated", "validation": validation})
             update_job(checkpoint, paths.checkpoint_path, episode_id, {"status": "completed", "stage": "job_completed", "last_action": "transcribed", "last_error": None, "completed_at": utc_now(), "output": str(transcript_path(paths, episode_id))})

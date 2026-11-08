@@ -7,46 +7,50 @@ from typing import Any
 from .common import read_json, sha256_file, utc_now
 
 
+class TranscriptValidationError(ValueError):
+    """A source-independent diagnostic that is safe to include in job reports."""
+
+
 def validate_payload(payload: Any, expected_episode: str | None = None) -> dict[str, Any]:
     if not isinstance(payload, dict):
-        raise ValueError("Transcript must be a JSON object.")
+        raise TranscriptValidationError("Transcript must be a JSON object.")
     metadata = payload.get("metadata")
     if not isinstance(metadata, dict) or not isinstance(metadata.get("episode_id"), str) or not metadata["episode_id"].strip():
-        raise ValueError("Transcript metadata.episode_id is required.")
+        raise TranscriptValidationError("Transcript metadata.episode_id is required.")
     episode = metadata["episode_id"]
     if expected_episode is not None and episode != expected_episode:
-        raise ValueError("Transcript episode ID mismatch.")
+        raise TranscriptValidationError("Transcript episode ID mismatch.")
     source = metadata.get("source_episode_metadata") or {}
     if not isinstance(source, dict):
-        raise ValueError("Source episode metadata must be an object.")
+        raise TranscriptValidationError("Source episode metadata must be an object.")
     if source.get("episode_id", episode) != episode:
-        raise ValueError("Source metadata episode ID mismatch.")
+        raise TranscriptValidationError("Source metadata episode ID mismatch.")
     segments = payload.get("segments")
     if not isinstance(segments, list) or not segments:
-        raise ValueError("Transcript has no segments.")
+        raise TranscriptValidationError("Transcript has no segments.")
     duration = metadata.get("audio_duration_seconds")
     if duration is not None and (isinstance(duration, bool) or not isinstance(duration, (int, float))
                                  or not math.isfinite(duration) or duration <= 0):
-        raise ValueError("Invalid audio duration.")
+        raise TranscriptValidationError("Invalid audio duration.")
     previous_start = -1.0
     seen: set[int] = set()
     last_end = 0.0
     for segment in segments:
         if not isinstance(segment, dict):
-            raise ValueError("Segment must be an object.")
+            raise TranscriptValidationError("Segment must be an object.")
         sid = segment.get("segment_id")
         if type(sid) is not int or sid < 0 or sid in seen:
-            raise ValueError("Segment IDs must be unique nonnegative integers.")
+            raise TranscriptValidationError("Segment IDs must be unique nonnegative integers.")
         seen.add(sid)
         if not isinstance(segment.get("text"), str) or not segment["text"].strip():
-            raise ValueError(f"Empty text in segment {sid}.")
+            raise TranscriptValidationError(f"Empty text in segment {sid}.")
         start, end = segment.get("start"), segment.get("end")
         if any(type(v) not in (int, float) or not math.isfinite(v) for v in (start, end)):
-            raise ValueError(f"Non-finite or nonnumeric timestamp in segment {sid}.")
+            raise TranscriptValidationError(f"Non-finite or nonnumeric timestamp in segment {sid}.")
         if start < 0 or end < start or start < previous_start:
-            raise ValueError(f"Invalid or unsorted timestamps in segment {sid}.")
+            raise TranscriptValidationError(f"Invalid or unsorted timestamps in segment {sid}.")
         if duration is not None and end > duration + 1.0:
-            raise ValueError(f"Timestamp exceeds audio duration in segment {sid}.")
+            raise TranscriptValidationError(f"Timestamp exceeds audio duration in segment {sid}.")
         previous_start = start
         last_end = max(last_end, end)
     warnings = []

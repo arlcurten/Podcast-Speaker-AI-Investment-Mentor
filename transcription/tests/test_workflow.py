@@ -181,6 +181,36 @@ def test_empty_transcription_keeps_audio(config, worker, monkeypatch):
     assert not batch.transcript_path(paths, "EP57").exists()
 
 
+def test_rejected_decoder_output_preserved_with_safe_diagnostic(config, worker, monkeypatch):
+    segments = raw()["segments"]
+    segments[1]["text"] = " "
+    monkeypatch.setattr(batch, "transcribe_audio", lambda *a: (segments, {}))
+    assert run(config)["status_counts"] == {"failed": 2}
+    paths = batch.resolve_paths(config)
+    rejected = paths.checkpoint_path.parent / "rejected" / "EP57.attempt-1.rejected.json"
+    assert read_json(rejected)["segments"] == segments
+    error = batch.load_checkpoint(paths.checkpoint_path)["jobs"]["EP57"]["last_error"]
+    assert error["validation_detail"] == "Empty text in segment 1."
+    assert error["rejected_output_saved"]
+    assert error["rejected_output_sha256"] == sha256_file(rejected)
+    assert not batch.transcript_path(paths, "EP57").exists()
+    digest = sha256_file(rejected)
+    batch.run_batch(config, dry_run=False, resume=True, retry_failed=True, max_episodes=None)
+    assert sha256_file(rejected) == digest
+    assert rejected.with_name("EP57.attempt-2.rejected.json").is_file()
+
+
+def test_non_json_rejection_retains_original_failure(config, worker, monkeypatch):
+    segments = raw()["segments"]
+    segments[0]["end"] = float("nan")
+    monkeypatch.setattr(batch, "transcribe_audio", lambda *a: (segments, {}))
+    assert run(config)["status_counts"] == {"failed": 2}
+    paths = batch.resolve_paths(config)
+    error = batch.load_checkpoint(paths.checkpoint_path)["jobs"]["EP57"]["last_error"]
+    assert "Non-finite" in error["validation_detail"]
+    assert error["rejected_output_saved"] is False
+
+
 def test_atomic_failed_write_preserves_previous(tmp_path):
     path = tmp_path / "checkpoint.json"
     atomic_write_json(path, {"valid": True})
