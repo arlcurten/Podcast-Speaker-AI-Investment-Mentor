@@ -23,6 +23,11 @@ def main(argv=None):
     p = sub.add_parser("serve")
     p.add_argument("--port", type=int, default=8765)
     args = parser.parse_args(argv)
+    if args.command == "serve":
+        if args.no_llm:
+            parser.error("serve is a live API command; use --no-llm retrieve for diagnostics")
+        if not 1 <= args.port <= 65535:
+            parser.error("serve --port must be between 1 and 65535")
     load_project_dotenv({"PODCAST_DATA_ROOT", "PIPELINE_DATA_ROOT", "PRIVATE_DOCS_ROOT", "MENTOR_RELEASE", "MENTOR_MODEL_ID", "OPENROUTER_API_KEY"})
     try:
         cfg = load_config(args.config)
@@ -31,8 +36,6 @@ def main(argv=None):
             print(json.dumps({"valid": True, "cases": len(mentor.index.cases), "principles": len(mentor.index.principles), "model_calls": 0}))
             return 0
         if args.command == "serve":
-            if args.no_llm:
-                parser.error("serve is a live API command; use retrieve --no-llm for diagnostics")
             from .service import create_app
             import uvicorn
             from .model import OpenRouter

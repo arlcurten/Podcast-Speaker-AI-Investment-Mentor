@@ -1,4 +1,3 @@
-from pathlib import Path
 from unittest.mock import Mock
 
 import pytest
@@ -22,6 +21,8 @@ def test_openrouter_structured_format_usage_and_no_key_logs(monkeypatch):
     sent = post.call_args.kwargs["json"]
     assert sent["response_format"]["json_schema"]["strict"]
     assert sent["provider"]["require_parameters"]
+    assert post.call_args.kwargs["timeout"] == (10, 5)
+    assert sent["max_tokens"] == 100
     assert "synthetic-credential" not in str(meta)
 
 
@@ -43,3 +44,15 @@ def test_provider_failure_is_sanitized(monkeypatch, failure):
 def test_missing_key_no_request(monkeypatch):
     monkeypatch.delenv("OPENROUTER_API_KEY", raising=False)
     with pytest.raises(ValueError, match="OPENROUTER_API_KEY"):OpenRouter(settings())
+
+
+def test_blank_key_and_oversized_context_make_no_network_request(monkeypatch):
+    post = Mock()
+    monkeypatch.setattr("mentor_agent.model.requests.post", post)
+    monkeypatch.setenv("OPENROUTER_API_KEY", "   ")
+    with pytest.raises(ValueError, match="OPENROUTER_API_KEY"):
+        OpenRouter(settings())
+    monkeypatch.setenv("OPENROUTER_API_KEY", "synthetic-credential")
+    with pytest.raises(ModelError, match="context exceeds limit"):
+        OpenRouter(settings()).complete("Test", {"large": "x" * 1000}, obj(value=TEXT))
+    post.assert_not_called()

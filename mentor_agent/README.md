@@ -41,11 +41,49 @@ commits or pushes. `retrieve` never calls a model. The HTTP API binds only
 deployment/authentication is provided. One request runs at a time; competing
 requests get 429. Access logs and persistent question history are disabled.
 
+Before starting, run `--no-llm validate-data` in the installed virtual environment.
+This checks the release without contacting a model. An unset `MENTOR_RELEASE`
+requires the default `PIPELINE_DATA_ROOT` release location to be configured;
+neither path discovers or substitutes synthetic data. `serve` also requires a
+nonblank API key before binding and a port in 1-65535.
+
+```bash
+curl --fail http://127.0.0.1:8765/health
+# This explicit question can make paid provider calls:
+curl --fail http://127.0.0.1:8765/ask \
+  -H 'Content-Type: application/json' \
+  -d '{"query":"What evidence would change the historical decision framework?"}'
+```
+
+`/health` revalidates the pinned release and returns its hash and case/principle
+counts. It makes no provider call: `provider_verified: false` is deliberate,
+and `status: ready` does not certify live inference or semantic answer quality.
+Changed/revoked reviews, modified sources or missing artifacts return 503 from
+both `/health` and `/ask`, without exposing private paths. Reviews are checked
+again after model calls so revocation during inference suppresses the answer.
+
+HTTP limits are enforced before JSON parsing and worker dispatch. Only one
+`POST /ask` is admitted at a time, including its body upload. The body has a
+10-second read deadline and a byte cap of `12 * max_query_chars + 1024`
+(25,024 bytes by default, allowing JSON Unicode escapes). Questions obey the
+configured character limit, not a separate hardcoded HTTP limit. Invalid
+questions return 422, oversized bodies 413, slow uploads 408, and competing
+requests 429. JSON content type is required (415 otherwise); cross-origin
+browser requests are rejected (403), while same-origin `/docs` works.
+These controls are not authentication. Do not expose the service through a
+public bind, proxy or tunnel.
+
 The example Qwen model remains configurable; current provider availability and
 quality need a small live smoke before relying on it. API responses must support
 strict JSON schema; unsupported providers fail safely instead of silently
 dropping structured output. Token/latency/cost metadata is recorded when given;
 cost remains null otherwise. No model fallback silently changes the backend.
+Each question has at most three structured stages and one retry per stage:
+six provider attempts at the default settings. Context and output-token limits
+apply to each attempt. The provider connection timeout is 10 seconds and its
+read-inactivity timeout is `timeout_seconds` (90 by default); these are not a
+hard total wall-clock deadline for inference. The admission slot remains held
+until the operation ends, including retries and release checks.
 
 ## Evidence and Limits
 
@@ -74,7 +112,12 @@ conflict plus missing information prevents directional synthesis. Both sides
 retain source citations, including the non-directional fallback.
 
 Historical claims cite episode, record ID, source hash and separate timestamp
-regions. Model interpretation, missing scenario information and unavailable
+regions. Final answers must cite the assessed supporting cases as well as every
+classified conflict/context/exception side. The answer character budget is
+checked after adding required missing-information and current-data warnings.
+If answer validation fails, the non-directional fallback retains citations to
+classified differences, not the rejected historical claims.
+Model interpretation, missing scenario information and unavailable
 current facts are separate response fields. No current prices/news/tools or
 personalized trading instructions are supported. Citation existence and rule
 guards do **not** prove semantic entailment; subjective answer quality requires
@@ -88,6 +131,10 @@ tests and the archived baseline for comparison, not unreviewed production data.
 python3 -m pytest -q mentor_agent/tests
 python3 -m compileall -q mentor_agent
 ```
+
+Tests include a temporary real loopback HTTP listener with mocked inference and
+synthetic test-only releases. They do not configure or launch a production
+service, contact a provider, or approve any real corpus.
 
 No neural embeddings/vector database, market tools, portfolio/user profile,
 persistent memory, UI, multi-agent orchestration, trading or cloud deployment.

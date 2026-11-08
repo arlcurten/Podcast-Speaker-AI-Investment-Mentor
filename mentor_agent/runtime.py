@@ -1,12 +1,13 @@
 from __future__ import annotations
 
 import json
+import math
 import os
 import re
 from pathlib import Path
 
 import yaml
-from jsonschema import Draft202012Validator
+from jsonschema import Draft202012Validator, ValidationError
 
 from knowledge.release import load_release
 from transcription.common import private_path, sha256_file
@@ -20,26 +21,48 @@ OVERREACH = re.compile(r"他一定|講者一定|永遠都|保證獲利|穩賺|sp
 
 
 def load_config(path: Path) -> dict:
-    cfg = yaml.safe_load(path.read_text(encoding="utf-8"))
+    try:
+        cfg = yaml.safe_load(path.read_text(encoding="utf-8"))
+    except yaml.YAMLError:
+        raise ValueError("Invalid Mentor YAML configuration.") from None
     if not isinstance(cfg, dict) or cfg.get("schema_version") != "mentor_config.v1":
         raise ValueError("Expected mentor_config.v1.")
-    cfg["release"] = str(private_path(os.environ.get("MENTOR_RELEASE") or cfg["release"]))
-    cfg["model"] = os.environ.get("MENTOR_MODEL_ID") or cfg["model"]
-    if not cfg["model"]:
+    release = os.environ.get("MENTOR_RELEASE") or cfg.get("release")
+    if not isinstance(release, str) or not release.strip():
+        raise ValueError("Configure a reviewed private release.")
+    cfg["release"] = str(private_path(release))
+    cfg["model"] = os.environ.get("MENTOR_MODEL_ID") or cfg.get("model")
+    if not isinstance(cfg["model"], str) or not cfg["model"].strip():
         raise ValueError("Configure MENTOR_MODEL_ID.")
     for key in ("max_output_tokens", "max_context_chars", "timeout_seconds", "max_query_chars", "minimum_host_cases", "maximum_answer_chars"):
         if type(cfg.get(key)) is not int or cfg[key] < 1:
             raise ValueError(f"Invalid {key}.")
-    if cfg.get("retry_count") not in (0, 1):
+    if type(cfg.get("retry_count")) is not int or cfg["retry_count"] not in (0, 1):
         raise ValueError("At most one structured retry is allowed.")
-    r = cfg["retrieval"]
+    def finite_number(value):
+        try:
+            return type(value) in (int, float) and math.isfinite(value)
+        except OverflowError:
+            return False
+
+    if not finite_number(cfg.get("temperature")) or not 0 <= cfg["temperature"] <= 2:
+        raise ValueError("Invalid temperature.")
+    r = cfg.get("retrieval")
+    if not isinstance(r, dict):
+        raise ValueError("Expected retrieval settings.")
     for key in ("candidate_limit", "case_limit", "max_per_episode", "search_query_limit", "principle_limit"):
         if type(r.get(key)) is not int or r[key] < 1:
             raise ValueError(f"Invalid retrieval.{key}.")
-    if not 0 < r["minimum_score"] <= 1 or r["bm25_scale"] <= 0:
+    for key in ("minimum_score", "bm25_scale", "domain_mismatch_multiplier", "lexical_weight", "cosine_weight", "metadata_weight"):
+        if not finite_number(r.get(key)):
+            raise ValueError(f"Invalid retrieval.{key}.")
+    if not 0 < r["minimum_score"] <= 1 or r["bm25_scale"] <= 0 or not 0 <= r["domain_mismatch_multiplier"] <= 1:
         raise ValueError("Invalid retrieval thresholds.")
-    if any(r[k] < 0 for k in ("lexical_weight", "cosine_weight", "metadata_weight")):
-        raise ValueError("Retrieval weights must be nonnegative.")
+    weights = [r[k] for k in ("lexical_weight", "cosine_weight", "metadata_weight")]
+    if any(w < 0 for w in weights) or not finite_number(sum(weights)) or sum(weights) <= 0:
+        raise ValueError("Retrieval weights must be nonnegative with a finite positive sum.")
+    if cfg["minimum_host_cases"] > r["case_limit"]:
+        raise ValueError("minimum_host_cases exceeds retrieval.case_limit.")
     return cfg
 
 
@@ -122,6 +145,8 @@ def validate_answer(answer: dict, assessment: dict, cases: list[dict], settings:
         cited.update(claim["record_ids"])
     if not cited:
         raise ValueError("A substantive Mentor answer needs source cases.")
+    if not set(assessment["supporting_cases"]) <= cited:
+        raise ValueError("Answer omitted assessed supporting case citations.")
     required = set()
     for key in ("conflicting_evidence", "context_differences", "unresolved_conflicts", "exceptions_triggered"):
         required.update(r for row in assessment[key] for r in row["record_ids"])
@@ -148,9 +173,20 @@ class Mentor:
         self.settings = settings
         self.release_path = private_path(settings["release"])
         self.release_hash = sha256_file(self.release_path)
-        cases, principles = load_release(self.release_path)
+        cases, principles = self.validate_release()
         self.index = KnowledgeIndex(cases, principles, settings["retrieval"])
         self.backend = backend
+
+    def validate_release(self) -> tuple[dict, dict]:
+        try:
+            if sha256_file(self.release_path) != self.release_hash:
+                raise ValueError("Release changed")
+            released = load_release(self.release_path)
+            if sha256_file(self.release_path) != self.release_hash:
+                raise ValueError("Release changed during validation")
+            return released
+        except (ValueError, OSError, KeyError, TypeError, AttributeError, RuntimeError, ValidationError):
+            raise ValueError("Reviewed release unavailable or changed; verify reviews and restart with the pinned version.") from None
 
     def call(self, stage: str, context: dict, schema: dict, calls: list) -> dict:
         if self.backend is None:
@@ -175,9 +211,7 @@ class Mentor:
             raise ValueError("Query must be nonempty and within the configured length limit.")
         # Review revocation and changes to pinned artifacts invalidate the service,
         # even if an earlier request loaded a valid in-memory index.
-        if sha256_file(self.release_path) != self.release_hash:
-            raise ValueError("Knowledge release changed; restart with the reviewed version.")
-        load_release(self.release_path)
+        self.validate_release()
         result = {"query": query, "route": "insufficient_evidence", "analysis": None, "retrieval": None,
                   "assessment": None, "answer": None, "citations": [], "calls": [], "guards": [],
                   "release_sha256": self.release_hash}
@@ -205,15 +239,19 @@ class Mentor:
             # Full principles and retrieval diagnostics are not repeated in the answer call.
             answer = self.call("answer", {"query": query, "scenario_facts": analysis["scenario_facts"],
                                            "assessment": assessment, "cases": compact}, ANSWER, result["calls"])
-            result["citations"] = validate_answer(answer, assessment, retrieval["cases"], self.settings)
             if assessment["current_data_required"]:
                 answer["current_data_limitation"] = "Current prices/news/company conditions were not verified. Historical evidence is not a current buy/sell recommendation."
             answer["missing_information"] = list(dict.fromkeys(assessment["missing_information"] + answer["missing_information"]))
+            result["citations"] = validate_answer(answer, assessment, retrieval["cases"], self.settings)
             result["answer"] = answer
             result["guards"] = [{"status": "passed", "scope": "Schema, retrieved IDs, source timestamps, conflict-side coverage and rule-based safety; NOT semantic entailment proof."}]
             return result
         except (ModelError, ValueError, KeyError) as exc:
             return self.fallback(result, f"Validated answer unavailable ({type(exc).__name__}); no unverified speaker answer was emitted.")
+        finally:
+            # A review revoked during remote inference must also suppress its answer.
+            if result["calls"]:
+                self.validate_release()
 
     def fallback(self, result: dict, reason: str) -> dict:
         result["route"] = "insufficient_evidence"
@@ -222,7 +260,8 @@ class Mentor:
         if assessment and result["retrieval"] and "cases" in result["retrieval"]:
             cases = {c["record_id"]: c for c in result["retrieval"]["cases"]}
             # Preserve both sides in a non-directional fallback, not the failed answer.
-            refs = {rid for k in ("conflicting_evidence", "unresolved_conflicts") for c in assessment[k] for rid in c["record_ids"]}
+            refs = {rid for k in ("conflicting_evidence", "context_differences", "exceptions_triggered", "unresolved_conflicts")
+                    for c in assessment[k] for rid in c["record_ids"]}
             citations = [citation(cases[r]) for r in sorted(refs) if r in cases]
         result["citations"] = citations
         result["answer"] = {"conditional_answer": "Evidence is insufficient for a speaker-specific decision. " + reason,

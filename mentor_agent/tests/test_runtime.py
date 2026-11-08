@@ -49,7 +49,9 @@ class FakeMentor:
 
 
 @pytest.fixture
-def mentor_setup(cfg, tmp_path):
+def mentor_setup(cfg, tmp_path, monkeypatch):
+    monkeypatch.delenv("MENTOR_RELEASE", raising=False)
+    monkeypatch.delenv("MENTOR_MODEL_ID", raising=False)
     review = acceptance(cfg, tmp_path)
     release = tmp_path / "release.json"
     publish(cfg, review, release)
@@ -157,6 +159,7 @@ def test_conflict_answer_cannot_drop_one_side(mentor_setup):
     assessment, answer = result["assessment"], result["answer"]
     ids = [c["record_id"] for c in result["retrieval"]["cases"]][:2]
     assessment["conflicting_evidence"] = [{"record_ids": ids}]
+    assessment["supporting_cases"] = ids[:1]
     answer["historical_evidence"][0]["record_ids"] = ids[:1]
     with pytest.raises(ValueError, match="side citation"):
         validate_answer(answer, assessment, result["retrieval"]["cases"], mentor_setup)
@@ -177,3 +180,84 @@ def test_unconditional_speaker_claim_rejected(mentor_setup):
     result["answer"]["interpretation"] = "speaker always buys"
     with pytest.raises(ValueError, match="Unconditional"):
         validate_answer(result["answer"], result["assessment"], result["retrieval"]["cases"], mentor_setup)
+
+
+def test_answer_must_cite_the_assessed_support(mentor_setup):
+    result = Mentor(mentor_setup, backend=FakeMentor()).ask("evidence wait")
+    result["answer"]["historical_evidence"][0]["record_ids"] = result["assessment"]["supporting_cases"][:1]
+    with pytest.raises(ValueError, match="supporting case citations"):
+        validate_answer(result["answer"], result["assessment"], result["retrieval"]["cases"], mentor_setup)
+
+
+def test_final_answer_budget_includes_injected_limits_and_missing_information(mentor_setup):
+    class VerboseAnalysis(FakeMentor):
+        def complete(self, prompt, context, schema):
+            result, metadata = super().complete(prompt, context, schema)
+            if "query_type" in result:
+                result["missing_information"] = ["Additional scenario uncertainty " * 100]
+            return result, metadata
+
+    result = Mentor(mentor_setup, backend=VerboseAnalysis()).ask("evidence wait")
+    assert result["route"] == "insufficient_evidence"
+    assert result["guards"][0]["status"] == "fallback"
+    assert not result["answer"]["historical_evidence"]
+
+
+@pytest.mark.parametrize("kind", ["context_differences", "exceptions_triggered"])
+def test_fallback_preserves_context_and_exception_citations(mentor_setup, kind):
+    mentor = Mentor(mentor_setup, backend=FakeMentor())
+    result = mentor.ask("evidence wait")
+    ids = result["assessment"]["supporting_cases"][:2]
+    result["assessment"][kind] = [{"record_ids": ids}]
+    result = mentor.fallback(result, "Synthetic guard failure")
+    assert {c["record_id"] for c in result["citations"]} == set(ids)
+    assert result["answer"]["conflicts_and_exceptions"]
+
+
+def test_release_revoked_during_model_call_suppresses_response(mentor_setup):
+    from transcription.common import atomic_write_json, read_json
+
+    class RevokingModel(FakeMentor):
+        def complete(self, *args):
+            result = super().complete(*args)
+            release = read_json(Path(mentor_setup["release"]))
+            review = Path(release["review_path"])
+            data = read_json(review)
+            data["decision"] = "reject"
+            atomic_write_json(review, data)
+            return result
+
+    mentor = Mentor(mentor_setup, backend=RevokingModel())
+    with pytest.raises(ValueError, match="Reviewed release"):
+        mentor.ask("evidence wait")
+
+
+def test_release_descriptor_change_during_validation_is_rejected(mentor_setup, monkeypatch):
+    from mentor_agent import runtime
+
+    mentor = Mentor(mentor_setup, backend=FakeMentor())
+    original = runtime.load_release
+
+    def changing_release(path):
+        result = original(path)
+        path.write_text(path.read_text() + "\n")
+        return result
+
+    monkeypatch.setattr(runtime, "load_release", changing_release)
+    with pytest.raises(ValueError, match="Reviewed release"):
+        mentor.validate_release()
+
+
+def test_each_stage_retries_at_most_once(mentor_setup):
+    class TransientFailure(FakeMentor):
+        def complete(self, *args):
+            result, metadata = super().complete(*args)
+            if len(self.calls) % 2:
+                return {}, metadata
+            return result, metadata
+
+    model = TransientFailure()
+    result = Mentor(mentor_setup, backend=model).ask("evidence wait")
+    assert result["route"] == "principle_assisted"
+    assert model.calls == ["analysis", "analysis", "applicability", "applicability", "answer", "answer"]
+    assert [c["attempt"] for c in result["calls"]] == [1, 2, 1, 2, 1, 2]

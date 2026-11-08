@@ -17,7 +17,7 @@ class ModelError(RuntimeError):
 class OpenRouter:
     def __init__(self, settings: dict):
         self.settings = settings
-        self.key = os.environ.get("OPENROUTER_API_KEY")
+        self.key = os.environ.get("OPENROUTER_API_KEY", "").strip()
         if not self.key:
             raise ValueError("Set OPENROUTER_API_KEY locally; never put it in a query/config.")
 
