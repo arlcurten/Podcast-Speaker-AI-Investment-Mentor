@@ -120,7 +120,10 @@ checked after adding required missing-information and current-data warnings.
 Later model stages request only additional information gaps; code retains
 earlier gaps. This avoids asking for repeated paraphrases, not semantic deduplication.
 If answer validation fails, the non-directional fallback retains citations to
-classified differences, not the rejected historical claims.
+classified differences, not the rejected historical claims. It distinguishes
+resolved context differences and exceptions from unresolved conflicts; it does
+not label every cited difference as an unresolved contradiction. Internal error
+details remain in diagnostics, not the user-facing fallback answer.
 Model interpretation, missing scenario information and unavailable
 current facts are separate response fields. No current prices/news/tools or
 personalized trading instructions are supported. Citation existence and rule

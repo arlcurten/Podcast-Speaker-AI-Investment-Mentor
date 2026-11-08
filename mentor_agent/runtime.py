@@ -262,17 +262,28 @@ class Mentor:
         result["route"] = "insufficient_evidence"
         assessment = result["assessment"]
         citations = []
+        differences = []
         if assessment and result["retrieval"] and "cases" in result["retrieval"]:
             cases = {c["record_id"]: c for c in result["retrieval"]["cases"]}
             # Preserve both sides in a non-directional fallback, not the failed answer.
             refs = {rid for k in ("conflicting_evidence", "context_differences", "exceptions_triggered", "unresolved_conflicts")
                     for c in assessment[k] for rid in c["record_ids"]}
             citations = [citation(cases[r]) for r in sorted(refs) if r in cases]
+            if assessment["unresolved_conflicts"]:
+                differences.append("仍有未解的證據衝突，需要補足條件資訊，不能直接選邊。")
+            elif assessment["conflicting_evidence"]:
+                differences.append("已辨識不同方向的歷史證據；本次證據不足以支持情境判斷。")
+            if assessment["context_differences"]:
+                differences.append("已辨識適用情境的差異；情境不同本身不等於講者立場矛盾。")
+            if assessment["exceptions_triggered"]:
+                differences.append("已辨識相關例外條件；不能忽略限制而直接套用一般原則。")
         result["citations"] = citations
-        result["answer"] = {"conditional_answer": "Evidence is insufficient for a speaker-specific decision. " + reason,
-                            "historical_evidence": [], "interpretation": "No current trading conclusion is supported.",
-                            "conditions_and_risks": [], "conflicts_and_exceptions": ["Unresolved evidence differences remain; do not choose a side."] if citations else [],
+        current_needed = bool((assessment or result["analysis"] or {}).get("current_data_required")
+                              or CURRENT.search(result["query"]))
+        result["answer"] = {"conditional_answer": "目前證據不足，無法可靠判斷講者會如何回應這個情境。",
+                            "historical_evidence": [], "interpretation": "不以模型常識補成講者立場；需要相符的來源證據或補充情境。",
+                            "conditions_and_risks": [], "conflicts_and_exceptions": differences,
                             "missing_information": (assessment or result["analysis"] or {}).get("missing_information", []),
-                            "current_data_limitation": "No live market or company information is available."}
+                            "current_data_limitation": "本版本無法驗證即時市場或公司資訊，不能據此形成當前買賣判斷。" if current_needed else ""}
         result["guards"] = [{"status": "fallback", "reason": reason}]
         return result

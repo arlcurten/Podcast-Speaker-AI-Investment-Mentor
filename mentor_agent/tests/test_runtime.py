@@ -292,3 +292,41 @@ def test_empty_new_gaps_do_not_discard_prior_missing_information(mentor_setup):
     assert result["analysis"]["missing_information"]
     assert result["assessment"]["missing_information"] == result["analysis"]["missing_information"]
     assert result["answer"]["missing_information"] == result["analysis"]["missing_information"]
+
+
+def test_context_only_fallback_does_not_claim_unresolved_conflict(mentor_setup):
+    mentor = Mentor(mentor_setup, backend=FakeMentor())
+    result = mentor.ask("evidence wait")
+    ids = result["assessment"]["supporting_cases"][:2]
+    result["assessment"]["context_differences"] = [{"record_ids": ids}]
+    result["assessment"]["conflicting_evidence"] = []
+    result["assessment"]["unresolved_conflicts"] = []
+    result = mentor.fallback(result, "Insufficient current data")
+    notes = result["answer"]["conflicts_and_exceptions"]
+    assert any("情境不同" in note for note in notes)
+    assert not any("未解" in note for note in notes)
+    assert {c["record_id"] for c in result["citations"]} == set(ids)
+
+
+def test_unresolved_conflict_fallback_and_current_gap_remain_explicit(mentor_setup):
+    mentor = Mentor(mentor_setup, backend=FakeMentor())
+    result = mentor.ask("evidence wait")
+    ids = result["assessment"]["supporting_cases"][:2]
+    result["assessment"]["unresolved_conflicts"] = [{"record_ids": ids}]
+    result["assessment"]["current_data_required"] = True
+    result = mentor.fallback(result, "Unresolved conflict")
+    assert any("未解" in note for note in result["answer"]["conflicts_and_exceptions"])
+    assert result["answer"]["current_data_limitation"]
+    assert {c["record_id"] for c in result["citations"]} == set(ids)
+
+
+def test_fallback_does_not_invent_market_context_or_expose_diagnostics(mentor_setup):
+    mentor = Mentor(mentor_setup)
+    result = {"query": "Unrelated topic", "analysis": None, "retrieval": None, "assessment": None}
+    result = mentor.fallback(result, "Internal diagnostic marker")
+    assert not result["answer"]["current_data_limitation"]
+    assert not result["answer"]["conflicts_and_exceptions"]
+    assert "Internal diagnostic marker" not in str(result["answer"])
+    assert result["guards"][0]["reason"] == "Internal diagnostic marker"
+    result["query"] = "What should I buy today?"
+    assert mentor.fallback(result, "Analysis unavailable")["answer"]["current_data_limitation"]
