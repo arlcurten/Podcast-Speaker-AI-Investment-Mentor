@@ -93,6 +93,46 @@ boundary. Metadata records `provider=agent_review_revision`, `model=null`, and
 remains candidate-only with source hold and semantic review pending. A later
 source-grounded review must bind the new L2 hash before any selected-case use.
 
+To revise an already editorial L2, create a separate
+`knowledge_case_revision.v2` proposal with the same fields plus:
+
+```json
+"parent_application": {
+  "receipt": {"path": "<absolute-private-prior-application-receipt>", "sha256": "<sha256>"},
+  "proposal": {"path": "<absolute-private-prior-proposal>", "sha256": "<sha256>"}
+}
+```
+
+The parent config and L2 must exactly match that receipt's output references;
+L1 and the original completed-call reference must remain unchanged. V1 still
+requires a generated parent, not an editorial artifact. There is no automatic
+conversion or rebasing of existing proposals. V2 emits a
+`knowledge_case_revision_receipt.v2`; the CLI and read-only default are unchanged.
+
+Before writing, the tool replays known v1/v2 proposal semantics recursively back
+to the pinned generated L2 and its completed call (at most 32 revisions including
+the proposed revision). Each link checks exact allowed edits, raw anchors,
+source dependencies, config, complete derived artifact, notes and receipt.
+Unknown versions, cycles, changed dependencies and overlapping ancestor output
+directories fail closed. Missing or incompatible ancestors must be restored;
+they are never regenerated. Historical implementation hashes and timestamps are
+retained as recorded provenance, not rewritten to today's implementation hash.
+This is semantic replay under the current validator, not execution or attestation
+of old code. Changed prompts, schemas or deterministic derivation can therefore
+require historical code for replay; no compatibility checks are waived.
+
+V2 metadata retains ordered `revision_history` with every prior receipt/proposal,
+report, reviewer and note, plus separate `original_model_artifact` and
+`original_model_usage`. Current revision usage remains null and calls remain zero.
+Historical model diagnostics and reviewer commentary are not approval. The
+original generated artifact is the hash-bound content trust root: historical
+completed-call records bind context/fingerprint/usage but contain no response
+content digest. The chain does not invent that missing proof or cryptographically
+certify authorship, timestamps, semantic correctness or historical execution.
+All referenced files must remain available; a receipt is not a self-contained
+backup. A failure during writes leaves an incomplete version for inspection,
+without a successful application receipt; it cannot be resumed in place.
+
 ### Bounded Corpus Jobs
 
 `python3 -m knowledge.batch --config "$BATCH_CONFIG" --dry-run` plans explicit
