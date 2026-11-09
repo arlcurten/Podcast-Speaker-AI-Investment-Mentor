@@ -22,6 +22,39 @@ Optional `catalog: {path, sha256}` binds selection metadata without model input.
 Reserved IDs cannot appear in the extraction selection. No sources are discovered
 implicitly and knowledge-layer outputs are not extraction inputs.
 
+## Corpus Evidence Queue
+
+For independent per-episode evidence extraction, use a private `profile_batch.v1`
+config with `batch_id`, `output_root`, the same source/model options above,
+`excluded_episode_ids`, and `max_provider_failures`. The batch has no `run_id` or
+global `max_calls`: each episode receives its own immutable attempt and at most
+one configured repair. Explicitly exclude episodes already extracted by a pilot;
+reserved evaluation episodes must remain outside the selected source list.
+
+```bash
+python -m speaker_profile.batch plan --config "$PROFILE_BATCH" --workers 4
+python -m speaker_profile.batch run --config "$PROFILE_BATCH" --workers 4
+python -m speaker_profile.batch status --config "$PROFILE_BATCH"
+python -m speaker_profile.batch run --config "$PROFILE_BATCH" --workers 4 --retry-failed
+python -m speaker_profile.batch validate --config "$PROFILE_BATCH"
+```
+
+Worker count is configurable; include other active model jobs when choosing it.
+Plan and validation make no model calls. A normal resume reuses completed evidence
+and continues pending episodes, while failed/interrupted attempts require explicit
+`--retry-failed`. Retries preserve previous inputs, responses and failures in a new
+attempt directory. Source/content failures do not discard other episodes.
+`max_provider_failures` limits consecutive exhausted provider failures, not total
+errors scattered across a corpus; newly created evidence resets that streak.
+Repeated provider failures leave a visible `needs_attention` report. Inspect the
+retained failures before explicitly retrying, rather than blindly resubmitting.
+
+Config or implementation changes require a new batch ID. The batch saves an
+immutable manifest, per-episode configs/checkpoints/call records, evidence and an
+atomic summary. Status only reads checkpoints; validation checks artifact/source
+bindings. Neither approves semantic quality. This queue does **not** perform
+cross-episode synthesis, publish a global profile or make candidates serving-ready.
+
 Evidence is saved under `<output_root>/<run_id>/<episode_id>/evidence.json`;
 synthesis is `<output_root>/<run_id>/synthesis.json`. Requests, responses and
 bounded error diagnostics stay private. Plan/validate never call a model.
