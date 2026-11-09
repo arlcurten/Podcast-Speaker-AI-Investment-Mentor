@@ -60,6 +60,29 @@ freeze a new index, then create a new discovery config/run. This zero-inference
 revalidation includes source and provenance checks, not merely trusting old index
 headers. Neither structural replay nor inventory completeness certifies semantics.
 
+## Optional Native Synthesis Index
+
+`speaker_profile.inventory_extension` creates a separate v3 index from a checked
+v2 inventory and explicitly selected native synthesis candidates. It preserves
+exact evidence versions, all hypotheses, comparisons and pending comparisons;
+principles do not add evidence. Existing inventories and consumers are unchanged.
+
+```bash
+python -m speaker_profile.inventory_extension inspect --input "$EXTENSION_SELECTION" --sha256 "$SELECTION_SHA256"
+python -m speaker_profile.inventory_extension freeze --input "$EXTENSION_SELECTION" --sha256 "$SELECTION_SHA256" --output "$NEW_INDEX"
+python -m speaker_profile.inventory_extension validate --input "$NEW_INDEX" --sha256 "$INDEX_SHA256" --selection "$EXTENSION_SELECTION" --selection-sha256 "$SELECTION_SHA256"
+```
+
+Use an explicit private `profile_inventory_extension_selection.v1` selection
+with `base_inventory`, `native_syntheses`, expected synthesis IDs, reserved episode
+IDs and positive `limits` (`max_nodes`, `max_depth`, `max_metadata_bytes`). Limits
+fail visibly rather than truncate data. `closure` uses the same validation flags
+plus repeated `--support` evidence IDs to retain relevant counterevidence and
+comparison context. This is a candidate index, not a serving release. Existing
+discovery does not automatically consume v3; new consumers must opt in explicitly.
+Closure is seed-relative and non-transitive: a returned hypothesis does not imply
+that every comparison involving all of its other evidence has been expanded.
+
 ## Corpus Discovery
 
 For an explicitly frozen private Profile inventory, use bounded discovery to
