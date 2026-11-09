@@ -4,6 +4,28 @@ Independent offline extraction from explicitly selected, hash-bound transcripts.
 Artifacts use `profile.v1`; they do not grant source acceptance, publication,
 serving eligibility or automatic inclusion in a global profile.
 
+## Reviewed Native Teaching Context
+
+An explicitly authored, source-bound review can authorize selected native synthesis
+hypotheses for provisional private teaching. It does not approve a global persona,
+change episode source holds, or enable the API backend. Prepare is read-only;
+publication requires per-item source and semantic findings plus pinned review reports.
+
+```bash
+python -m speaker_profile.release prepare --input "$PROFILE_CANDIDATE" --sha256 "$CANDIDATE_SHA256" --hypothesis "$HYPOTHESIS_ID"
+python -m speaker_profile.release schema
+python -m speaker_profile.release publish --input "$SCOPED_REVIEW" --sha256 "$REVIEW_SHA256" --output "$NEW_RELEASE"
+python -m speaker_profile.release validate --input "$NEW_RELEASE" --sha256 "$RELEASE_SHA256"
+python -m speaker_profile.release read --input "$NEW_RELEASE" --sha256 "$RELEASE_SHA256"
+```
+
+Use configured private roots for all files. Each read replays pinned sources and
+returns support, counterevidence, inference bases and incident comparison context.
+Rare observations and unresolved differences remain visible; abstractions are not
+extra evidence. Tests verify integrity, not the truth of reviewer judgments.
+An existing release is immutable; changed source, review or implementation requires
+an explicit new version or its historical code for replay.
+
 ## Corpus Inventory
 
 Use `speaker_profile.corpus_inventory inspect|freeze|validate|closure` with an
