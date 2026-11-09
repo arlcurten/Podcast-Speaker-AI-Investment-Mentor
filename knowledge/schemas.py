@@ -78,14 +78,18 @@ PROPOSALS = {
 }
 
 
-def schema(stage: str) -> dict:
-    return copy.deepcopy(PROPOSALS[stage])
+def schema(stage: str, *, candidate: bool = False) -> dict:
+    result = copy.deepcopy(PROPOSALS[stage])
+    if candidate:
+        from .candidates import proposal_schema
+        result = proposal_schema(stage, result)
+    return result
 
 
-def validate_proposal(stage: str, payload: dict) -> None:
+def validate_proposal(stage: str, payload: dict, *, candidate: bool = False) -> None:
     from jsonschema import Draft202012Validator
 
-    errors = list(Draft202012Validator(schema(stage)).iter_errors(payload))
+    errors = list(Draft202012Validator(schema(stage, candidate=candidate)).iter_errors(payload))
     if errors:
         # Do not echo model content, source text or paths into public console logs.
         first = errors[0]

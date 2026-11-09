@@ -16,6 +16,16 @@ pattern? Generic 'watch risk/use data' advice is insufficient. Never merge solel
 on risk/data/valuation keywords. proposed_assessment is qualitative, not measured
 independence; code calculates episode/context counts and constrains runtime use.
 
+Carry forward reviewed_annotations in case evidence, including their method and
+limitations. Corrections remain episode-local; interpretive cautions about spoken
+slips, inconsistent arithmetic or attribution are not replacement facts. Preserve
+unresolved numeric/wording uncertainty rather than selecting a convenient value.
+Audio-model agreement is not independent evidence or proof of human listening.
+Annotation anchors and notes never add supporting cases or independent contexts.
+An [Agent clarification] remains reviewer commentary across abstraction levels.
+Never promote it into source context, speaker preference, causal explanation or
+independent support. Carry relevant limitations forward without filling the gaps.
+
 Provide context_relationships for every unordered supporting-case pair as in
 Level 3. Compare the underlying decision/event, not the episode containing its
 retelling. Different publication dates alone are never an independence basis.

@@ -109,7 +109,7 @@ def create_app(mentor: Mentor) -> FastAPI:
             raise HTTPException(422, "Query must be nonempty and within the configured length limit.")
         try:
             result = mentor.ask(body.query)
-            return {k: result[k] for k in ("route", "answer", "citations", "guards", "release_sha256")}
+            return {k: result[k] for k in ("route", "answer", "citations", "guards", "release_sha256", "evidence_review_limits")}
         except (ValueError, OSError, KeyError):
             raise HTTPException(503, "Reviewed knowledge/configuration unavailable; inspect locally.") from None
 

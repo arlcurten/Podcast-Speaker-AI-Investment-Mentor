@@ -5,6 +5,7 @@ from pathlib import Path
 from typing import Any
 
 from .common import private_path, read_json, sha256_file, utc_now
+from .annotations import load_annotations
 
 
 class TranscriptValidationError(ValueError):
@@ -146,10 +147,13 @@ def quality_gate(path: Path, expected_episode: str | None = None, review_path: P
     result = validate_transcript(path, expected_episode)
     digest = sha256_file(path)
     accepted = False
+    annotation_meta = {}
     if review_path is not None:
+        review_hash = sha256_file(review_path)
         review = read_json(review_path)
-        if not isinstance(review, dict) or review.get("schema_version") != "transcript_review.v1":
-            raise ValueError("Expected transcript_review.v1 quality review.")
+        if (not isinstance(review, dict) or not isinstance(review.get("schema_version"), str)
+                or review["schema_version"] not in {"transcript_review.v1", "transcript_review.v2"}):
+            raise ValueError("Expected transcript_review.v1 or transcript_review.v2 quality review.")
         if review.get("episode_id") != result["episode_id"] or review.get("transcript_sha256") != digest:
             raise ValueError("Quality review does not match this transcript version.")
         if review.get("decision") not in {"accept", "retranscribe", "uncertain"}:
@@ -164,8 +168,19 @@ def quality_gate(path: Path, expected_episode: str | None = None, review_path: P
         if not isinstance(sampled, list) or not sampled or any(type(i) is not int or i not in valid_ids for i in sampled):
             raise ValueError("Quality review must identify valid sampled segment IDs.")
         accepted = review["decision"] == "accept" and not review["unresolved_critical_issues"]
+        if review["schema_version"] == "transcript_review.v2":
+            raw = read_json(path)
+            validate_payload(raw, result["episode_id"])
+            notes = load_annotations(review, review_path, raw, digest)
+            critical = sum(a["kind"] == "uncertainty" and a["severity"] == "critical" for a in notes["annotations"])
+            annotation_meta = {"annotations_sha256": notes["sha256"], "annotation_count": len(notes["annotations"]),
+                               "unresolved_critical_annotation_count": critical}
+            accepted = accepted and not critical
+            if sha256_file(path) != digest or sha256_file(review_path) != review_hash:
+                raise ValueError("Source/review changed while validating annotations.")
     return {
-        "schema_version": "transcript_quality.v1", **result,
+        "schema_version": "transcript_quality.v2" if annotation_meta else "transcript_quality.v1", **result,
+        **annotation_meta,
         "transcript_sha256": digest,
         "content_quality": "accepted_review" if accepted else "review_required",
         "ready_for_extraction": accepted,

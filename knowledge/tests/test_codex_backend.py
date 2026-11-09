@@ -59,6 +59,16 @@ def test_only_known_disabled_host_notice_is_nonfatal(monkeypatch, tmp_path):
     assert meta["cli_notices"] == [DISABLED_HOST_NOTICE]
 
 
+def test_notice_does_not_replace_input_size(monkeypatch, tmp_path):
+    context = {"source": "synthetic evidence " * 100}
+    fake_process(monkeypatch, [])
+    _, baseline = CodexBackend("synthetic", tmp_path).complete("Test", context, obj(episode_id=TEXT))
+    fake_process(monkeypatch, [{"type": "error", "message": DISABLED_HOST_NOTICE}])
+    _, actual = CodexBackend("synthetic", tmp_path).complete("Test", context, obj(episode_id=TEXT))
+    assert actual["input_characters"] == baseline["input_characters"]
+    assert actual["input_characters"] > actual["context_characters"] > len(DISABLED_HOST_NOTICE)
+
+
 def test_invalid_json_and_failed_process_retain_usage(monkeypatch, tmp_path):
     fake_process(monkeypatch, [], result="truncated")
     with pytest.raises(ModelCallError, match="valid structured"):

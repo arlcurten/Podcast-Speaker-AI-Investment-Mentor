@@ -43,6 +43,126 @@ at most one retry is configurable. A per-execution call cap bounds work.
 
 ## Incremental Updates
 
+### Bounded Corpus Jobs
+
+`python3 -m knowledge.batch --config "$BATCH_CONFIG" --dry-run` plans explicit
+private sources without inference. Remove `--dry-run` and optionally set
+`--workers 2 --max-episodes 8` for a measured batch. Each episode has its own
+source review, normalized version, L1-L3 stages and atomic status. A held or
+failed episode does not discard other results. No command publishes a release
+or starts serving. This runs subscription model calls, not a free validation.
+
+For an already running candidate batch, `python3 -m knowledge.prefetch
+--config "$BATCH_CONFIG" --run-id "$TRIAL_ID" --episode "$EPISODE_ID"
+--workers 1 --dry-run` plans a bounded look-ahead trial (repeat `--episode`).
+Choose unstarted episodes well away from the main queue head. Remove `--dry-run`
+to execute up to 16 episodes with 1-4 additional workers. Account for all other
+running model services before choosing concurrency; token allowance does not
+establish a concurrency limit. The trial uses the original per-episode stage
+store and locks, leaves the main queue/status untouched, and writes a separate
+private trial report. The main queue later validates/reuses these stages without
+new model calls. A scheduler collision cannot generate the same stage twice;
+the current scheduler defers a busy job until resume. Already-running schedulers
+from older code do not hot-reload this handling: keep trials far from their queue
+head and inspect any busy-job failure before retry. A failed trial preserves
+partial stages; the main queue's normal bounded execution policy still applies.
+Trials never restart automatically or grant review/publication acceptance.
+`--minimum-queue-gap` requires that many unstarted, unselected episodes before
+each trial episode and rechecks on admission; it reduces collision risk with old
+live schedulers but is not a reservation or a substitute for per-episode locks.
+
+For sustained throughput, use `python3 -m knowledge.prefetch --config
+"$BATCH_CONFIG" --run-id "$CONTROLLER_ID" --workers 4 --minimum-queue-gap 128
+--continue-pending`. The controller waits for an existing look-ahead trial, then
+automatically schedules further tail chunks. Sixteen episodes is a chunk size,
+not a total work limit. A controller lock prevents multiple controllers; do not
+start separate manual trials alongside it. Completed artifacts are reused and
+isolated content failures are retained for review while other episodes continue.
+Interrupted trial episodes are preserved for explicit inspection. Transient
+provider failures get a backoff; repeated provider failures stop with a visible
+`needs_attention` checkpoint. Completion means the safe tail is drained, not that
+the main queue, semantic review, or serving release is finished. State is under
+`controllers/<run-id>/status.json` in the private batch directory. Resume with the
+same controller command/config; this does not restart it after machine shutdown.
+
+For **candidate construction**, set `extraction_mode: candidate`. The same
+pipeline validates the raw/draft mapping, then extracts L1-L3 without requiring
+whole-episode acceptance or repeating a preliminary model review. Each L2 case
+has a source assessment and separate, anchored supplementary notes. Local doubt
+can limit one claim/case without blocking unrelated material. Known source
+reviews are passed as pinned `source_review` / `source_review_sha256` references,
+including held reviews; their notes are retained, not silently marked resolved.
+Use an empty `prior_findings` list in this mode; existing findings must instead
+be preserved in a pinned review. Do not omit known findings to bypass accounting.
+
+In candidate L2 accounting, `unextracted_regions` records source-anchored omission
+notes, not a disjoint sentence partition. One merged region may contain both a
+usable claim and an omitted ambiguous statement; different notes may reference
+that same region. Keep all reasons and expose `partial_extraction_notes`, counting
+unique regions rather than extra evidence. Missing/foreign IDs, within-note
+duplicates and unresolved case/issue references still fail. Reviewed-mode
+partition validation remains unchanged. Region accounting is not claim completeness.
+
+Candidate artifacts use `knowledge_candidate.v1`, not `knowledge.v2`.
+They cannot be published or loaded by Mentor, even with a forged acceptance
+selection or changed config mode. `usable_with_limits` is a model proposal,
+not source certification. Unresolved supporting cases constrain principles to
+low confidence and prevent L3 eligibility; all candidate principles remain
+ineligible online. Sources and prior artifacts stay immutable. Acceptance and
+promotion require separate source-grounded review; there is no automatic promotion.
+
+The private JSON `knowledge_batch.v1` config declares `batch_id`, `output_root`,
+`model`, `reasoning_effort`, optional `timeout_seconds` / `max_input_chars`, and
+`episodes`. Each entry specifies `episode_id`, `raw`, `draft`, `raw_sha256`,
+`draft_sha256`, and `prior_findings`. Inputs must be private and hash-pinned.
+The default `reviewed` mode retains the existing whole-episode source gate.
+Known critical findings must be included, not dropped to obtain acceptance.
+
+A new candidate batch may give each episode `reuse_artifacts`: a contiguous
+`level1` through `level3` prefix of `{path, sha256}` references. Preflight verifies
+the exact source, model/prompt and upstream bindings before generation. This can
+select an explicitly revised L2 without copying old artifacts; its old L3 cannot
+be reused against the changed L2. Full-prefix reuse makes no inference calls.
+Full-context model source review is a text-based judgment, not audio listening
+or ASR-accuracy certification. Structural checks alone never grant acceptance.
+
+Completed stages resume without new generation; changed sources/settings need
+a new batch version. Holds remain holds. Failed or interrupted jobs require
+explicit `--retry-failed`; immutable review/call records may require inspection
+or a new version before retry. Source review and semantic publication review
+are separate gates. L4 remains a separately configured, bounded cross-episode
+consolidation; this command does not claim full-corpus L4 scalability.
+
+After the selected jobs finish, `--consolidate-config "$L4_CONFIG" --run-id
+candidate_cross_v1` creates a separately runnable L4 config referencing their
+immutable L1-L3 files. It makes no model calls and rejects unfinished inputs.
+Run `python3 -m knowledge run --config "$L4_CONFIG"` to consolidate that explicit
+bounded corpus. Input-size limits still apply; a small batch is not global L4
+coverage of every episode in a larger queue.
+
+For a **new candidate L4 config**, opt in to `context_format: compact_candidate.v1`
+to retain every L2 case, assessment, omission reason and exact annotation/issue
+note while deduplicating episode-scoped source issues. Case evidence references
+source hashes and keeps raw IDs and timestamp regions; repeated raw anchor text
+and annotation-review blobs stay in the full immutable artifacts, not the model
+view. The context includes its reference legend. This is serialization, not
+retrieval, filtering, summarization or source acceptance. Only L4 generation
+and its fingerprint use the explicit format; L1-L3 contexts and fingerprints
+remain unchanged, including pinned L3 reuse. Omit this setting for existing runs: default contexts and
+fingerprints are unchanged. Measure the resulting context before choosing an
+explicit input cap; compact serialization does not guarantee it fits the default.
+
+Optional `retry_count: 1` permits one repair per stage using the actual validation
+failure and retained proposal, never an invented source fix. Completed stages
+are reused. If an unchanged candidate proposal rejected by an older validator
+passes all current checks, resume revalidates it without inference. The original
+failed call remains immutable and a separate recovery record links its checksum;
+original token usage is not counted twice. This is not semantic approval.
+`max_consecutive_failures: 3` stops admission of queued jobs after
+successive new failures; in-flight calls finish and remaining jobs are deferred.
+Inspect private reports before resuming failed jobs. This bounds failures, not
+subscription availability or completion time.
+
 Keep the serving release fixed while preparing new knowledge. A private JSON or
 YAML source list contains entries with `episode_id`, `raw`, `normalized`, and
 `review`, just like `config.episodes`; every source must already be accepted.
@@ -91,9 +211,52 @@ metadata is null. Input overflow fails, never silently truncates an episode.
 code reconstructs raw ID ranges/singles and distinct timestamp regions. A
 min/max timestamp range must not imply missing discussion was read. The loader
 checks complete normalized-to-raw mapping, text preservation and version hashes.
-It also reconstructs OpenCC text and terminology annotations using the recorded
+L4 must account for every counterevidence link from support-overlapping L3
+principles. Additional links are allowed only when their exact parent, record
+and kind exist in the supplied L3 artifacts, with a reason and consistent
+retention status. They do not add independent support. Missing required links,
+invented links and duplicate dispositions still fail validation.
+The loader also reconstructs OpenCC text and terminology annotations using the recorded
 normalizer/dictionary version. Editing a normalized view cannot bypass raw-source
 acceptance; upgrading those versions requires a new derived version.
+
+An optional [reviewed annotation sidecar](../transcription/README.md#episode-local-reviewed-annotations)
+is discovered only through a `transcript_review.v2` hash-bound reference. The
+episode config remains `raw`/`normalized`/`review`; no duplicate annotation setting
+is needed. All v1 sources retain their existing contract. V2 verifies the sidecar,
+its separate review, exact raw anchors and supporting-review file hashes before
+any model call. Critical unresolved annotation uncertainty blocks reviewed-mode
+extraction, not explicit quarantined candidate construction.
+Spoken slips and inconsistent quantities can be reviewed cautions, not ASR fixes
+or silently normalized facts. Model agreement alone is not ambiguity resolution;
+review methods preserve model-assisted versus human evidence and their limits.
+
+**Source versus commentary:** raw anchors remain verbatim and normalized text
+remains the deterministic reading aid. Annotation `note` is reviewer commentary,
+not speech or evidence. Keep it brief; describe an ambiguity, limitation or
+distinction without supplying missing context, facts, motives or reasoning.
+Candidate extraction-time clarifications use separate `supplementary_notes` with
+kind, concise note and relevant merged IDs. Reviewed-mode prose clarifications
+use `[Agent clarification]` in L2 `uncertainty`, never in speaker claims or quotes. L3/L4 must
+not promote these clarifications into preferences or independent support.
+
+L1/L2 receive `reviewed_annotations` separately from unchanged transcript text,
+with deterministically mapped `merged_ids`. Source metadata and fingerprints pin
+`annotations_sha256`. Deterministic evidence attaches every note overlapping a
+case/thread's raw IDs, with the sidecar hash, review metadata and supporting-review
+hashes, but no private reference paths. Complete note anchors may extend beyond
+the cited case; they do not expand its evidence IDs or independent-context counts.
+L3/L4 and released cases retain these notes through case evidence even if a model
+omits them from prose. Their faithful interpretation still requires semantic
+review. Notes do not authorize exclusions or change existing coverage rules.
+
+Preparation and extraction recheck dependencies before publishing derivatives;
+release loading revalidates the same references. Missing, changed or mismatched
+sidecars/supporting reviews fail closed. Use new reviewed source versions and
+`extend --replace-existing` for annotation revisions; affected episode stages
+and L4 need regeneration and fresh semantic acceptance. Never edit old sidecars,
+reviews or outputs in place. Prompt changes also require a new run; existing
+reviewed releases retain their pinned prompts. There is no automatic migration.
 
 L2 is evidence authority. Host/listener/guest/unknown attribution is explicit;
 listener/guest assertions cannot establish the host's principles. L1 guides
@@ -205,6 +368,30 @@ stays untouched; regenerate a new version only
 after source acceptance.
 
 ## Schema Migration
+
+### Selected Case Use
+
+An episode-wide source hold need not discard independently readable cases.
+`knowledge_case_review.v1` provides explicit **selected-case** source fitness and
+semantic review, with exact source/L1/L2 hashes. Every case field, overlapping
+source issue, omission and global limitation needs a source-grounded disposition.
+An unrelated uncertain label can be excluded with a reason; unresolved ambiguity
+that determines the selected claim cannot be approved. This is a reviewer
+judgment, not an automatic promotion based on a model score or passing tests.
+
+```bash
+python3 -m knowledge case-review-packet --config "$CANDIDATE_CONFIG" \
+  --case-id SYN1:R1 --output "$PRIVATE_REVIEW_PACKET"
+# Inspect the packet and source, then author the hash-bound private review.
+python3 -m knowledge publish-cases --config "$CANDIDATE_CONFIG" \
+  --review "$PRIVATE_CASE_REVIEW" --output "$PRIVATE_CASE_RELEASE"
+```
+
+The resulting `knowledge_case_release.v1` contains no principles. It preserves
+the original episode hold, analyst/source distinction and limitations; it permits
+case-only reasoning, not whole-episode acceptance. Source/review changes invalidate
+the release. Complete reviews and evidence remain private. This does not replace
+full corpus review or cross-episode principle construction.
 
 `knowledge.v1` artifacts lack these required coverage/independence/disposition
 fields and are **not** silently upgraded or accepted by the v2 loader. Keep old

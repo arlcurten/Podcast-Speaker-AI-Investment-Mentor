@@ -11,13 +11,43 @@ from pathlib import Path
 
 import yaml
 
-from transcription.common import atomic_write_json, private_path, child_path, sha256_file, safe_id, utc_now
+from transcription.common import atomic_write_json, private_path, child_path, sha256_file, safe_id, utc_now, read_json
 from .schemas import VERSION, schema, validate_proposal
 from .provenance import load_source, digest, evidence, case_catalog, qualify
 from .coverage import coverage
 
 PROMPTS = Path(__file__).parent / "prompts"
 STAGES = ("level1", "level2", "level3", "level4")
+COMPACT_CONTEXT = "compact_candidate.v1"
+
+
+def candidate_mode(cfg):
+    mode = cfg.get("extraction_mode", "reviewed")
+    if mode not in {"reviewed", "candidate"}:
+        raise ValueError("extraction_mode must be reviewed or candidate.")
+    return mode == "candidate"
+
+
+def _context_format(cfg):
+    if "context_format" not in cfg:
+        return None
+    if cfg["context_format"] != COMPACT_CONTEXT or not candidate_mode(cfg):
+        raise ValueError("context_format must be compact_candidate.v1 and requires candidate extraction.")
+    return cfg["context_format"]
+
+
+def artifact_version(cfg):
+    if candidate_mode(cfg):
+        from .candidates import VERSION as candidate_version
+        return candidate_version
+    return VERSION
+
+
+def generation_prompt(cfg, stage):
+    prompt = (PROMPTS / (stage + ".md")).read_text(encoding="utf-8")
+    if candidate_mode(cfg):
+        prompt += "\n\n" + (PROMPTS / "candidate.md").read_text(encoding="utf-8")
+    return prompt
 
 
 def load_config(path: Path) -> dict:
@@ -25,6 +55,8 @@ def load_config(path: Path) -> dict:
     if not isinstance(cfg, dict) or cfg.get("schema_version") != "knowledge_config.v1":
         raise ValueError("Expected knowledge_config.v1.")
     safe_id(cfg["run_id"])
+    candidate = candidate_mode(cfg)
+    _context_format(cfg)
     cfg["output_root"] = str(private_path(cfg["output_root"]))
     cfg["model"] = os.environ.get("KNOWLEDGE_MODEL_ID") or cfg.get("model")
     if not cfg["model"]:
@@ -35,6 +67,9 @@ def load_config(path: Path) -> dict:
     for entry in cfg["episodes"]:
         ids.append(safe_id(entry["episode_id"]))
         for key in ("raw", "normalized", "review"):
+            if key == "review" and candidate and not entry.get(key):
+                entry[key] = None
+                continue
             entry[key] = str(private_path(entry[key]))
         reuse = entry.get("reuse_artifacts", {})
         if not isinstance(reuse, dict) or set(reuse) != set(STAGES[:len(reuse)]):
@@ -66,15 +101,30 @@ def load_config(path: Path) -> dict:
 def sources(cfg: dict) -> dict:
     result = {}
     for entry in cfg["episodes"]:
-        source = load_source(entry["raw"], entry["normalized"], entry["review"])
+        if candidate_mode(cfg):
+            from .candidates import load_candidate_source
+            source = load_candidate_source(entry["raw"], entry["normalized"], entry.get("review"))
+        else:
+            source = load_source(entry["raw"], entry["normalized"], entry["review"])
         if source["episode_id"] != entry["episode_id"]:
             raise ValueError("Configured/source episode identity mismatch.")
+        for key in ("raw_sha256", "normalized_sha256", "review_sha256"):
+            if key in entry and source[key] != entry[key]:
+                raise ValueError("Pinned source version changed; use a new configuration.")
         result[source["episode_id"]] = source
     return result
 
 
 def _source_meta(source: dict) -> dict:
-    return {k: source[k] for k in ("episode_id", "raw_sha256", "normalized_sha256", "review_sha256", "publication_date")}
+    result = {k: source[k] for k in ("episode_id", "raw_sha256", "normalized_sha256", "review_sha256", "publication_date")}
+    if "annotations_sha256" in source:
+        result["annotations_sha256"] = source["annotations_sha256"]
+    if source.get("extraction_mode") == "candidate":
+        result.update(extraction_mode="candidate", source_acceptance="not_granted")
+        for key in ("source_recovery", "source_limitations", "prior_source_decision", "prior_review_limitations"):
+            if key in source:
+                result[key] = source[key]
+    return result
 
 
 def stage_location(cfg: dict, stage: str, episode_id: str = "cross_episode") -> tuple[Path, str | None]:
@@ -96,11 +146,14 @@ def release_locations(cfg: dict) -> list[dict]:
 
 
 def stage_inputs(cfg, source_map, stage, source, upstream, prompt_override=None):
-    prompt = prompt_override if prompt_override is not None else (PROMPTS / (stage + ".md")).read_text(encoding="utf-8")
+    prompt = prompt_override if prompt_override is not None else generation_prompt(cfg, stage)
     meta = _source_meta(source) if source else {"episodes": [_source_meta(s) for s in source_map.values()]}
-    fingerprint = digest({"source": meta, "upstream": [digest(a) for a in upstream],
-                          "schema": schema(stage), "prompt": prompt, "model": cfg["model"],
-                          "reasoning_effort": cfg["reasoning_effort"], "schema_version": VERSION})
+    inputs = {"source": meta, "upstream": [digest(a) for a in upstream],
+              "schema": schema(stage, candidate=candidate_mode(cfg)), "prompt": prompt, "model": cfg["model"],
+              "reasoning_effort": cfg["reasoning_effort"], "schema_version": artifact_version(cfg)}
+    if stage == "level4" and _context_format(cfg) is not None:
+        inputs["context_format"] = cfg["context_format"]
+    fingerprint = digest(inputs)
     return prompt, meta, fingerprint
 
 
@@ -112,17 +165,19 @@ def checked_artifact(cfg, source_map, stage, source, upstream, path, expected_sh
     artifact = json.loads(payload)
     if not isinstance(artifact, dict):
         raise ValueError("Knowledge artifact must be a JSON object.")
-    if artifact.get("schema_version") != VERSION:
+    if artifact.get("schema_version") != artifact_version(cfg):
         raise ValueError("Incompatible knowledge schema; preserve old outputs and regenerate with a new run_id without reuse_artifacts.")
     pinned_prompt = artifact.get("generation_prompt")
     if pinned_prompt is not None and (not isinstance(pinned_prompt, str) or not pinned_prompt.strip()):
         raise ValueError("Malformed pinned generation prompt.")
     if (not allow_pinned_prompts and pinned_prompt is not None
-            and pinned_prompt != (PROMPTS / (stage + ".md")).read_text(encoding="utf-8")):
+            and pinned_prompt != generation_prompt(cfg, stage)):
         raise ValueError("Existing knowledge prompt is incompatible; use a new run_id.")
+    if stage == "level4" and artifact.get("context_format") != _context_format(cfg):
+        raise ValueError("Existing knowledge context format is incompatible; use a new run_id.")
     _, meta, fingerprint = stage_inputs(cfg, source_map, stage, source, upstream,
                                        pinned_prompt if allow_pinned_prompts else None)
-    if (artifact.get("schema_version") != VERSION or artifact.get("fingerprint") != fingerprint
+    if (artifact.get("schema_version") != artifact_version(cfg) or artifact.get("fingerprint") != fingerprint
             or artifact.get("stage") != stage or artifact.get("source") != meta
             or artifact.get("evidence_authority") != "level2"):
         raise ValueError("Existing knowledge version is incompatible; use a new run_id and review reuse settings.")
@@ -166,7 +221,9 @@ def plan_stages(cfg: dict, source_map: dict, through: str, *, allow_pinned_promp
 
 
 def derive(stage: str, content: dict, source: dict | None, upstream: list[dict]) -> tuple[dict, dict, list[str]]:
-    validate_proposal(stage, content)
+    candidate = (source or {}).get("extraction_mode") == "candidate" or any(
+        a.get("schema_version") == "knowledge_candidate.v1" for a in upstream)
+    validate_proposal(stage, content, candidate=candidate)
     warnings, resolved, qualifications = [], {}, {}
     if source and content.get("episode_id") != source["episode_id"]:
         raise ValueError("Model changed episode identity.")
@@ -217,16 +274,102 @@ def derive(stage: str, content: dict, source: dict | None, upstream: list[dict])
             accounting = qualified["counterevidence_accounting"]
             if accounting.get("context_excluded") or accounting.get("unresolved"):
                 warnings.append(f"Counterevidence disposition requires semantic review: {p['principle_id']}")
+    if candidate:
+        from .candidates import derive_candidate
+        derive_candidate(stage, content, source, upstream, resolved, qualifications, warnings)
     return resolved, qualifications, warnings
 
 
-def context(stage: str, source: dict | None, upstream: list[dict]) -> dict:
+def _compact_candidate_context(result: dict, upstream: list[dict]) -> dict:
+    if any(a.get("schema_version") != "knowledge_candidate.v1" for a in upstream):
+        raise ValueError("Compact candidate context requires candidate upstream artifacts.")
+    result = copy.deepcopy(result)
+    sources, issues = {}, {}
+
+    def register(catalog, reference, value):
+        previous = catalog.get(reference, {})
+        if any(previous[key] != value[key] for key in previous.keys() & value.keys()):
+            raise ValueError("Conflicting compact-context catalog reference.")
+        catalog[reference] = {**previous, **value}
+        return reference
+
+    for artifact in upstream:
+        if artifact["stage"] != "level2":
+            continue
+        eid = artifact["source"]["episode_id"]
+        if eid in sources:
+            raise ValueError("Duplicate episode in compact context.")
+        sources[eid] = {"source": copy.deepcopy(artifact["source"]),
+                        "thread_dispositions": copy.deepcopy(artifact["content"]["thread_dispositions"])}
+    for case in result["cases"]:
+        eid = case["episode_id"]
+        ev = case["evidence"]
+        meta = sources[eid]["source"]
+        if (ev["episode_id"] != eid or ev["source_raw_sha256"] != meta["raw_sha256"]
+                or ev["source_normalized_sha256"] != meta["normalized_sha256"]):
+            raise ValueError("Compact case evidence disagrees with its source reference.")
+        ev["source_ref"] = eid
+        for key in ("episode_id", "source_raw_sha256", "source_normalized_sha256"):
+            del ev[key]
+        notes = ev.pop("reviewed_annotations", None)
+        if notes is not None:
+            if notes["sha256"] != meta.get("annotations_sha256"):
+                raise ValueError("Compact annotation/source hash mismatch.")
+            binding = {"sha256": notes["sha256"],
+                       "supporting_review_sha256": copy.deepcopy(notes["review"].get("supporting_review_sha256", []))}
+            register(sources[eid], "annotation_provenance", binding)
+            ev["reviewed_annotation_refs"] = []
+            for note in notes["annotations"]:
+                compact_note = {**note, "episode_id": eid, "issue_id": note["annotation_id"],
+                                "authority": "reviewer_commentary_not_source",
+                                "anchors": [{k: v for k, v in anchor.items() if k != "raw_text"}
+                                            for anchor in note["anchors"]]}
+                reference = eid + "/" + note["annotation_id"]
+                ev["reviewed_annotation_refs"].append(register(issues, reference, compact_note))
+        assessment = ev["candidate_source_assessment"]
+        local_issues = {}
+        for issue in assessment.pop("source_issues"):
+            reference = eid + "/" + issue["issue_id"]
+            if issue["issue_id"] in local_issues:
+                raise ValueError("Duplicate compact case source issue.")
+            local_issues[issue["issue_id"]] = register(issues, reference, {**issue, "episode_id": eid})
+        assessment["source_issue_refs"] = list(local_issues.values())
+        dispositions = assessment["source_issue_dispositions"]
+        if (len(dispositions) != len(local_issues)
+                or {d["issue_id"] for d in dispositions} != set(local_issues)):
+            raise ValueError("Compact case dispositions require exact source-issue references.")
+        for disposition in dispositions:
+            disposition["source_issue_ref"] = local_issues[disposition["issue_id"]]
+    result.update(context_format=COMPACT_CONTEXT, sources=sources, source_issues=issues, context_legend={
+                      "cases": "Every L2 case is retained verbatim; evidence source_ref resolves to sources[episode_id].source hashes. "
+                               "Raw ID ranges are inclusive; timestamp_regions retain separate cited regions.",
+                      "notes": "reviewed_annotation_refs and source_issue_refs both resolve to the top-level source_issues catalog. "
+                               "Keys are episode-scoped. Notes and candidate assessments are commentary, not speaker evidence.",
+                      "omissions": "sources[episode_id].thread_dispositions retains every omission reason, including ambiguity "
+                                   "inside used regions. Omitted subclaims must not be treated as case support.",
+                      "provenance": "Only repeated raw anchor text and annotation-review blobs are omitted from this model view. "
+                                    "Exact note text, corrections, raw anchor IDs/times and source/review hashes are retained. "
+                                    "Full provenance remains in the immutable upstream artifacts; no source acceptance is granted."})
+    return result
+
+
+def context(stage: str, source: dict | None, upstream: list[dict], context_format=None) -> dict:
+    if context_format is not None and context_format != COMPACT_CONTEXT:
+        raise ValueError("Unsupported context_format.")
     if stage in {"level1", "level2"}:
         result = {"episode": _source_meta(source), "transcript": [
             {k: s[k] for k in ("merged_id", "start", "end", "normalized_text_zh_tw", "terminology_annotations")}
             for s in source["segments"]]}
+        if "reviewed_annotations" in source:
+            result["reviewed_annotations"] = copy.deepcopy(source["reviewed_annotations"])
+            for note in result["reviewed_annotations"]["annotations"]:
+                ids = {a["segment_id"] for a in note["anchors"]}
+                note["merged_ids"] = [s["merged_id"] for s in source["segments"] if ids.intersection(s["source_segment_ids"])]
         if stage == "level2":
             result["episode_map"] = upstream[0]["content"]
+        if source.get("extraction_mode") == "candidate":
+            from .candidates import source_issues
+            result["source_issues"] = source_issues(source, upstream[0] if stage == "level2" else None)
         return result
     result = {"cases": list(case_catalog([a for a in upstream if a["stage"] == "level2"]).values())}
     if stage == "level3":
@@ -241,6 +384,8 @@ def context(stage: str, source: dict | None, upstream: list[dict]) -> dict:
              "counterexamples": p["counterexamples"], "contradictions": p["contradictions"]}
             for a in upstream if a["stage"] == "level3" for p in a["content"]["principles"]
             if p["counterexamples"] or p["contradictions"]]
+    if stage == "level4" and context_format == COMPACT_CONTEXT:
+        return _compact_candidate_context(result, upstream)
     return result
 
 
@@ -248,6 +393,7 @@ def run(cfg: dict, *, through: str = "level4", dry_run: bool = False, validate_o
         backend=None, allow_pinned_prompts: bool = False) -> dict:
     from .codex_backend import CodexBackend
 
+    context_format = _context_format(cfg)
     if allow_pinned_prompts and not validate_only:
         raise ValueError("Pinned prompts are for reviewed release validation, never new extraction/reuse planning.")
     source_map = sources(cfg)  # Fail before any paid call if quality or provenance is invalid.
@@ -257,7 +403,8 @@ def run(cfg: dict, *, through: str = "level4", dry_run: bool = False, validate_o
         return {"dry_run": True, "episode_ids": list(source_map), "through": through,
                 "maximum_initial_calls": len(source_map) * min(STAGES.index(through) + 1, 3) + int(through == "level4"),
                 "estimated_new_calls": sum(r["action"] == "planned" for r in planned),
-                "artifacts": planned, "output": str(root), "sources_accepted": True}
+                "artifacts": planned, "output": str(root), "sources_accepted": not candidate_mode(cfg),
+                "extraction_mode": "candidate" if candidate_mode(cfg) else "reviewed"}
     if validate_only:
         if any(r["action"] == "planned" for r in planned):
             raise ValueError("Missing knowledge artifact; validation does not run a model.")
@@ -284,22 +431,58 @@ def run(cfg: dict, *, through: str = "level4", dry_run: bool = False, validate_o
                     if len(calls) >= cfg["max_calls"]:
                         raise ValueError("Configured model-call limit reached; completed stages remain resumable.")
                     call_id = f"{identifier}_{stage}_{len(list((root / 'calls').glob('*.json'))) + 1}"
-                    request_context = context(stage, source, upstream)
+                    request_context = context(stage, source, upstream, context_format=context_format)
+                    recovered = None
+                    # Resume/one bounded retry can repair a rejected proposal using
+                    # the real validator error, without overwriting that attempt.
+                    previous_calls = sorted((root / "calls").glob(f"{identifier}_{stage}_*.json"),
+                                            key=lambda p: int(p.stem.rsplit("_", 1)[1]))
+                    if previous_calls:
+                        previous = read_json(previous_calls[-1])
+                        if (previous.get("status") == "failed" and previous.get("fingerprint") == fingerprint
+                                and isinstance(previous.get("response"), dict)):
+                            try:
+                                derive(stage, previous["response"], source, upstream)
+                            except ValueError as invalid:
+                                request_context["validation_repair"] = {
+                                    "previous_proposal": previous["response"],
+                                    "validation_error": str(invalid)[:2000],
+                                    "instruction": "Correct the invalid structure/references against the supplied source. "
+                                                   "Do not invent context, evidence or speaker claims to satisfy validation.",
+                                    "previous_call_sha256": sha256_file(previous_calls[-1])}
+                            else:
+                                # A candidate rejected by an older validator may now
+                                # pass. Preserve that call and revalidate its exact
+                                # proposal, rather than paying to recreate it.
+                                if candidate_mode(cfg):
+                                    recovered = (previous, sha256_file(previous_calls[-1]))
                     usage, response = None, None
                     try:
-                        response, usage = model.complete(prompt, request_context, schema(stage))
+                        if recovered is not None:
+                            response = recovered[0]["response"]
+                            usage = {"provider": "candidate_revalidation", "model": cfg["model"],
+                                     "model_call_performed": False, "usage": None, "cost_usd": None,
+                                     "latency_seconds": 0, "recovered_call_sha256": recovered[1],
+                                     "note": "No new inference; original model usage remains in the immutable failed call."}
+                        else:
+                            response, usage = model.complete(prompt, request_context, schema(stage, candidate=candidate_mode(cfg)))
                         ev, qual, warn = derive(stage, response, source, upstream)
                     except (ValueError, RuntimeError) as exc:
                         usage = getattr(exc, "metadata", usage)
                         report = {"stage": stage, "episode_id": identifier, "status": "failed", "attempt": attempt + 1,
-                                  "error_type": type(exc).__name__, "response": response, "usage": usage, "fingerprint": fingerprint}
+                                  "error_type": type(exc).__name__, "response": response, "usage": usage, "fingerprint": fingerprint,
+                                  "request_context_sha256": digest(request_context),
+                                  "repair_from_sha256": request_context.get("validation_repair", {}).get("previous_call_sha256")}
                         calls.append(report)
                         atomic_write_json(root / "calls" / (call_id + ".json"), report, overwrite=False)
                         if attempt == cfg["retry_count"]:
                             raise ValueError(f"{stage} extraction/validation failed; inspect private call record, never publish invalid output.") from exc
                     else:
-                        report = {"stage": stage, "episode_id": identifier, "status": "completed", "attempt": attempt + 1,
-                                  "usage": usage, "fingerprint": fingerprint}
+                        report = {"stage": stage, "episode_id": identifier,
+                                  "status": "revalidated" if recovered is not None else "completed", "attempt": attempt + 1,
+                                  "usage": usage, "fingerprint": fingerprint,
+                                  "request_context_sha256": digest(request_context),
+                                  "repair_from_sha256": request_context.get("validation_repair", {}).get("previous_call_sha256")}
                         calls.append(report)
                         atomic_write_json(root / "calls" / (call_id + ".json"), report, overwrite=False)
                         break
@@ -309,11 +492,13 @@ def run(cfg: dict, *, through: str = "level4", dry_run: bool = False, validate_o
                 for item in planned:
                     if item["action"] == "referenced" and sha256_file(Path(item["artifact_path"])) != item["sha256"]:
                         raise ValueError("Pinned artifact changed during extraction; result not published.")
-                artifact = {"schema_version": VERSION, "stage": stage, "created_at": utc_now(),
+                artifact = {"schema_version": artifact_version(cfg), "stage": stage, "created_at": utc_now(),
                             "fingerprint": fingerprint, "source": source_meta, "content": response,
                             "generation_prompt": prompt,
                             "evidence": ev, "qualification": qual, "warnings": warn, "model_metadata": usage,
                             "semantic_review_status": "pending", "evidence_authority": "level2"}
+                if stage == "level4" and context_format is not None:
+                    artifact["context_format"] = context_format
                 atomic_write_json(path, artifact, overwrite=False)
                 action = "created"
             records.append({"path": f"{identifier}/{stage}.json", "artifact_path": str(path), "stage": stage, "action": action,
@@ -332,7 +517,10 @@ def run(cfg: dict, *, through: str = "level4", dry_run: bool = False, validate_o
         if through == "level4":
             stage_run("level4", None, [a for row in outputs.values() for a in row])
         report = {"schema_version": "knowledge_run.v1", "run_id": cfg["run_id"], "artifacts": records,
-                  "model_calls_this_execution": len(calls), "ready_for_serving": False,
+                  "model_calls_this_execution": sum(c.get("usage", {}).get("model_call_performed", True)
+                                                     if isinstance(c.get("usage"), dict) else 1 for c in calls),
+                  "revalidated_candidate_stages": sum(c["status"] == "revalidated" for c in calls),
+                  "ready_for_serving": False,
                   "note": "Structural/evidence validation is not semantic certification. Publish only after source-grounded review."}
         atomic_write_json(root / "run_report.json", report)
         return report
@@ -340,6 +528,8 @@ def run(cfg: dict, *, through: str = "level4", dry_run: bool = False, validate_o
 
 def extend(cfg: dict, additions_path: Path, run_id: str, output: Path, *, replace_existing: bool = False) -> dict:
     """Prepare an explicit update; reference prior artifacts without copying them."""
+    if candidate_mode(cfg):
+        raise ValueError("Candidate extension uses a new explicit batch/configuration, not reviewed-source promotion.")
     output = private_path(output)
     new_root = child_path(private_path(cfg["output_root"]), safe_id(run_id))
     if run_id == cfg["run_id"] or output.exists() or new_root.exists():

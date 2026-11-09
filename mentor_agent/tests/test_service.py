@@ -23,7 +23,7 @@ def client():
     mentor.settings = {"max_query_chars": 20}
     mentor.ask.return_value = {
         "route": "insufficient_evidence", "answer": {}, "citations": [], "guards": [],
-        "release_sha256": "a" * 64,
+        "release_sha256": "a" * 64, "evidence_review_limits": [],
     }
     with TestClient(create_app(mentor), base_url="http://127.0.0.1") as client:
         yield client, mentor
@@ -39,7 +39,7 @@ def test_bad_queries_are_client_errors_without_work(client, body):
 
 def test_configured_query_limit_overrides_old_hardcoded_limit():
     mentor = Mock(settings={"max_query_chars": 3000})
-    mentor.ask.return_value = {key: [] for key in ("route", "answer", "citations", "guards", "release_sha256")}
+    mentor.ask.return_value = {key: [] for key in ("route", "answer", "citations", "guards", "release_sha256", "evidence_review_limits")}
     with TestClient(create_app(mentor), base_url="http://127.0.0.1") as client:
         assert client.post("/ask", json={"query": "x" * 2500}).status_code == 200
     mentor.ask.assert_called_once()

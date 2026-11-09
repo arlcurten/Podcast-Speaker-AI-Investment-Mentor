@@ -70,7 +70,7 @@ def main(argv: list[str] | None = None) -> int:
     sub = commands.add_parser("validate-transcript")
     sub.add_argument("--input", required=True, type=Path)
     sub.add_argument("--episode")
-    sub.add_argument("--review", type=Path, help="Private source-hash-bound transcript_review.v1 assessment")
+    sub.add_argument("--review", type=Path, help="Private transcript_review.v1 or v2 assessment; v2 pins its annotation sidecar")
     sub.add_argument("--require-ready", action="store_true", help="Nonzero exit if content review is missing or rejects extraction")
     sub = commands.add_parser("prepare")
     sub.add_argument("--input", required=True, type=Path)

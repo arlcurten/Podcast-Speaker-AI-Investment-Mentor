@@ -292,6 +292,93 @@ It can prepare a pending-review view, but that is not accepted evidence.
 The active `knowledge` consumer rejects unaccepted versions. New outputs never
 overwrite old ones.
 
+### Episode-Local Reviewed Annotations
+
+`transcript_review.v1` keeps its original behavior. To require a separately
+reviewed annotation sidecar, use `transcript_review.v2` with all the same source
+review fields and one additional reference:
+
+```json
+"annotations": {"path": "SYN1_annotations.json", "sha256": "<exact sidecar SHA-256>"}
+```
+
+No extra CLI flag or knowledge configuration field is needed. The reference is
+required for v2 and cannot be dropped to bypass a note. Its path is relative to
+the review file, or an absolute private path. Supporting-review paths below are
+relative to the sidecar, or absolute private paths. All resolved paths must stay
+outside the public repository, including through symlinks. Every referenced file
+must exist and match its SHA-256 when preparing, extracting or loading a release.
+
+The following schema example is synthetic, with no private transcript source.
+Replace the placeholders with actual hashes, review metadata and exact raw
+anchors in private storage; this example is not an acceptance review:
+
+```json
+{
+  "schema_version": "transcript_annotations.v1",
+  "episode_id": "SYN1",
+  "transcript_sha256": "<exact raw file SHA-256>",
+  "decision": "accept_annotations",
+  "reviewer": "<actual reviewer or reviewing system>",
+  "reviewed_at": "<actual review timestamp>",
+  "method": "<checks performed, evidence type, and limitations>",
+  "supporting_reviews": [
+    {"path": "evidence/focused_review.json", "sha256": "<exact file SHA-256>"}
+  ],
+  "annotations": [
+    {
+      "annotation_id": "SYN1:A01",
+      "kind": "interpretive_caution",
+      "severity": "critical",
+      "anchors": [
+        {"segment_id": 12, "raw_text": "<complete exact raw segment text>", "start": 10.0, "end": 12.0}
+      ],
+      "note": "<spoken inconsistency, numerical ambiguity, attribution or scope caution>"
+    }
+  ]
+}
+```
+
+The sidecar accepts exactly these fields. `annotations`, `supporting_reviews`
+and each `anchors` list are nonempty. Annotation IDs are unique within the
+episode; each note's anchor IDs are unique. Anchors must match complete raw text
+and original segment timestamps exactly, not edited text or inferred word timing.
+Record actual audio interval coverage and audio identity/binding limitations in
+the supporting review artifact. A hash proves file identity, not listening,
+audio fidelity, review truth or independent corroboration.
+
+Kinds and their contracts:
+
+- `transcription_correction`: add a required nonempty `correction` string for a
+  separately reviewed ASR/terminology reading. It is context, never a text edit.
+  Combine corrections on an overlapping raw segment into one reviewed reading;
+  incompatible correction strings on overlapping anchors are rejected.
+- `interpretive_caution`: the transcript may accurately preserve a spoken slip,
+  inconsistent arithmetic, listener premise or attribution hazard. Explain it in
+  `note`; a `correction` field is prohibited. Do not invent intended wording.
+- `uncertainty`: preserve unresolved wording or meaning in `note`; a `correction`
+  field is prohibited. Model agreement or repetition of an ambiguous homophone
+  alone is not resolution and must not be promoted into a confirmed correction.
+
+Severity is `critical` or `noncritical`. A critical `uncertainty` blocks readiness
+even if the source review claims acceptance with an empty critical-issue list.
+A separately qualified critical caution is not automatically blocking, but it
+does not approve the source either: the source review must still accept with no
+unresolved critical issues. Do not relabel unresolved critical semantics as a
+caution to pass. Reviewers remain responsible for these semantic distinctions.
+Use `method` and `note` to state model-assisted evidence and its limitations
+honestly; no field or validation result implies human listening.
+
+Raw and normalized text, mapping and dictionary suggestions are unchanged.
+Normalized metadata additionally pins `annotations_sha256`; complete notes stay
+in their sidecar. A changed sidecar or supporting review needs a new sidecar,
+source review, normalized version and affected knowledge run, with fresh review.
+Retain earlier versions. Source acceptance and annotation review are separate;
+pending normalization remains possible but does not become accepted evidence.
+There is no scoped exclusion, automatic correction, or quality-gate bypass.
+Unanchored missing-speech concerns remain in the source review's unresolved
+critical issues, not fabricated segment annotations.
+
 ## Validation
 
 ```bash

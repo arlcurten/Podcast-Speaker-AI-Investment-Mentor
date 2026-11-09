@@ -9,6 +9,7 @@ from itertools import combinations
 from importlib.metadata import version
 
 from transcription.common import TERMINOLOGY, private_path, read_json, sha256_file
+from transcription.annotations import load_annotations
 from transcription.prepare import annotate_terms, load_annotation_terms
 from transcription.quality import quality_gate
 
@@ -19,6 +20,7 @@ def digest(payload) -> str:
 
 def load_source(raw_path, normalized_path, review_path) -> dict:
     raw_path, normalized_path, review_path = map(private_path, (raw_path, normalized_path, review_path))
+    hashes = {p: sha256_file(p) for p in (raw_path, normalized_path, review_path)}
     quality = quality_gate(raw_path, review_path=review_path)
     if not quality["ready_for_extraction"]:
         raise ValueError("Source quality is not accepted; review the exact transcript before extraction.")
@@ -62,10 +64,19 @@ def load_source(raw_path, normalized_path, review_path) -> dict:
         mapped.extend(ids)
     if mapped != list(raw_segments):
         raise ValueError("Normalized mapping must cover raw segments exactly once, in source order.")
-    return {"episode_id": quality["episode_id"], "raw_sha256": sha256_file(raw_path),
-            "normalized_sha256": sha256_file(normalized_path), "review_sha256": sha256_file(review_path),
+    result = {"episode_id": quality["episode_id"], "raw_sha256": hashes[raw_path],
+            "normalized_sha256": hashes[normalized_path], "review_sha256": hashes[review_path],
             "publication_date": raw["metadata"].get("source_episode_metadata", {}).get("publication_date"),
             "segments": normalized["segments"], "raw_segments": raw_segments}
+    notes = load_annotations(read_json(review_path), review_path, raw, hashes[raw_path])
+    if notes is not None:
+        if (notes["sha256"] != quality.get("annotations_sha256")
+                or metadata.get("annotations_sha256") != notes["sha256"]):
+            raise ValueError("Normalized annotation/review version mismatch; prepare a new version.")
+        result.update(annotations_sha256=notes["sha256"], reviewed_annotations=notes)
+    if any(sha256_file(p) != checksum for p, checksum in hashes.items()):
+        raise ValueError("Source changed during provenance validation.")
+    return result
 
 
 def compact_ids(ids: list[int]) -> dict:
@@ -99,9 +110,15 @@ def evidence(merged_ids: list[int], source: dict) -> dict:
             regions[-1]["end"] = row["end"]
         else:
             regions.append({"start": row["start"], "end": row["end"], "merged_ids": [row["merged_id"]]})
-    return {"episode_id": source["episode_id"], "source_raw_sha256": source["raw_sha256"],
+    result = {"episode_id": source["episode_id"], "source_raw_sha256": source["raw_sha256"],
             "source_normalized_sha256": source["normalized_sha256"], "merged_ids": sorted(merged_ids),
             **compact_ids(raw_ids), "timestamp_regions": regions}
+    if "reviewed_annotations" in source:
+        notes = copy.deepcopy(source["reviewed_annotations"])
+        notes["annotations"] = [a for a in notes["annotations"]
+                                if any(anchor["segment_id"] in raw_ids for anchor in a["anchors"])]
+        result["reviewed_annotations"] = notes
+    return result
 
 
 def case_catalog(level2_artifacts: list[dict]) -> dict:
@@ -186,18 +203,22 @@ def provenance_statistics(ids: list[str], cases: dict, relationships: list[dict]
 
 
 def _counterevidence_accounting(p: dict, cases: dict, upstream_l3: dict) -> dict:
-    expected = set()
+    expected, available = set(), set()
     support = set(p["supporting_records"])
     # Include all overlapping upstream abstractions, even if derived_from names
     # cases directly or an upstream abstraction is ineligible due to conflict.
     for pid, parent in upstream_l3.items():
+        links = {(pid, row["record_id"], kind)
+                 for kind, field in (("counterexample", "counterexamples"), ("contradiction", "contradictions"))
+                 for row in parent[field]}
+        available.update(links)
         if support & set(parent["supporting_records"]):
-            for kind, field in (("counterexample", "counterexamples"), ("contradiction", "contradictions")):
-                expected.update((pid, row["record_id"], kind) for row in parent[field])
+            expected.update(links)
     seen, counts = set(), {"retained": 0, "context_excluded": 0, "unresolved": 0}
     for row in p.get("counterevidence_dispositions", []):
         key = (row["source_principle_id"], row["record_id"], row["kind"])
-        if key not in expected or key in seen or row["record_id"] not in cases or not row["reason"].strip():
+        if (key not in available or key in seen or row["record_id"] not in cases
+                or not isinstance(row.get("reason"), str) or not row["reason"].strip()):
             raise ValueError("Invalid/duplicate upstream counterevidence disposition or missing reason.")
         seen.add(key)
         disposition = row["disposition"]
@@ -206,11 +227,16 @@ def _counterevidence_accounting(p: dict, cases: dict, upstream_l3: dict) -> dict
         if disposition not in counts or retained != (disposition != "context_excluded"):
             raise ValueError("Counterevidence disposition disagrees with retained Level 4 evidence.")
         counts[disposition] += 1
-    if seen != expected:
+    if not expected <= seen:
         raise ValueError("Known upstream counterevidence needs an explicit retained/excluded/unresolved disposition.")
-    return {"upstream_link_count": len(expected), **counts,
-            "unique_record_count": len({key[1] for key in expected}),
-            "scope": "Link counts are not independent evidence counts; exclusions require semantic review."}
+    result = {"upstream_link_count": len(seen), **counts,
+              "unique_record_count": len({key[1] for key in seen}),
+              "scope": "Link counts are not independent evidence counts; exclusions require semantic review."}
+    # Keep existing qualification metadata identical when only required links
+    # are accounted for; stored artifacts are compared to reconstruction exactly.
+    if seen - expected:
+        result.update(required_link_count=len(expected), additional_link_count=len(seen - expected))
+    return result
 
 
 def qualify(principle: dict, cases: dict, stage: str, eligible_l3: dict | None = None,

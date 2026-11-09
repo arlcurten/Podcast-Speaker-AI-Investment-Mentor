@@ -86,8 +86,25 @@ def compact_case(case: dict) -> dict:
     fields = ("record_id", "episode_id", "publication_date", "title", "speaker_attribution", "claims", "reasoning_steps",
               "assumptions", "conditions", "risks", "exceptions", "uncertainty", "contradictions",
               "preferred_actions", "decision_preferences", "view_change_conditions", "speaker_behavior", "domains")
-    return {**{k: case[k] for k in fields}, "evidence": case["evidence"],
-            "candidate_roles": case["retrieval"]["roles"], "role_reasons": case["retrieval"]["role_reasons"]}
+    review_fields = ("source_assessment", "supplementary_notes")
+    compact = {**{k: case[k] for k in fields}, **{k: case[k] for k in review_fields if k in case}, "evidence": case["evidence"],
+               "candidate_roles": case["retrieval"]["roles"], "role_reasons": case["retrieval"]["role_reasons"]}
+    if "scoped_review" in case:
+        # Hashes/full review remain in the release; models need scope and material caveats.
+        keys = ("scope", "decision", "source_acceptance", "usage", "authority", "review_sha256", "limitations",
+                "review_limitations", "issue_dispositions", "global_dispositions", "omission_dispositions")
+        compact["scoped_review"] = {k: case["scoped_review"][k] for k in keys}
+    return compact
+
+
+def evidence_review_limits(cases: list[dict]) -> list[dict]:
+    """Keep case-use limitations visible even if model prose omits them."""
+    return [{"record_id": c["record_id"], "scope": c["scoped_review"]["scope"],
+             "source_acceptance": c["scoped_review"]["source_acceptance"],
+             "review_sha256": c["scoped_review"]["review_sha256"],
+             "limitations": list(dict.fromkeys(c["scoped_review"]["review_limitations"]
+                                               + c["scoped_review"]["limitations"]))}
+            for c in cases if "scoped_review" in c]
 
 
 def assessment_references(assessment: dict) -> set[str]:
@@ -214,17 +231,21 @@ class Mentor:
         self.validate_release()
         result = {"query": query, "route": "insufficient_evidence", "analysis": None, "retrieval": None,
                   "assessment": None, "answer": None, "citations": [], "calls": [], "guards": [],
-                  "release_sha256": self.release_hash}
+                  "release_sha256": self.release_hash, "evidence_review_limits": []}
         try:
             if no_llm:
                 result["retrieval"] = {"diagnostic_hits": self.index.search(query, []), "model_used": False}
+                result["evidence_review_limits"] = evidence_review_limits([
+                    self.index.cases[h["record_id"]] for h in result["retrieval"]["diagnostic_hits"]])
                 return self.fallback(result, "No-LLM mode: evidence search only, not a speaker answer.")
             analysis = self.call("analysis", {"query": query, "principle_index": self.index.principle_index(),
+                                             "available_case_count": len(self.index.cases),
                                              "available_domains": sorted({d for c in self.index.cases.values() for d in c["domains"]})}, ANALYSIS, result["calls"])
             analysis["current_data_required"] |= bool(CURRENT.search(query))
             result["analysis"] = analysis
             retrieval = self.index.select(query, analysis)
             result["retrieval"] = retrieval
+            result["evidence_review_limits"] = evidence_review_limits(retrieval["cases"])
             hosts = [c for c in retrieval["cases"] if c["speaker_attribution"] == "host"]
             if len(hosts) < self.settings["minimum_host_cases"]:
                 return self.fallback(result, "No sufficient relevant host-attributed historical cases were retrieved.")

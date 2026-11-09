@@ -60,7 +60,8 @@ python3 -m transcription prepare --input "$RAW_TRANSCRIPT" --review "$QUALITY_RE
 
 Completed episodes are skipped on resume. Retry failures explicitly with
 `batch-resume --retry-failed`. Structural validation does not approve transcript
-accuracy; [source review](transcription/README.md#quality-gate) is required before extraction.
+accuracy. Reviewed extraction requires [source acceptance](transcription/README.md#quality-gate);
+quarantined candidate extraction can proceed with explicitly retained local uncertainty.
 Snapshots are checksum-bound, read-only copies, not hard links. Restore into a
 new directory only; see [preservation and recovery](transcription/README.md#raw-preservation).
 
@@ -80,6 +81,19 @@ python3 -m knowledge publish --config "$KNOWLEDGE_CONFIG" --review "$KNOWLEDGE_R
 
 Only configured episodes are processed. Set `MENTOR_RELEASE` in `.env` to the
 published descriptor. [Extraction, review and updates](knowledge/README.md).
+
+For corpus construction, use a private batch config with
+`extraction_mode: candidate`. Agents assess ambiguous passages during extraction;
+brief supplementary notes stay separate from source claims. Candidates cannot
+enter Mentor releases automatically.
+
+```bash
+python3 -m knowledge.batch --config "$KNOWLEDGE_BATCH_CONFIG" --dry-run
+python3 -m knowledge.batch --config "$KNOWLEDGE_BATCH_CONFIG" --workers 4
+# After all explicitly selected episode jobs complete, plan then run bounded L4:
+python3 -m knowledge.batch --config "$KNOWLEDGE_BATCH_CONFIG" --consolidate-config "$L4_CONFIG" --run-id candidate_cross_v1
+python3 -m knowledge run --config "$L4_CONFIG" --through level4
+```
 
 ### Use the Mentor
 
@@ -133,15 +147,15 @@ flowchart TD
     end
 
     raw --> privateRaw["Validated transfer / save to private storage"]
-    privateRaw --> prepare["Source-content review + normalization"]
+    privateRaw --> prepare["Immutable normalization + source limitations"]
 
     subgraph offline["Offline knowledge: Codex CLI + deterministic validation"]
-        prepare --> l1["L1: episode semantic map"]
-        l1 --> l2["L2: reasoning cases + source evidence"]
+        prepare --> l1["L1: episode map + separate source observations"]
+        l1 --> l2["L2: cases + evidence + case-local uncertainty assessment"]
         l2 --> l3["L3: provisional episode principles, or bypass"]
         l2 --> l4["L4: cross-episode candidate principles"]
         l3 --> l4
-        l2 --> release["Semantic review + versioned private release"]
+        l2 --> release["Source acceptance + semantic review + private release"]
         l4 --> release
     end
 
@@ -162,3 +176,8 @@ flowchart TD
 **L2 cases are evidence; L4 principles are revisable abstractions, not extra
 evidence.** Codex and OpenRouter receive selected context remotely; local
 storage does not mean local LLM inference. No live-market tools or trading execution.
+
+General introductions: [architecture](docs/architecture.md),
+[L1-L4 knowledge layers](docs/data-model.md), and
+[behavioral profile layers](docs/speaker_profile.md).
+Speaker-specific design notes, experiments and tuning decisions remain private.

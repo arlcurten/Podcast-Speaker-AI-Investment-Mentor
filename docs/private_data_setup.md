@@ -5,7 +5,7 @@ This public repository should contain source code, schemas, prompts, public docu
 ```text
 projects/
 ├── Podcast-Speaker-AI-Investment-Mentor/
-└── AI-Investment-Mentor-private/
+└── <private-data-repository>/
 ```
 
 ## Environment Variables
@@ -13,9 +13,9 @@ projects/
 Create a local `.env` in the public repository or export these values in your shell:
 
 ```bash
-PODCAST_DATA_ROOT=/absolute/path/to/AI-Investment-Mentor-private/shared_data
-PIPELINE_DATA_ROOT=/absolute/path/to/AI-Investment-Mentor-private/pipeline_data
-PRIVATE_DOCS_ROOT=/absolute/path/to/AI-Investment-Mentor-private/private_docs
+PODCAST_DATA_ROOT=/path/to/private-data-repository/shared_data
+PIPELINE_DATA_ROOT=/path/to/private-data-repository/pipeline_data
+PRIVATE_DOCS_ROOT=/path/to/private-data-repository/private_docs
 ```
 
 Do not commit `.env`.
@@ -54,6 +54,7 @@ on the transcription GPU worker.
 - private reports and review notes
 - retrieval indexes and runtime outputs
 - internal documents, experiment notes, and private know-how
+- complete design notes and speaker-specific selection, evaluation and tuning strategies, under the private document root's `design_notes/`
 
 Public samples do not replace private data and must not be used as production pipeline input.
 

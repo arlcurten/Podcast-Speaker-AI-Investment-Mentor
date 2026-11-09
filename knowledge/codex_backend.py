@@ -105,13 +105,15 @@ class CodexBackend:
                     kind = event.get("item", {}).get("type")
                     if kind not in {"agent_message", "reasoning"}:
                         if kind == "error":
-                            message = str(event["item"].get("message", "Unspecified CLI error"))[:500]
-                            notices.append(re.sub(r"https?://\S+|sk-[A-Za-z0-9_-]+|gh[pousr]_[A-Za-z0-9]+", "[redacted]", message))
-                            if message == DISABLED_HOST_NOTICE:
+                            notice = str(event["item"].get("message", "Unspecified CLI error"))[:500]
+                            notices.append(re.sub(r"https?://\S+|sk-[A-Za-z0-9_-]+|gh[pousr]_[A-Za-z0-9]+", "[redacted]", notice))
+                            if notice == DISABLED_HOST_NOTICE:
                                 continue
                         unexpected.append(kind)
             metadata = {"provider": "codex_cli", "model": self.model, "reasoning_effort": self.effort,
                         "latency_seconds": time.perf_counter() - start, "usage": usage,
+                        "input_characters": len(message),
+                        "context_characters": len(json.dumps(context, ensure_ascii=False, separators=(",", ":"))),
                         "cost_usd": None, "cost_scope": "Subscription usage; no per-call monetary metadata available.",
                         "tool_execution_allowed": False, "unexpected_item_types": unexpected,
                         "cli_notices": notices}

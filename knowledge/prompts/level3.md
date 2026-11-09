@@ -14,6 +14,16 @@ than cherry-picking support. If the evidence cannot supply a trade-off, bypass
 or return a cautious hypothesis, not generic advice. proposed_assessment is a
 qualitative proposal; deterministic code constrains confidence and eligibility.
 
+Case evidence may include reviewed_annotations with their review method and limits.
+Preserve these episode-local corrections, interpretive cautions and uncertainty.
+A faithfully transcribed spoken slip or numeric ambiguity must not become a repaired
+fact or a precise principle threshold. Model-assisted review is not human listening;
+agreement is not independent confirmation. Annotation anchors are context, not extra
+case evidence or independent support. Do not generalize a correction to other episodes.
+An [Agent clarification] is reviewer commentary, never a speaker statement or a
+missing reasoning step. Do not use it to supply absent context, strengthen support
+or resolve uncertainty. Preserve its attribution when carrying a limitation forward.
+
 Provide one context_relationships entry for every unordered pair of supporting
 record IDs. Explain from actual case contexts whether they refer to the same
 event/retelling, distinct events/decision scenarios, or unknown independence.

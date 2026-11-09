@@ -5,7 +5,7 @@ from pathlib import Path
 import pytest
 
 from knowledge import pipeline
-from knowledge.provenance import qualify, provenance_statistics
+from knowledge.provenance import _counterevidence_accounting, qualify, provenance_statistics
 from knowledge.release import publish
 from knowledge.schemas import VERSION, schema, validate_proposal
 from knowledge.tests.test_pipeline import cfg, FakeModel, case, principle
@@ -152,6 +152,149 @@ def test_ineligible_parent_cannot_hide_known_conflicts(cases):
     assert not qualify(ancestor, cases, "level3")["eligible_for_level4"]
     with pytest.raises(ValueError, match="Known upstream counterevidence"):
         qualify(cross(), cases, "level4", {}, {"SYN1:P1": ancestor})
+
+
+def additional_counterevidence(kind="counterexample", status="retained"):
+    p, required = cross(), parent()
+    p["counterevidence_dispositions"] = [disposition()]
+    p["contradictions"] = copy.deepcopy(required["contradictions"])
+    extra = {**principle("SYN2:P2", ["SYN2:R2"]), "episode_id": "SYN2", "eligible_for_level4": False}
+    field = "counterexamples" if kind == "counterexample" else "contradictions"
+    extra[field] = [{"record_id": "SYN2:R3", "explanation": "Synthetic relevant evidence beyond support overlap"}]
+    p["counterevidence_dispositions"].append({
+        "source_principle_id": "SYN2:P2", "record_id": "SYN2:R3", "kind": kind,
+        "disposition": status, "reason": "Synthetic case-local comparison with the supplied counterevidence"})
+    if status != "context_excluded":
+        p[field].extend(copy.deepcopy(extra[field]))
+    return p, {"SYN1:P1": required, "SYN2:P2": extra}
+
+
+@pytest.mark.parametrize("kind", ["counterexample", "contradiction"])
+@pytest.mark.parametrize("status", ["retained", "context_excluded", "unresolved"])
+def test_additional_exact_upstream_counterevidence_is_allowed_without_support_inflation(cases, kind, status):
+    p, upstream = additional_counterevidence(kind, status)
+    before = provenance_statistics(p["supporting_records"], cases, p["context_relationships"])
+    q = qualify(p, cases, "level4", {}, upstream)
+    accounting = q["counterevidence_accounting"]
+    assert accounting["upstream_link_count"] == 2
+    assert accounting["required_link_count"] == accounting["additional_link_count"] == 1
+    assert accounting["unique_record_count"] == 2
+    assert accounting[status] == (2 if status == "retained" else 1)
+    assert q["provenance"] == before
+    assert q["supporting_records"] == ["SYN1:R1", "SYN2:R1"]
+    assert q["provenance"]["independent_source_context_count"] == 2
+    assert q["confidence"]["overall"] != "high"
+    if status == "unresolved":
+        assert q["confidence"]["overall"] == "low"
+        assert not q["eligible_for_online_reasoning"]
+
+
+@pytest.mark.parametrize("mutation", ["wrong_parent", "wrong_record", "wrong_kind", "missing_case",
+                                      "duplicate", "missing_required", "blank_reason", "nontext_reason",
+                                      "retained_but_absent", "excluded_but_retained", "unknown_disposition"])
+def test_additional_counterevidence_keeps_exact_link_and_disposition_checks(cases, mutation):
+    p, upstream = additional_counterevidence()
+    row = p["counterevidence_dispositions"][-1]
+    if mutation == "wrong_parent":
+        row["source_principle_id"] = "SYN1:P1"  # Existing parent, but not this tuple.
+    elif mutation == "wrong_record":
+        row["record_id"] = "SYN1:R3"  # Existing case and upstream link, but under another parent/kind.
+    elif mutation == "wrong_kind":
+        row["kind"] = "contradiction"
+        p["contradictions"].extend(p.pop("counterexamples"))
+        p["counterexamples"] = []
+    elif mutation == "missing_case":
+        del cases["SYN2:R3"]
+        row["disposition"] = "context_excluded"
+        p["counterexamples"] = []
+    elif mutation == "duplicate":
+        p["counterevidence_dispositions"].append(copy.deepcopy(row))
+    elif mutation == "missing_required":
+        p["counterevidence_dispositions"].pop(0)
+    elif mutation == "blank_reason":
+        row["reason"] = " \n\t"
+    elif mutation == "nontext_reason":
+        row["reason"] = None
+    elif mutation == "retained_but_absent":
+        p["counterexamples"] = []
+    elif mutation == "excluded_but_retained":
+        row["disposition"] = "context_excluded"
+    else:
+        row["disposition"] = "ignored"
+    with pytest.raises(ValueError):
+        qualify(p, cases, "level4", {}, upstream)
+
+
+def test_optional_links_do_not_make_other_nonoverlapping_links_required(cases):
+    p, upstream = additional_counterevidence()
+    upstream["SYN2:P2"]["contradictions"] = [
+        {"record_id": "SYN2:R2", "explanation": "Synthetic unselected additional link"}]
+    accounting = qualify(p, cases, "level4", {}, upstream)["counterevidence_accounting"]
+    assert accounting["upstream_link_count"] == 2
+    assert accounting["required_link_count"] == accounting["additional_link_count"] == 1
+
+
+def test_optional_links_can_be_selected_when_no_parent_overlaps_support(cases):
+    p, upstream = additional_counterevidence()
+    del upstream["SYN1:P1"]
+    p["counterevidence_dispositions"].pop(0)
+    p["contradictions"] = []
+    accounting = qualify(p, cases, "level4", {}, upstream)["counterevidence_accounting"]
+    assert accounting["required_link_count"] == 0
+    assert accounting["additional_link_count"] == accounting["upstream_link_count"] == 1
+
+
+def test_same_record_in_multiple_upstream_links_is_not_independent_evidence(cases):
+    p, upstream = additional_counterevidence("contradiction")
+    extra = upstream.pop("SYN2:P2")
+    extra.update(principle_id="SYN1:P2", episode_id="SYN1", supporting_records=["SYN1:R2"])
+    extra["contradictions"][0]["record_id"] = "SYN1:R3"
+    upstream["SYN1:P2"] = extra
+    p["counterevidence_dispositions"][-1].update(source_principle_id="SYN1:P2", record_id="SYN1:R3")
+    p["contradictions"] = copy.deepcopy(upstream["SYN1:P1"]["contradictions"])
+    baseline = provenance_statistics(p["supporting_records"], cases, p["context_relationships"])
+    q = qualify(p, cases, "level4", {}, upstream)
+    assert q["counterevidence_accounting"]["upstream_link_count"] == 2
+    assert q["counterevidence_accounting"]["unique_record_count"] == 1
+    assert q["provenance"] == baseline
+
+
+def test_same_record_different_kinds_need_distinct_exact_upstream_links(cases):
+    p, upstream = additional_counterevidence()
+    link = {"record_id": "SYN2:R3", "explanation": "Synthetic separately classified contradiction"}
+    upstream["SYN2:P2"]["contradictions"] = [link]
+    p["contradictions"].append(copy.deepcopy(link))
+    p["counterevidence_dispositions"].append({**p["counterevidence_dispositions"][-1], "kind": "contradiction"})
+    accounting = qualify(p, cases, "level4", {}, upstream)["counterevidence_accounting"]
+    assert accounting["upstream_link_count"] == 3
+    assert accounting["required_link_count"] == 1 and accounting["additional_link_count"] == 2
+    assert accounting["unique_record_count"] == 2
+
+
+@pytest.mark.parametrize("status", ["retained", "context_excluded", "unresolved"])
+def test_required_only_accounting_preserves_exact_legacy_shape(cases, status):
+    p, upstream = additional_counterevidence()
+    p["counterevidence_dispositions"] = [disposition(status)]
+    p["counterexamples"] = []
+    if status == "context_excluded":
+        p["contradictions"] = []
+    expected = {"upstream_link_count": 1, "retained": int(status == "retained"),
+                "context_excluded": int(status == "context_excluded"), "unresolved": int(status == "unresolved"),
+                "unique_record_count": 1,
+                "scope": "Link counts are not independent evidence counts; exclusions require semantic review."}
+    assert _counterevidence_accounting(p, cases, upstream) == expected
+    # Extra unselected upstream links must not change any existing qualification field.
+    assert qualify(p, cases, "level4", {}, upstream) == qualify(p, cases, "level4", {}, {"SYN1:P1": parent()})
+
+
+def test_no_counterevidence_and_level3_qualifications_stay_unchanged(cases):
+    p = cross()
+    assert _counterevidence_accounting(p, cases, {}) == {
+        "upstream_link_count": 0, "retained": 0, "context_excluded": 0, "unresolved": 0,
+        "unique_record_count": 0,
+        "scope": "Link counts are not independent evidence counts; exclusions require semantic review."}
+    ancestor = parent()
+    assert qualify(ancestor, cases, "level3")["counterevidence_accounting"] == {}
 
 
 @pytest.fixture

@@ -1,18 +1,34 @@
 """Review-bound release descriptor, not a duplicate copy of the corpus."""
 from __future__ import annotations
 
+import hashlib
+import json
 from pathlib import Path
 
 from transcription.common import atomic_write_json, private_path, read_json, sha256_file, utc_now
 from .pipeline import run, release_locations
 
 
-def publish(cfg: dict, review_path: Path, output: Path) -> dict:
-    run(cfg, validate_only=True)
-    review_path, output = private_path(review_path), private_path(output)
-    if output.exists():
-        raise FileExistsError("Use a new release descriptor; existing releases are immutable.")
-    review = read_json(review_path)
+def _read_snapshot(path: Path) -> tuple[dict, str]:
+    payload = path.read_bytes()
+    checksum = hashlib.sha256(payload).hexdigest()
+    data = json.loads(payload)
+    if not isinstance(data, dict):
+        raise ValueError("Release metadata and artifacts must be JSON objects.")
+    return data, checksum
+
+
+def _check_pins(pins: dict[Path, str]) -> None:
+    for path, checksum in pins.items():
+        try:
+            actual = sha256_file(path)
+        except OSError as exc:
+            raise ValueError("Release dependency changed or disappeared during validation.") from exc
+        if actual != checksum:
+            raise ValueError("Release dependency changed during validation.")
+
+
+def _validate_review(review: dict) -> None:
     if review.get("schema_version") != "knowledge_review.v1" or review.get("decision") != "accept":
         raise ValueError("A knowledge_review.v1 acceptance is required; do not invent approval.")
     for key in ("reviewer", "method", "reviewed_at"):
@@ -20,15 +36,27 @@ def publish(cfg: dict, review_path: Path, output: Path) -> dict:
             raise ValueError(f"Review requires {key}.")
     if review.get("unresolved_critical_issues") != []:
         raise ValueError("Unresolved semantic issues block publication.")
+
+
+def publish(cfg: dict, review_path: Path, output: Path) -> dict:
+    if cfg.get("extraction_mode", "reviewed") != "reviewed":
+        raise ValueError("Candidate extraction cannot be published; source and semantic review are required.")
+    run(cfg, validate_only=True)
+    review_path, output = private_path(review_path), private_path(output)
+    if output.exists():
+        raise FileExistsError("Use a new release descriptor; existing releases are immutable.")
+    review, review_sha = _read_snapshot(review_path)
+    _validate_review(review)
     artifacts = []
     for location in release_locations(cfg):
         path = Path(location["path"])
         relative = location["logical_path"]
-        if review.get("artifact_sha256", {}).get(relative) != sha256_file(path):
+        checksum = sha256_file(path)
+        if review.get("artifact_sha256", {}).get(relative) != checksum:
             raise ValueError("Review does not cover the exact artifact version.")
-        artifacts.append({**location, "sha256": sha256_file(path)})
+        artifacts.append({**location, "sha256": checksum})
     data = {"schema_version": "knowledge_release.v1", "created_at": utc_now(), "run_id": cfg["run_id"],
-            "artifacts": artifacts, "review_path": str(review_path), "review_sha256": sha256_file(review_path),
+            "artifacts": artifacts, "review_path": str(review_path), "review_sha256": review_sha,
             "accepted_case_ids": review.get("accepted_case_ids"), "accepted_principle_ids": review.get("accepted_principle_ids"),
             "source_config": cfg, "evidence_authority": "level2"}
     # Validation is shared with the runtime; publication never bypasses its checks.
@@ -39,16 +67,21 @@ def publish(cfg: dict, review_path: Path, output: Path) -> dict:
 
 
 def load_release_payload(data: dict) -> tuple[dict, dict]:
+    if data.get("schema_version") == "knowledge_case_release.v1":
+        from .case_release import load_payload
+        return load_payload(data)
+    if data.get("source_config", {}).get("extraction_mode", "reviewed") != "reviewed":
+        raise ValueError("Candidate artifacts cannot enter a serving release.")
     if data.get("schema_version") != "knowledge_release.v1" or data.get("evidence_authority") != "level2":
         raise ValueError("Unsupported knowledge release.")
     if data["run_id"] != data["source_config"]["run_id"]:
         raise ValueError("Release/run identity mismatch.")
     review_path = private_path(data["review_path"])
-    if sha256_file(review_path) != data["review_sha256"]:
+    review, review_sha = _read_snapshot(review_path)
+    if review_sha != data["review_sha256"]:
         raise ValueError("Release review changed; publish a new reviewed release.")
-    review = read_json(review_path)
-    if review.get("decision") != "accept" or review.get("unresolved_critical_issues") != []:
-        raise ValueError("Release acceptance is missing or revoked.")
+    _validate_review(review)
+    pins = {review_path: review_sha}
     # Revalidates raw/normalized/review hashes and every upstream stage.
     run(data["source_config"], validate_only=True, allow_pinned_prompts=True)
     expected = {p["path"]: p for p in release_locations(data["source_config"])}
@@ -59,12 +92,15 @@ def load_release_payload(data: dict) -> tuple[dict, dict]:
     for item in data["artifacts"]:
         path = private_path(item["path"])
         location = expected[str(path)]
-        if (sha256_file(path) != item["sha256"] or item["stage"] != location["stage"]
+        artifact, checksum = _read_snapshot(path)
+        pins[path] = checksum
+        if (checksum != item["sha256"] or item["stage"] != location["stage"]
                 or item.get("logical_path", location["logical_path"]) != location["logical_path"]):
             raise ValueError("Release artifact changed or differs from its configured identity.")
         if review["artifact_sha256"].get(location["logical_path"]) != item["sha256"]:
             raise ValueError("Release artifact lacks exact review coverage.")
-        artifact = read_json(path)
+        if artifact.get("schema_version") != "knowledge.v2":
+            raise ValueError("Only reviewed-mode knowledge artifacts may enter a release.")
         if item["stage"] != artifact["stage"]:
             raise ValueError("Release stage identity mismatch.")
         if item["stage"] == "level2":
@@ -100,8 +136,13 @@ def load_release_payload(data: dict) -> tuple[dict, dict]:
         refs += [x["record_id"] for x in p["counterevidence_dispositions"]]
         if any(ref not in cases for ref in refs):
             raise ValueError("Release must include supporting AND counter/exception evidence, including context-excluded sources for review.")
+    _check_pins(pins)
     return cases, principles
 
 
 def load_release(path: Path) -> tuple[dict, dict]:
-    return load_release_payload(read_json(private_path(path)))
+    path = private_path(path)
+    data, checksum = _read_snapshot(path)
+    result = load_release_payload(data)
+    _check_pins({path: checksum})
+    return result

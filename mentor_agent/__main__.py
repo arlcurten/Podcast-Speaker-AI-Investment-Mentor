@@ -56,9 +56,11 @@ def main(argv=None):
                     print(key + ":", " / ".join(value) if isinstance(value, list) else value)
             for cite in result["citations"]:
                 print(cite["label"])
+            for review in result["evidence_review_limits"]:
+                print("Source review limits (" + review["record_id"] + "):", " / ".join(review["limitations"]))
         return 0
     except (ValueError, KeyError, OSError, RuntimeError) as exc:
-        print(f"Mentor setup/operation failed ({type(exc).__name__}); set MENTOR_RELEASE to a reviewed private knowledge_release.v1, verify source reviews, and configure OPENROUTER_API_KEY / MENTOR_MODEL_ID for live calls.", file=sys.stderr)
+        print(f"Mentor setup/operation failed ({type(exc).__name__}); set MENTOR_RELEASE to a reviewed private knowledge_release.v1 or knowledge_case_release.v1, verify source reviews, and configure OPENROUTER_API_KEY / MENTOR_MODEL_ID for live calls.", file=sys.stderr)
         return 2
 
 

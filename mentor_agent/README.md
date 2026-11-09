@@ -20,7 +20,10 @@ framework, never an independent evidence item or permanent speaker policy.
 
 Install root `requirements.txt`. Configure private paths and local secrets in
 the ignored root `.env` or environment. Set `MENTOR_RELEASE` to a reviewed
-`knowledge_release.v1` descriptor produced by `python3 -m knowledge publish`.
+`knowledge_release.v1` descriptor produced by `python3 -m knowledge publish`, or a
+`knowledge_case_release.v1` produced by `python3 -m knowledge publish-cases`.
+The latter requires an explicit source-grounded, hash-bound selected-case review;
+it provides case-only evidence and never upgrades the original episode hold.
 Set `OPENROUTER_API_KEY`; optionally override `MENTOR_MODEL_ID`. Never use a
 public sample or bypass review to manufacture a live demo.
 
@@ -90,6 +93,10 @@ until the operation ends, including retries and release checks.
 The loader revalidates source reviews, source/artifact hashes and deterministic
 qualification. A release descriptor pins accepted case/principle IDs. Public
 fixtures are never auto-discovered. Changing/revoking review invalidates use.
+Scoped case-use reviews retain source limitations and separate analyst notes in
+model context. `evidence_review_limits` are also returned by HTTP/JSON and printed
+by the CLI, independently of whether the model repeats them. These reviews are
+not speaker evidence or whole-episode/audio quality certification.
 New knowledge does not silently alter a running service. Publish a new reviewed
 descriptor, change `MENTOR_RELEASE` and restart; retain the old descriptor and
 its referenced sources/stages for rollback. Responses include `release_sha256`;

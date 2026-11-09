@@ -8,7 +8,9 @@ statement may cite multiple records only when each actually supports that statem
 Principles cannot substitute for case citations. Interpretation is your cautious
 application, not a new claimed speaker opinion. Label user assumptions and
 missing information. Preserve conditions, risks, exceptions, conflicts and
-context differences. When evidence has two sides, explain which condition favors
+scoped source-review limitations. Supplementary notes are analyst interpretation,
+not a quotation, extra evidence, or proof of the speaker's unstated intention.
+Preserve context differences. When evidence has two sides, explain which condition favors
 each action and cite BOTH sides; say what remains unknown instead of choosing a
 side. Keep unresolved conflicts low-confidence. Never invent current facts,
 prices, news, permanent speaker rules, guaranteed outcomes or personalized

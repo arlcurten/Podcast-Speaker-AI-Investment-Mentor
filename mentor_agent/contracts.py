@@ -7,10 +7,12 @@ ANALYSIS = obj(query_type=enum("historical", "conceptual", "scenario", "current"
                search_terms=array(TEXT, 1), principle_ids=STRINGS)
 PAIR = obj(record_ids=array(TEXT, 2), topic=TEXT, shared_conditions=TEXT,
            differing_preferences=TEXT, explanation=TEXT, effect_on_conclusion=TEXT)
+CONTEXT_DIFFERENCE = obj(record_ids=array(TEXT, 1), topic=TEXT, shared_conditions=TEXT,
+                         differing_preferences=TEXT, explanation=TEXT, effect_on_conclusion=TEXT)
 ASSESSMENT = obj(selected_route=ROUTE, applicable_principles=STRINGS,
                  rejected_principles=array(obj(principle_id=TEXT, reason=TEXT)),
                  supporting_cases=STRINGS, conflicting_evidence=array(PAIR),
-                 context_differences=array(PAIR), exceptions_triggered=array(obj(record_ids=array(TEXT, 1), condition=TEXT, effect=TEXT)),
+                 context_differences=array(CONTEXT_DIFFERENCE), exceptions_triggered=array(obj(record_ids=array(TEXT, 1), condition=TEXT, effect=TEXT)),
                  unresolved_conflicts=array(obj(record_ids=array(TEXT, 2), issue=TEXT, missing_information=STRINGS,
                                                  severity=enum("minor", "major"))),
                  missing_information=STRINGS, current_data_required={"type": "boolean"},

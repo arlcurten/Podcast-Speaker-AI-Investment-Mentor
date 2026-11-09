@@ -82,6 +82,7 @@ def prepare(source: Path, output: Path, review: Path | None = None) -> dict[str,
     if source == output or output.exists():
         raise ValueError("Derived output must be a new path; source and prior versions are never overwritten.")
     quality = quality_gate(source, review_path=review)
+    review_hash = sha256_file(review) if review else None
     payload = read_json(source)
     try:
         import opencc
@@ -114,13 +115,19 @@ def prepare(source: Path, output: Path, review: Path | None = None) -> dict[str,
             "normalization": "OpenCC s2twp; terminology annotations only",
             "opencc_version": version("opencc-python-reimplemented"),
             "merge_parameters": {"max_gap": 1.2, "max_duration": 25.0, "max_chars": 220},
-            "quality": quality, "review_sha256": sha256_file(review) if review else None,
+            "quality": quality, "review_sha256": review_hash,
             "source_mapping_complete": True, "not_semantic_segmentation": True,
         },
         "segments": rows,
     }
     if sha256_file(source) != quality["transcript_sha256"]:
         raise ValueError("Raw source changed during preparation; review the new version.")
+    if "annotations_sha256" in quality:
+        current = quality_gate(source, review_path=review)
+        if (sha256_file(review) != review_hash or current.get("annotations_sha256") != quality["annotations_sha256"]
+                or current["ready_for_extraction"] != quality["ready_for_extraction"]):
+            raise ValueError("Annotation review changed during preparation; use a new reviewed version.")
+        result["metadata"]["annotations_sha256"] = quality["annotations_sha256"]
     atomic_write_json(output, result, overwrite=False)
     return {"episode_id": quality["episode_id"], "merged_count": len(rows),
             "raw_segment_count": quality["segment_count"], "output_sha256": sha256_file(output),
