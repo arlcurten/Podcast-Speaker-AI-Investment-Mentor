@@ -474,6 +474,15 @@ principles or independent evidence. Global reconciliation, counter-review and
 semantic acceptance remain separate work. Preserve old runs when creating new
 versions after input or implementation changes.
 
+For a small completed discovery run, `python -m knowledge.family_reconciliation`
+provides the same `plan`, `run` and `validate` interface. Its private
+`knowledge_reconciliation_config.v1` replaces `inventory` with
+`parent: {config: {path, sha256}, artifact: {path, sha256}}` and requires an
+explicit `max_pairs`. Check the plan's pair/call estimate before execution.
+This source-backed pair verifier is quadratic, not a full-corpus scheduler:
+it retains conditional differences, unresolved relations and ungrouped cases,
+but does not transitively merge families or perform global counter-review.
+
 ## Validation and Limits
 
 ```bash
