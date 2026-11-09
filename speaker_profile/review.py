@@ -134,7 +134,8 @@ def _replay(proposal_path, output_path):
     upstream, evidence_pins = [], {}
     for entry in cfg["episodes"]:
         eid = entry["episode_id"]
-        ref = cfg.get("reuse_evidence", {}).get("artifacts", {}).get(eid)
+        ref = (cfg.get("reuse_recovered_evidence", {}).get(eid)
+               or cfg.get("reuse_evidence", {}).get("artifacts", {}).get(eid))
         path = ref["path"] if ref else child_path(root, eid, "evidence.json")
         artifact, pin = _read(path, pins, ref["sha256"] if ref else None)
         upstream.append(artifact)

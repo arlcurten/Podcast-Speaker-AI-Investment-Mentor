@@ -182,6 +182,10 @@ reviewer commentary, not a new model response or source evidence. Evidence,
 source holds and serving policy remain unchanged. Neither command calls a model
 or publishes a global profile.
 
+Synthesis revisions follow the parent's explicit completed and recovered evidence
+references. Recovered artifacts retain their distinct recovery provenance; they
+are not copied into the synthesis run or relabeled as successful extraction.
+
 Run `plan` before extraction. For a fresh recovery it reports `base_input_chars`,
 `repair_input_chars` (added overhead), and total `input_chars`, including the prompt
 and transport envelope, plus `seeded_validation_repair` and `input_fits`. Set
