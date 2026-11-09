@@ -97,23 +97,74 @@ def _manifest(ref, pins, reserved, protected, active=None):
     return cfg
 
 
-def _parent_manifest(descriptor, artifact, evidence):
-    if descriptor["kind"] == "completed":
-        return descriptor["manifest"]
-    if evidence:
-        return artifact["recovery_config"]["manifest"] if descriptor["kind"] == "recovered" else artifact["parent_manifest"]
-    return artifact["parent_manifest"] if descriptor["kind"] == "editorial_completed" else artifact["parent"]["manifest"]
+def _lineage_manifest(descriptor, artifact, evidence, pins, reserved, protected, active=None):
+    """Follow authoritative configs/proposals before any replay can load sources."""
+    active = set() if active is None else active
+    path = private_path(descriptor["artifact"]["path"])
+    if path in active:
+        raise ValueError("Cyclic Profile artifact lineage.")
+    active.add(path)
+    kind = descriptor["kind"]
+    formats = ({"completed": schemas.VERSION, "recovered": recover_evidence.VERSION,
+                "editorial": evidence_revision.VERSION} if evidence else
+               {"completed": schemas.VERSION, "recovered": recover_synthesis.VERSION,
+                "editorial_completed": "profile_reviewed_revision.v1", "editorial_recovered": review_recovered.VERSION})
+    stage = "evidence" if evidence else "synthesis"
+    if (not isinstance(artifact, dict) or artifact.get("schema_version") != formats.get(kind)
+            or artifact.get("stage", None if evidence else "synthesis") != stage):
+        raise ValueError("Artifact kind must name its actual Profile format and stage.")
+    claimed = None
+    if kind == "completed":
+        manifest_ref = descriptor["manifest"]
+    elif evidence and kind == "recovered":
+        manifest_ref = recover_evidence._config(artifact["recovery_config"])["manifest"]
+    elif evidence and kind == "editorial":
+        config = shared._read(artifact["config"], pins)
+        shared._validate(config, evidence_revision.CONFIG_SCHEMA)
+        parent = config["parent"]
+        manifest_ref = _lineage_manifest(parent, shared._read(parent["artifact"], pins), True,
+                                        pins, reserved, protected, active)
+        claimed = artifact["parent_manifest"]
+        if artifact["parent"] != parent:
+            raise ValueError("Editorial evidence parent differs from its pinned configuration.")
+    elif not evidence and kind == "recovered":
+        proposal = shared._read(artifact["proposal"], pins)
+        shared._validate(proposal, recover_synthesis.PROPOSAL_SCHEMA)
+        manifest_ref, claimed = proposal["manifest"], artifact["parent"]["manifest"]
+    elif not evidence and kind == "editorial_completed":
+        proposal = shared._read(artifact["proposal"], pins)
+        shared._validate(proposal, review.PROPOSAL_SCHEMA)
+        cfg = pipeline._config(shared._read(proposal["parent_config"], pins))
+        root = child_path(Path(cfg["output_root"]), cfg["run_id"])
+        manifest_path = root / "run_manifest.json"
+        manifest_ref = {"path": str(manifest_path), "sha256": sha256_file(manifest_path)}
+        if (_manifest(manifest_ref, pins, reserved, protected) != cfg
+                or private_path(proposal["parent_artifact"]["path"]) != root / "synthesis.json"):
+            raise ValueError("Editorial synthesis parent configuration differs from its original run.")
+        shared._read(proposal["parent_artifact"], pins)
+        claimed = artifact["parent_manifest"]
+    elif not evidence and kind == "editorial_recovered":
+        proposal = shared._read(artifact["proposal"], pins)
+        shared._validate(proposal, review_recovered.PROPOSAL_SCHEMA)
+        parent = {"kind": "recovered", "artifact": proposal["parent_artifact"]}
+        manifest_ref = _lineage_manifest(parent, shared._read(parent["artifact"], pins), False,
+                                        pins, reserved, protected, active)
+        claimed = artifact["parent"]["manifest"]
+    else:
+        raise ValueError("Unsupported Profile artifact lineage.")
+    manifest_ref = shared._ref(manifest_ref)
+    _manifest(manifest_ref, pins, reserved, protected)
+    if claimed is not None and shared._ref(claimed) != manifest_ref:
+        raise ValueError("Artifact manifest header differs from its authoritative parent lineage.")
+    active.remove(path)
+    return manifest_ref
 
 
 def _load_evidence(descriptor, pins, reserved, protected, check_path):
     descriptor = copy.deepcopy(descriptor)
     ref = descriptor["artifact"] = shared._ref(descriptor["artifact"])
     artifact = shared._read(ref, pins)
-    expected = {"completed": schemas.VERSION, "recovered": recover_evidence.VERSION, "editorial": evidence_revision.VERSION}
-    if artifact.get("schema_version") != expected[descriptor["kind"]] or artifact.get("stage") != "evidence":
-        raise ValueError("Evidence kind must name its actual artifact format, never relabel a derivative.")
-    manifest_ref = shared._ref(_parent_manifest(descriptor, artifact, True))
-    _manifest(manifest_ref, pins, reserved, protected)
+    manifest_ref = _lineage_manifest(descriptor, artifact, True, pins, reserved, protected)
     if descriptor["kind"] == "editorial":
         checked = evidence_revision.load_checked(ref, pins)
     else:
@@ -131,6 +182,16 @@ def _completed_synthesis(descriptor, cfg, pins):
     root = child_path(Path(cfg["output_root"]), cfg["run_id"])
     if private_path(descriptor["artifact"]["path"]) != root / "synthesis.json":
         raise ValueError("Completed synthesis is outside its original run.")
+    manifest_path = root / "run_manifest.json"
+    manifest_ref = {"path": str(manifest_path), "sha256": sha256_file(manifest_path)}
+    manifest = shared._read(manifest_ref, pins)
+    historical = manifest.get("implementation")
+    if (not isinstance(historical, dict) or not historical.get("python")
+            or not isinstance(historical.get("packages"), dict)
+            or not isinstance(historical.get("code"), dict) or not historical["code"]):
+        raise ValueError("Missing completed synthesis implementation lineage.")
+    for checksum in historical["code"].values():
+        pipeline._checksum(checksum)
     # Pin the closed call chain before replay so changes during validation cannot be adopted.
     for identity, stage in [(e["episode_id"], "evidence") for e in cfg["episodes"]] + [("cross_episode", "synthesis")]:
         for attempt in range(1, cfg["retry_count"] + 2):
@@ -138,13 +199,11 @@ def _completed_synthesis(descriptor, cfg, pins):
                 path = root / "calls" / f"{identity}_{stage}_{attempt}.{suffix}.json"
                 if path.exists():
                     shared._read({"path": str(path), "sha256": sha256_file(path)}, pins)
-    # Existing validation is read-only and rejects missing stages; no backend is constructed.
-    pipeline.run(cfg, through="synthesis", validate_only=True)
     sources = evidence_revision._sources(cfg, pins)
     reused = pipeline._reused_evidence(cfg, sources, pins)
     reused.update(pipeline._reused_recovered_evidence(cfg, sources, pins))
-    pipeline._reused_failed_synthesis(cfg, sources, reused, pins)
-    refs = {}
+    previous = pipeline._reused_failed_synthesis(cfg, sources, reused, pins)
+    refs, upstream = {}, []
     for entry in cfg["episodes"]:
         eid = entry["episode_id"]
         ref = (cfg.get("reuse_recovered_evidence", {}).get(eid)
@@ -152,8 +211,56 @@ def _completed_synthesis(descriptor, cfg, pins):
         if ref is None:
             path = child_path(root, eid, "evidence.json")
             ref = {"path": str(path), "sha256": sha256_file(path)}
+            checked, _, _ = evidence_revision._parent({"parent": {
+                "kind": "completed", "manifest": manifest_ref, "artifact": ref}}, pins,
+                root.parent / ("inventory_check_" + pipeline.digest(cfg)[:24]))
+        else:
+            checked = reused[eid]
         refs[eid] = shared._ref(ref)
-        shared._read(refs[eid], pins)
+        if shared._read(refs[eid], pins) != checked:
+            raise ValueError("Synthesis evidence changed during historical replay.")
+        upstream.append(checked)
+    artifact = shared._read(descriptor["artifact"], pins)
+    source_meta = {"episodes": [pipeline._meta(sources[e["episode_id"]]) for e in cfg["episodes"]]}
+    if (artifact.get("schema_version") != schemas.VERSION or artifact.get("stage") != "synthesis"
+            or artifact.get("source") != source_meta or artifact.get("policy") != pipeline.POLICY
+            or artifact.get("grounding") != pipeline._derive_synthesis(artifact["content"], upstream)
+            or any(artifact.get("reused_" + key) != cfg.get("reuse_" + key)
+                   for key in ("evidence", "recovered_evidence", "failed_synthesis"))):
+        raise ValueError("Completed synthesis source, grounding or evidence lineage differs.")
+    # Historical fingerprints bind the original manifest, schema and prompt, not today's code.
+    for number in range(1, cfg["retry_count"] + 2):
+        request_path = root / "calls" / f"cross_episode_synthesis_{number}.request.json"
+        result_path = request_path.with_name(request_path.name.replace(".request.json", ".result.json"))
+        request_ref = {"path": str(request_path), "sha256": sha256_file(request_path)}
+        result_ref = {"path": str(result_path), "sha256": sha256_file(result_path)}
+        request, result = shared._read(request_ref, pins), shared._read(result_ref, pins)
+        if request.get("schema") != schemas.schema("synthesis"):
+            raise ValueError("Historical synthesis schema requires explicit compatibility review.")
+        fingerprint = pipeline.digest({"run": manifest, "stage": "synthesis", "source": source_meta,
+            "upstream": [pipeline.digest(a) for a in upstream],
+            "schema": request["schema"], "prompt": request.get("prompt")})
+        context = pipeline._repair_context(pipeline._context(
+            "synthesis", None, upstream, cfg.get("context_format"), cfg.get("commentary_scope")), previous)
+        if (request.get("schema_version") != "profile_call.v1" or result.get("schema_version") != "profile_call.v1"
+                or request.get("stage") != "synthesis" or request.get("episode_id") != "cross_episode"
+                or type(request.get("attempt")) is not int or request["attempt"] != number
+                or not isinstance(request.get("prompt"), str) or not request["prompt"]
+                or request.get("context") != context or request.get("fingerprint") != fingerprint
+                or result.get("fingerprint") != fingerprint or artifact.get("fingerprint") != fingerprint
+                or result.get("request_sha256") != request_ref["sha256"]):
+            raise ValueError("Completed synthesis original request/repair provenance differs.")
+        if request_ref["sha256"] == artifact.get("request_sha256"):
+            if (result_ref["sha256"] != artifact.get("result_sha256") or result.get("status") != "completed"
+                    or result.get("error") is not None or result.get("response") != artifact["content"]
+                    or result.get("usage") != artifact.get("model_metadata")):
+                raise ValueError("Completed synthesis original result/usage binding differs.")
+            break
+        if result.get("status") != "failed" or not isinstance(result.get("error"), dict):
+            raise ValueError("Completed synthesis repair chain lacks an original failed result.")
+        previous = result
+    else:
+        raise ValueError("Completed synthesis lacks its original successful request/result.")
     return refs
 
 
@@ -161,11 +268,7 @@ def _load_synthesis(descriptor, pins, reserved, protected):
     ref = shared._ref(descriptor["artifact"])
     artifact = shared._read(ref, pins)
     kind = descriptor["kind"]
-    expected = {"completed": schemas.VERSION, "recovered": recover_synthesis.VERSION,
-                "editorial_completed": "profile_reviewed_revision.v1", "editorial_recovered": review_recovered.VERSION}
-    if artifact.get("schema_version") != expected[kind] or artifact.get("stage", "synthesis") != "synthesis":
-        raise ValueError("Synthesis kind must name its actual artifact format.")
-    manifest_ref = shared._ref(_parent_manifest(descriptor, artifact, False))
+    manifest_ref = _lineage_manifest(descriptor, artifact, False, pins, reserved, protected)
     cfg = _manifest(manifest_ref, pins, reserved, protected)
     if kind == "completed":
         evidence_refs = _completed_synthesis(descriptor, cfg, pins)
@@ -207,6 +310,13 @@ def inspect(selection_ref: dict) -> dict:
             safe_id(identifier)
     for eid in reserved:
         safe_id(eid)
+    for collection, stage in (("episodes", "evidence"), ("syntheses", "synthesis")):
+        for entry in selection[collection]:
+            state = entry[stage]
+            if state["status"] == "available":
+                descriptor = state["input"]
+                _lineage_manifest(descriptor, shared._read(descriptor["artifact"], pins),
+                                  stage == "evidence", pins, reserved, protected)
     episodes, evidence, syntheses, hypotheses, gaps = {}, {}, {}, {}, []
     check_path = Path(selection_ref["path"]).parent / ("inventory_check_" + selection_ref["sha256"][:24])
 

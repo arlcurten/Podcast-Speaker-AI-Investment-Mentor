@@ -5,7 +5,7 @@ from unittest.mock import Mock
 
 import pytest
 
-from speaker_profile import corpus_inventory as inventory, evidence_revision, pipeline, recover_evidence, recover_synthesis, review, review_recovered
+from speaker_profile import corpus_inventory as inventory, evidence_revision, pipeline, recover_evidence, recover_synthesis, review, review_recovered, schemas
 from transcription.common import atomic_write_json, read_json, sha256_file
 from .test_pipeline import SyntheticModel, cfg, root
 from .test_review import ParentModel, make_parent, pin
@@ -55,11 +55,8 @@ def ready(cfg, tmp_path):
 
 def test_complete_inventory_keeps_every_item_and_original_pointers(ready, tmp_path, monkeypatch):
     before = {p: p.read_bytes() for p in tmp_path.rglob("*") if p.is_file()}
-    original = pipeline.run
-    def only_validate(config, **kwargs):
-        assert kwargs == {"through": "synthesis", "validate_only": True}
-        return original(config, **kwargs)
-    monkeypatch.setattr(pipeline, "run", only_validate)
+    forbidden = Mock(side_effect=AssertionError("Inventory must not resume an original completed run"))
+    monkeypatch.setattr(pipeline, "run", forbidden)
     inspected = inventory.inspect(pin(ready["path"]))
     assert not ready["output"].exists()
     ref = inventory.freeze(pin(ready["path"]), ready["output"])
@@ -86,6 +83,7 @@ def test_complete_inventory_keeps_every_item_and_original_pointers(ready, tmp_pa
     assert not result["policy"]["publication_authorized"] and not result["policy"]["eligible_for_serving"]
     assert {p: p.read_bytes() for p in before} == before
     assert {p for p in tmp_path.rglob("*") if p.is_file()} - set(before) == {ready["output"]}
+    forbidden.assert_not_called()
     with pytest.raises(FileExistsError): inventory.freeze(pin(ready["path"]), ready["output"])
 
 
@@ -312,13 +310,13 @@ def test_current_implementation_is_not_silently_relabelled(ready, monkeypatch):
 
 
 def test_call_change_during_synthesis_validation_cannot_be_pinned_as_original(ready, monkeypatch):
-    original = pipeline.run
+    original = pipeline._derive_synthesis
     path = root(ready["cfg"]) / "calls/cross_episode_synthesis_1.result.json"
     def race(*args, **kwargs):
         result = original(*args, **kwargs)
         value = read_json(path); value["mutation"] = True; atomic_write_json(path, value)
         return result
-    monkeypatch.setattr(pipeline, "run", race)
+    monkeypatch.setattr(pipeline, "_derive_synthesis", race)
     with pytest.raises(ValueError): inventory.inspect(pin(ready["path"]))
     assert not ready["output"].exists()
 
@@ -359,3 +357,197 @@ def test_safe_cli_only_emits_counts(ready, capsys):
     text = capsys.readouterr().out
     assert str(ready["path"].parent) not in text and "Fictional" not in text
     assert '"model_calls": 0' in text
+
+
+def test_completed_synthesis_preserves_historical_runtime_without_resuming(ready, monkeypatch, tmp_path):
+    old_manifest = pin(root(ready["cfg"]) / "run_manifest.json")
+    changed = copy.deepcopy(pipeline._implementation())
+    changed["code"]["profile_pipeline"] = "c" * 64
+    monkeypatch.setattr(pipeline, "_implementation", lambda: changed)
+    with pytest.raises(ValueError, match="implementation changed"):
+        pipeline.run(ready["cfg"], through="synthesis", validate_only=True)
+    forbidden = Mock(side_effect=AssertionError("Historical inventory must not resume a run"))
+    monkeypatch.setattr(pipeline, "run", forbidden)
+    before = {p: p.read_bytes() for p in tmp_path.rglob("*") if p.is_file()}
+    result = inventory.load_checked(inventory.freeze(pin(ready["path"]), ready["output"]))
+    assert result["inventory_complete"] and len(result["hypotheses"]) == 2
+    assert result["syntheses"]["prior"]["original_manifest"] == old_manifest
+    assert result["implementation"]["profile"] == changed
+    assert {p: p.read_bytes() for p in before} == before
+    assert {p for p in tmp_path.rglob("*") if p.is_file()} - set(before) == {ready["output"]}
+    forbidden.assert_not_called()
+
+
+@pytest.mark.parametrize("fault", ["grounding", "obsolete_content", "schema", "context", "usage",
+                                   "response", "fingerprint", "reuse_lineage", "failed_status"])
+def test_completed_historical_replay_rejects_rebound_corruption(ready, fault, monkeypatch):
+    parent = root(ready["cfg"])
+    path = parent / "synthesis.json"
+    artifact = read_json(path)
+    request_path = parent / "calls/cross_episode_synthesis_1.request.json"
+    result_path = parent / "calls/cross_episode_synthesis_1.result.json"
+    request, result = read_json(request_path), read_json(result_path)
+    if fault == "grounding": artifact["grounding"]["retained_evidence_ids"] = []
+    elif fault == "obsolete_content": artifact["content"]["unknown_old_field"] = "Not silently migrated"
+    elif fault == "schema": request["schema"] = {"type": "object"}
+    elif fault == "context": request["context"]["unbound_context"] = True
+    elif fault == "usage": artifact["model_metadata"] = {"changed": True}
+    elif fault == "response": result["response"]["summary"] = "Changed synthetic model response"
+    elif fault == "fingerprint": artifact["fingerprint"] = "d" * 64
+    elif fault == "reuse_lineage": artifact["reused_evidence"] = {"changed": True}
+    else: result["status"] = "failed"
+    atomic_write_json(request_path, request)
+    result["request_sha256"] = sha256_file(request_path)
+    atomic_write_json(result_path, result)
+    artifact.update(request_sha256=sha256_file(request_path), result_sha256=sha256_file(result_path))
+    atomic_write_json(path, artifact)
+    ready["selection"]["syntheses"][0]["synthesis"]["input"]["artifact"] = pin(path)
+    changed = copy.deepcopy(pipeline._implementation())
+    changed["code"]["profile_pipeline"] = "c" * 64
+    monkeypatch.setattr(pipeline, "_implementation", lambda: changed)
+    with pytest.raises(ValueError):
+        inventory.inspect(save(ready))
+    assert not ready["output"].exists()
+
+
+def test_completed_synthesis_checks_original_repair_chain(cfg, tmp_path, monkeypatch):
+    class RepairModel(ParentModel):
+        def complete(self, *args):
+            content, usage = super().complete(*args)
+            if self.calls[-1] == "synthesis" and self.calls.count("synthesis") == 1:
+                content["unknown_field"] = "Synthetic validation failure"
+            return content, usage
+    cfg.update(episodes=cfg["episodes"][:1], retry_count=1)
+    pipeline.run(cfg, backend=RepairModel())
+    data = selection_for(cfg, tmp_path)
+    forbidden = Mock(side_effect=AssertionError("Read-only inventory must not resume"))
+    monkeypatch.setattr(pipeline, "run", forbidden)
+    assert inventory.inspect(pin(data["path"]))["inventory_complete"]
+    path = root(cfg) / "calls/cross_episode_synthesis_1.result.json"
+    value = read_json(path)
+    value["error"]["message"] = "Rebound diagnostic no longer matches the original repair input"
+    atomic_write_json(path, value)
+    with pytest.raises(ValueError, match="repair provenance"):
+        inventory.inspect(pin(data["path"]))
+    forbidden.assert_not_called()
+
+
+def safe_source_run(cfg, tmp_path):
+    safe = copy.deepcopy(cfg)
+    raw, draft = tmp_path / "SYN4-raw.json", tmp_path / "SYN4-draft.json"
+    safe.update(run_id="unrelated_allowed_source", episodes=[{
+        "episode_id": "SYN4", "raw": str(raw), "draft": str(draft),
+        "raw_sha256": sha256_file(raw), "draft_sha256": sha256_file(draft),
+        "source_review": None, "source_review_sha256": None, "prior_findings": []}])
+    pipeline.run(safe, through="evidence", backend=SyntheticModel())
+    return {"kind": "completed", "manifest": pin(root(safe) / "run_manifest.json"),
+            "artifact": pin(root(safe) / "SYN4/evidence.json")}
+
+
+def guarded_selection(descriptor, stage, safe, tmp_path, monkeypatch, *, reserved=True):
+    value = {"schema_version": inventory.SELECTION_VERSION, "corpus_id": "reserved_lineage_guard",
+        "expected_episode_ids": ["SYN4"], "reserved_episode_ids": ["SYN1"] if reserved else [],
+        "episodes": [{"episode_id": "SYN4", "evidence": available(safe)}],
+        "expected_synthesis_ids": [], "syntheses": []}
+    if stage == "evidence":
+        value["expected_episode_ids"].append("SYN3")
+        value["episodes"].append({"episode_id": "SYN3", "evidence": available(descriptor)})
+    else:
+        value["expected_synthesis_ids"] = ["derived"]
+        value["syntheses"] = [{"synthesis_id": "derived", "synthesis": available(descriptor)}]
+    path = tmp_path / "guarded-selection.json"
+    atomic_write_json(path, value)
+    forbidden = Mock(side_effect=AssertionError("Metadata preflight must precede every source load"))
+    monkeypatch.setattr(pipeline, "_sources", forbidden)
+    with pytest.raises(ValueError, match="reserved sources" if reserved else "manifest header"):
+        inventory.inspect(pin(path))
+    forbidden.assert_not_called()
+
+
+@pytest.mark.parametrize("kind,reserved", [("completed", True), ("recovered", True),
+    ("editorial_completed", True), ("editorial_completed", False),
+    ("editorial_recovered", True), ("editorial_recovered", False)])
+def test_evidence_authoritative_parent_preflight(cfg, tmp_path, monkeypatch, kind, reserved):
+    cfg["episodes"] = cfg["episodes"][:1]
+    if kind in {"completed", "editorial_completed"}:
+        pipeline.run(cfg, through="evidence", backend=SyntheticModel())
+        parent = {"kind": "completed", "manifest": pin(root(cfg) / "run_manifest.json"),
+                  "artifact": pin(root(cfg) / "SYN1/evidence.json")}
+    else:
+        with pytest.raises(ValueError, match="attempts exhausted"):
+            pipeline.run(cfg, through="evidence", backend=ContextModel())
+        recovery = {"schema_version": recover_evidence.CONFIG_VERSION, "commentary_scope": schemas.EPISODE_CONTEXT,
+                    "manifest": pin(root(cfg) / "run_manifest.json"),
+                    "request": pin(root(cfg) / "calls/SYN1_evidence_1.request.json"),
+                    "result": pin(root(cfg) / "calls/SYN1_evidence_1.result.json")}
+        parent = {"kind": "recovered", "artifact": recover_evidence.apply(recovery, tmp_path / "recovered/evidence.json")}
+    safe = safe_source_run(cfg, tmp_path)
+    descriptor = parent
+    if kind.startswith("editorial"):
+        row = read_json(Path(parent["artifact"]["path"]))["content"]["items"][0]
+        source = pipeline._sources(cfg)["SYN1"]
+        config = {"schema_version": evidence_revision.CONFIG_VERSION, "commentary_scope": schemas.EPISODE_CONTEXT,
+            "parent": parent, "reviewer": "Synthetic reviewer", "rationale": "Keep uncertainty explicit",
+            "edits": [{"evidence_id": row["evidence_id"], "field": "/uncertainty", "expected": row["uncertainty"],
+                "value": row["uncertainty"] + ["Synthetic unresolved context"], "reason": "No invented outcome",
+                "source_anchors": [source["raw_segments"][0]]}]}
+        config_path, output = tmp_path / "revision-config.json", tmp_path / "revision/evidence.json"
+        atomic_write_json(config_path, config)
+        evidence_revision.apply(pin(config_path), output)
+        artifact = read_json(output)
+        artifact["parent_manifest"] = safe["manifest"]
+        atomic_write_json(output, artifact)
+        descriptor = {"kind": "editorial", "artifact": pin(output)}
+    guarded_selection(descriptor, "evidence", safe, tmp_path, monkeypatch, reserved=reserved)
+
+
+@pytest.mark.parametrize("editorial,reserved", [(False, True), (True, True), (True, False)])
+def test_completed_synthesis_reserved_preflight_before_source_loading(cfg, tmp_path, monkeypatch, editorial, reserved):
+    data = make_parent(cfg, tmp_path)
+    safe = safe_source_run(data["cfg"], tmp_path)
+    if editorial:
+        review.apply(data["path"], data["output"])
+        artifact = read_json(data["output"])
+        artifact["parent_manifest"] = safe["manifest"]
+        atomic_write_json(data["output"], artifact)
+        descriptor = {"kind": "editorial_completed", "artifact": pin(data["output"])}
+    else:
+        descriptor = {"kind": "completed", "manifest": pin(root(data["cfg"]) / "run_manifest.json"),
+                      "artifact": pin(root(data["cfg"]) / "synthesis.json")}
+    guarded_selection(descriptor, "synthesis", safe, tmp_path, monkeypatch, reserved=reserved)
+
+
+@pytest.mark.parametrize("kind", ["recovered", "editorial_recovered", "nested_recovered_header"])
+@pytest.mark.parametrize("reserved", [True, False])
+def test_recovered_synthesis_authoritative_proposal_preflight(failed, tmp_path, monkeypatch, kind, reserved):
+    cfg, recovery_path, output = failed
+    parent_ref = recover_synthesis.apply(recovery_path, output)
+    parent = read_json(output)
+    safe = safe_source_run(cfg, tmp_path)
+    descriptor = {"kind": "recovered", "artifact": parent_ref}
+    if kind != "recovered":
+        raw = pipeline._sources(cfg)["SYN1"]["raw_segments"][0]
+        proposal = {"schema_version": review_recovered.PROPOSAL_VERSION, "parent_artifact": parent_ref,
+            "reviewer": "Synthetic reviewer", "method": "Exact fictional source reading", "rationale": "Narrow wording",
+            "edits": [{"hypothesis_id": "PROFILE:H1", "field": "/label",
+                "expected": parent["content"]["hypotheses"][0]["label"], "value": "Synthetic contextual comparison",
+                "reason": "Do not generalize", "evidence_ids": ["SYN1:E1"],
+                "source_anchors": [{"episode_id": "SYN1", **{k: raw[k] for k in ("segment_id", "start", "end", "text")}}]}]}
+        path, edited = tmp_path / "revision-proposal.json", tmp_path / "revision/synthesis.json"
+        atomic_write_json(path, proposal)
+        review_recovered.apply(path, edited)
+        if kind == "nested_recovered_header":
+            parent["parent"]["manifest"] = safe["manifest"]
+            atomic_write_json(output, parent)
+            proposal["parent_artifact"] = pin(output)
+            atomic_write_json(path, proposal)
+        output = edited
+        artifact = read_json(output)
+        artifact["proposal"] = pin(path)
+        descriptor = {"kind": "editorial_recovered", "artifact": pin(output)}
+    else:
+        artifact = parent
+    artifact["parent"]["manifest"] = safe["manifest"]
+    atomic_write_json(output, artifact)
+    descriptor["artifact"] = pin(output)
+    guarded_selection(descriptor, "synthesis", safe, tmp_path, monkeypatch, reserved=reserved)
