@@ -32,7 +32,8 @@ def _config(value: dict) -> dict:
     cfg = copy.deepcopy(value)
     allowed = {"schema_version", "run_id", "output_root", "model", "reasoning_effort", "timeout_seconds",
                "max_input_chars", "max_calls", "retry_count", "episodes", "reserved_episode_ids", "catalog",
-               "context_format", "reuse_evidence", "reuse_failed_synthesis", "commentary_scope"}
+               "context_format", "reuse_evidence", "reuse_failed_synthesis", "commentary_scope",
+               "reuse_recovered_evidence"}
     if not isinstance(cfg, dict) or set(cfg) - allowed or cfg.get("schema_version") != "profile_config.v1":
         raise ValueError("Expected profile_config.v1 with only supported fields.")
     common.safe_id(cfg["run_id"])
@@ -85,11 +86,24 @@ def _config(value: dict) -> dict:
         raise ValueError("Unsupported explicit profile context format.")
     if "commentary_scope" in cfg and cfg["commentary_scope"] != schemas.EPISODE_CONTEXT:
         raise ValueError("Unsupported explicit profile commentary scope.")
+    recovered = cfg.get("reuse_recovered_evidence", {})
+    if "reuse_recovered_evidence" in cfg:
+        if (cfg.get("commentary_scope") != schemas.EPISODE_CONTEXT
+                or not isinstance(recovered, dict) or not recovered or not set(recovered) <= set(ids)):
+            raise ValueError("Recovered evidence requires explicit episode-context scope and selected episode IDs.")
+        for ref in recovered.values():
+            if not isinstance(ref, dict) or set(ref) != {"path", "sha256"}:
+                raise ValueError("Recovered evidence references require a private path and SHA-256.")
+            _checksum(ref["sha256"])
+            ref["path"] = str(private_path(ref["path"]))
+            if Path(ref["path"]).is_relative_to(root):
+                raise ValueError("Recovered evidence must be outside the new run directory.")
     if "reuse_evidence" in cfg:
         reuse = cfg["reuse_evidence"]
         if (not isinstance(reuse, dict) or set(reuse) != {"manifest", "artifacts"}
-                or not isinstance(reuse["artifacts"], dict) or set(reuse["artifacts"]) != set(ids)):
-            raise ValueError("Evidence reuse requires a manifest and pinned artifacts for every selected episode.")
+                or not isinstance(reuse["artifacts"], dict) or not reuse["artifacts"]
+                or set(reuse["artifacts"]) != set(ids) - set(recovered)):
+            raise ValueError("Evidence reuse requires disjoint pinned artifacts covering every selected episode.")
         for ref in [reuse["manifest"], *reuse["artifacts"].values()]:
             if not isinstance(ref, dict) or set(ref) != {"path", "sha256"}:
                 raise ValueError("Evidence references require a private path and SHA-256.")
@@ -97,9 +111,11 @@ def _config(value: dict) -> dict:
             ref["path"] = str(private_path(ref["path"]))
             if Path(ref["path"]).is_relative_to(root):
                 raise ValueError("Reused evidence must be outside the new run directory.")
+    elif recovered and set(recovered) != set(ids):
+        raise ValueError("Recovered evidence references must cover every selected episode without extraction.")
     if "reuse_failed_synthesis" in cfg:
         reuse = cfg["reuse_failed_synthesis"]
-        if ("reuse_evidence" not in cfg or not isinstance(reuse, dict)
+        if (("reuse_evidence" not in cfg and not recovered) or not isinstance(reuse, dict)
                 or set(reuse) != {"manifest", "request", "result"}):
             raise ValueError("Failed synthesis reuse requires reused evidence and pinned manifest/request/result.")
         for ref in reuse.values():
@@ -368,11 +384,16 @@ def _reused_evidence(cfg, sources, pins):
     old_root = child_path(Path(old_cfg["output_root"]), old_cfg["run_id"])
     new_root = child_path(Path(cfg["output_root"]), cfg["run_id"])
     if (cfg["run_id"] == old_cfg["run_id"] or parent_path != old_root / "run_manifest.json" or old_root.is_relative_to(new_root)
-            or new_root.is_relative_to(old_root) or "reuse_evidence" in old_cfg):
+            or new_root.is_relative_to(old_root) or "reuse_evidence" in old_cfg or "reuse_recovered_evidence" in old_cfg):
         raise ValueError("Reuse must reference an original evidence run in a separate output directory.")
     if parent["config"] != old_cfg or parent.get("config_digest") != digest(old_cfg):
         raise ValueError("Original profile configuration digest differs.")
-    if ({e["episode_id"]: e for e in old_cfg["episodes"]} != {e["episode_id"]: e for e in cfg["episodes"]}
+    original_entries = {e["episode_id"]: e for e in old_cfg["episodes"]}
+    selected_entries = {e["episode_id"]: e for e in cfg["episodes"]}
+    same_selection = original_entries == selected_entries
+    if "reuse_recovered_evidence" in cfg:
+        same_selection = all(original_entries.get(eid) == selected_entries[eid] for eid in refs["artifacts"])
+    if (not same_selection
             or set(old_cfg["reserved_episode_ids"]) != set(cfg["reserved_episode_ids"])
             or old_cfg.get("catalog") != cfg.get("catalog")):
         raise ValueError("Reused evidence selection/source pins differ from the original run.")
@@ -383,8 +404,8 @@ def _reused_evidence(cfg, sources, pins):
     for checksum in historical["code"].values():
         _checksum(checksum)
     reused = {}
-    for eid, source in sources.items():
-        ref = refs["artifacts"][eid]
+    for eid, ref in refs["artifacts"].items():
+        source = sources[eid]
         path = Path(ref["path"])
         if path != child_path(old_root, eid, "evidence.json"):
             raise ValueError("Evidence reference does not belong to the pinned original run.")
@@ -426,6 +447,32 @@ def _reused_evidence(cfg, sources, pins):
     return reused
 
 
+def _reused_recovered_evidence(cfg, sources, pins):
+    if "reuse_recovered_evidence" not in cfg:
+        return {}
+    from .recover_evidence import load_checked
+
+    selected = {e["episode_id"]: e for e in cfg["episodes"]}
+    new_root = child_path(Path(cfg["output_root"]), cfg["run_id"])
+    reused = {}
+    for eid, ref in cfg["reuse_recovered_evidence"].items():
+        artifact = load_checked(ref, pins)
+        parent_ref = artifact["recovery_config"]["manifest"]
+        parent = _pinned_json(Path(parent_ref["path"]), parent_ref["sha256"], pins)
+        old_cfg = _config(parent["config"])
+        old_root = child_path(Path(old_cfg["output_root"]), old_cfg["run_id"])
+        original = {e["episode_id"]: e for e in old_cfg["episodes"]}
+        if (artifact["source"] != _meta(sources[eid]) or original.get(eid) != selected[eid]
+                or set(old_cfg["reserved_episode_ids"]) != set(cfg["reserved_episode_ids"])
+                or old_cfg.get("catalog") != cfg.get("catalog")):
+            raise ValueError("Recovered evidence selection/source pins differ from the original run.")
+        if (cfg["run_id"] == old_cfg["run_id"] or new_root.is_relative_to(old_root)
+                or old_root.is_relative_to(new_root)):
+            raise ValueError("Recovered evidence requires a distinct synthesis run outside the original run.")
+        reused[eid] = artifact
+    return reused
+
+
 def _derive(stage, content, source, upstream, commentary_scope=None):
     return (_derive_evidence(content, source, commentary_scope) if stage == "evidence"
             else _derive_synthesis(content, upstream))
@@ -458,10 +505,11 @@ def _reused_failed_synthesis(cfg, sources, reused, pins):
             or set(old_cfg["reserved_episode_ids"]) != set(cfg["reserved_episode_ids"])
             or old_cfg.get("catalog") != cfg.get("catalog")):
         raise ValueError("Failed synthesis selection/source pins differ from reused evidence.")
-    if "reuse_evidence" in old_cfg:
-        if old_cfg["reuse_evidence"] != cfg["reuse_evidence"]:
+    reuse_keys = ("reuse_evidence", "reuse_recovered_evidence")
+    if any(key in old_cfg for key in reuse_keys):
+        if any(old_cfg.get(key) != cfg.get(key) for key in reuse_keys):
             raise ValueError("Failed synthesis evidence lineage differs from reused evidence.")
-    elif refs["manifest"] != cfg["reuse_evidence"]["manifest"]:
+    elif cfg.get("reuse_recovered_evidence") or refs["manifest"] != cfg.get("reuse_evidence", {}).get("manifest"):
         raise ValueError("Failed synthesis must use the pinned original evidence run.")
     attempt = request.get("attempt")
     if type(attempt) is not int or not 1 <= attempt <= old_cfg["retry_count"] + 1:
@@ -517,16 +565,27 @@ def run(config: dict, *, through="synthesis", dry_run=False, validate_only=False
     commentary_scope = cfg.get("commentary_scope")
     prompts = {stage: schemas.prompt(stage, commentary_scope) for stage in PROMPTS}
     sources = _sources(cfg)
-    implementation = _implementation()
+    def run_implementation():
+        result = _implementation()
+        if "reuse_recovered_evidence" in cfg:
+            from . import recover_evidence
+            result = {**result, "recovered_evidence_checker_sha256": sha256_file(Path(recover_evidence.__file__))}
+        return result
+
+    implementation = run_implementation()
     root = child_path(Path(cfg["output_root"]), cfg["run_id"])
     manifest = {"schema_version": "profile_run.v1", "config": cfg, "implementation": implementation,
                 "config_digest": digest(cfg), "policy": POLICY}
     manifest_path = root / "run_manifest.json"
     artifact_pins = {}
     reused = _reused_evidence(cfg, sources, artifact_pins)
+    recovered = _reused_recovered_evidence(cfg, sources, artifact_pins)
+    reused.update(recovered)
     repair_seed = _reused_failed_synthesis(cfg, sources, reused, artifact_pins)
 
     def evidence_path(eid):
+        if eid in recovered:
+            return Path(cfg["reuse_recovered_evidence"][eid]["path"])
         return (Path(cfg["reuse_evidence"]["artifacts"][eid]["path"]) if eid in reused
                 else child_path(root, eid, "evidence.json"))
 
@@ -538,7 +597,7 @@ def run(config: dict, *, through="synthesis", dry_run=False, validate_only=False
             raise ValueError("Existing profile output lacks its immutable run manifest.")
 
     def unchanged():
-        if _sources(cfg) != sources or _implementation() != implementation:
+        if _sources(cfg) != sources or run_implementation() != implementation:
             raise ValueError("Profile inputs or implementation changed during execution.")
         check_manifest()
         if any(sha256_file(path) != checksum for path, checksum in artifact_pins.items()):
@@ -567,6 +626,8 @@ def run(config: dict, *, through="synthesis", dry_run=False, validate_only=False
             raise ValueError("Stored profile grounding differs from exact reconstruction.")
         if stage == "synthesis" and a.get("reused_evidence") != cfg.get("reuse_evidence"):
             raise ValueError("Synthesis evidence reuse lineage differs.")
+        if stage == "synthesis" and a.get("reused_recovered_evidence") != cfg.get("reuse_recovered_evidence"):
+            raise ValueError("Synthesis recovered-evidence lineage differs.")
         if stage == "synthesis" and a.get("reused_failed_synthesis") != cfg.get("reuse_failed_synthesis"):
             raise ValueError("Synthesis failed-response reuse lineage differs.")
         matched = False
@@ -593,7 +654,8 @@ def run(config: dict, *, through="synthesis", dry_run=False, validate_only=False
         a = checked("evidence", source, [])
         existing.append(a)
         planned.append({"stage": "evidence", "episode_id": source["episode_id"],
-                        "action": "referenced" if source["episode_id"] in reused else "reused" if a else "planned"})
+                        "action": "referenced_recovered" if source["episode_id"] in recovered else
+                                  "referenced" if source["episode_id"] in reused else "reused" if a else "planned"})
     if through == "synthesis":
         if not all(a is not None for a in existing) and (root / "synthesis.json").exists():
             raise ValueError("Synthesis exists without its complete evidence inputs.")
@@ -630,7 +692,8 @@ def run(config: dict, *, through="synthesis", dry_run=False, validate_only=False
             cached = checked(stage, source, ancestors)
             if cached is not None:
                 results.append({"stage": stage, "episode_id": source["episode_id"] if source else None,
-                                "action": "referenced" if source and source["episode_id"] in reused else "reused",
+                                "action": "referenced_recovered" if source and source["episode_id"] in recovered else
+                                          "referenced" if source and source["episode_id"] in reused else "reused",
                                 "sha256": sha256_file(path)})
                 return cached
             previous = repair_seed if stage == "synthesis" else None
@@ -707,8 +770,10 @@ def run(config: dict, *, through="synthesis", dry_run=False, validate_only=False
                             "fingerprint": fingerprint, "source": source_meta, "content": response,
                             "grounding": grounding, "policy": copy.deepcopy(POLICY), "model_metadata": usage,
                             "request_sha256": sha256_file(request_path), "result_sha256": sha256_file(result_path)}
-                if stage == "synthesis" and reused:
+                if stage == "synthesis" and "reuse_evidence" in cfg:
                     artifact["reused_evidence"] = copy.deepcopy(cfg["reuse_evidence"])
+                if stage == "synthesis" and recovered:
+                    artifact["reused_recovered_evidence"] = copy.deepcopy(cfg["reuse_recovered_evidence"])
                 if stage == "synthesis" and repair_seed is not None:
                     artifact["reused_failed_synthesis"] = copy.deepcopy(cfg["reuse_failed_synthesis"])
                 atomic_write_json(path, artifact, overwrite=False)

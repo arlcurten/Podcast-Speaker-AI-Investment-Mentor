@@ -59,8 +59,34 @@ then separately grounds the unchanged response. The new
 `profile_recovered_evidence.v1` preserves the original failure and historical
 model usage; recovery itself makes zero calls. It does not overwrite later
 repairs, automatically prefer one response version, grant acceptance, or create
-a successful model receipt. Downstream synthesis must explicitly support this
-distinct provenance contract; ordinary `reuse_evidence` does not accept it.
+a successful model receipt. Ordinary `reuse_evidence` does not accept this
+distinct provenance contract.
+
+To synthesize recovered candidates, use a **new run** with
+`commentary_scope: episode_context.v1` and an explicit mapping:
+
+```json
+{
+  "reuse_recovered_evidence": {
+    "SYNTHETIC_EPISODE": {"path": "<private-recovery>/candidate.json", "sha256": "<sha256>"}
+  }
+}
+```
+
+This mapping may be combined with the existing `reuse_evidence` manifest/artifact
+references for completed originals. Together they must cover every selected
+episode exactly once; neither automatic preference nor new evidence extraction
+is allowed. When mixing, completed references may select a subset of their
+original run. Each selected source entry, reserved-ID set and catalog pin must
+still match its original run. Recovery checks include the failed call, source
+reviews and annotation dependencies; all content and historical provenance stay
+unchanged. Recovered candidates are not converted into completed model artifacts.
+
+`plan` marks these evidence inputs `referenced_recovered` and counts no new
+evidence calls. The synthesis manifest, fingerprint and artifact bind both sets
+of references; only synthesis can make a new call. Resume revalidates the pins,
+and a changed selection requires a new run. A failed-synthesis repair must use
+exactly the same completed and recovered references as its parent.
 
 ## Corpus Evidence Queue
 
@@ -115,7 +141,8 @@ not a statement about provider context limits. Input overflow does not repeat an
 identical repair attempt; use a new, explicitly reviewed recovery configuration.
 
 To repair a persisted validation failure without repeating the initial synthesis,
-set `reuse_failed_synthesis` in a **new run** alongside `reuse_evidence`:
+set `reuse_failed_synthesis` in a **new run** alongside `reuse_evidence`,
+`reuse_recovered_evidence`, or their explicit combination:
 
 ```json
 {
