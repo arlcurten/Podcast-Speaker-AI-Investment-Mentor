@@ -37,7 +37,8 @@ Do not create a `private/` directory in the public repo. If an artifact is uncer
 
 Rebuild note: historical reports below describe the archived implementations
 under `legacy/`, not a new GPU run or newly validated Mentor. Synthetic in-code
-fixtures in `transcription/tests/`, `knowledge/tests/` and `mentor_agent/tests/`
+fixtures in `transcription/tests/`, `knowledge/tests/`, `speaker_profile/tests/`
+and `mentor_agent/tests/`
 are invented text and temporary metadata,
 with no private source or real transcript excerpts; they test structural
 contracts and failure recovery, not real ASR or answer quality. The fictional

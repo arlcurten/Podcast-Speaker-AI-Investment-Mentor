@@ -129,6 +129,86 @@ of references; only synthesis can make a new call. Resume revalidates the pins,
 and a changed selection requires a new run. A failed-synthesis repair must use
 exactly the same completed and recovered references as its parent.
 
+## Native-Agent Candidate Adoption
+
+`speaker_profile.native_evidence` is a standalone, single-episode authoring and
+import contract. It does not launch an agent, call a provider, create backend call
+receipts, or integrate candidates into extraction, inventory or synthesis.
+An already available agent must genuinely read and author against the frozen
+packet. Do not relabel an earlier response as having used a later packet.
+
+Export the strict config and submission schemas:
+
+```bash
+python -m speaker_profile.native_evidence schema --kind config
+python -m speaker_profile.native_evidence schema --kind submission
+```
+
+A private `profile_native_evidence_config.v1` contains:
+
+- `packet_id`: a new safe identifier; `actor: {identity, session_id}`: the known
+  assigned author and existing session, not a guessed model identity.
+- `episode: {episode_id, raw, normalized, source_review}`: each file is an absolute
+  private `{path, sha256}` reference; absent `source_review` is explicitly null.
+- `reserved_episode_ids`: explicit unique IDs, checked before source loading.
+- `commentary_scope: episode_context.v1`.
+- `max_packet_bytes` and `max_submission_bytes`: positive byte limits, at most
+  32,000,000 each. Complete packets are measured without truncation. These are
+  file limits, not peak-RAM or provider-context guarantees; packet construction
+  materializes one whole episode. Existing admission/reserve policies are unchanged.
+
+```bash
+python -m speaker_profile.native_evidence plan --input "$NATIVE_CONFIG" --sha256 "$CONFIG_SHA256" --output "$NEW_PACKET"
+python -m speaker_profile.native_evidence freeze --input "$NATIVE_CONFIG" --sha256 "$CONFIG_SHA256" --output "$NEW_PACKET"
+python -m speaker_profile.native_evidence validate --input "$NEW_PACKET" --sha256 "$PACKET_SHA256"
+```
+
+`plan` is read-only and reports full packet bytes and source counts. Only `freeze`
+writes the new packet. It binds the config, raw/normalized/review dependencies,
+annotation sidecars/supporting reviews, terminology, exact evidence prompt and
+native authoring instructions, full raw/mapped context, schemas and implementation.
+No knowledge-layer extraction artifacts are inputs. The packet remains private.
+
+After freeze, the assigned agent writes a separate private
+`profile_native_evidence_submission.v1`: `packet: {path, sha256}`, matching `actor`,
+actual timezone-aware `authored_at`, `method`, `complete_episode_read: true`,
+nonempty `limitations`, and `content` conforming to the packet's evidence schema.
+The declaration is allowed only after the complete reading; record nonblind or
+other method limits honestly. Hashes and timestamp ordering bind the declared
+workflow, not independent proof of authorship, attention, audio fidelity or truth.
+Required `model_metadata` is exactly:
+
+```json
+{"provider": "native_agent_candidate", "model": null, "usage": null, "cost_usd": null}
+```
+
+The provider value identifies this authoring path, not a completed API call.
+Model/token/cost metadata is unknown, not zero. Preserve and pin the saved
+submission before adoption:
+
+```bash
+python -m speaker_profile.native_evidence prepare --input "$SUBMISSION" --sha256 "$SUBMISSION_SHA256" --output "$NEW_CANDIDATE"
+python -m speaker_profile.native_evidence apply --input "$SUBMISSION" --sha256 "$SUBMISSION_SHA256" --output "$NEW_CANDIDATE"
+python -m speaker_profile.native_evidence validate --input "$NEW_CANDIDATE" --sha256 "$CANDIDATE_SHA256"
+```
+
+`prepare` is read-only; `apply` writes only a new immutable
+`profile_native_evidence_candidate.v1`. Python equivalents are
+`plan/freeze(config_ref, output)`, `load_packet(packet_ref)`,
+`prepare/apply(submission_ref, output)` and `load_checked(candidate_ref)`.
+The unchanged evidence validator checks exact quotes/timestamps, attribution and
+inference constraints, same-episode context and full region accounting. Overlap
+is recomputed; independent-event count stays null. These checks cannot certify
+semantic fidelity or establish that reported actions actually happened.
+
+Adoption records `operation: import_only`, `model_call_performed: false` and
+`model_calls_this_execution: 0`. Those zeros describe import only, **not** the
+originating agent's reasoning usage. All source holds, analyst-note authority and
+unreviewed/non-serving policy survive. There are no successful backend receipts,
+automatic publication or L1-L4 changes. Replay requires the exact pinned inputs
+and implementation; code/source changes need a new explicitly authored version.
+Synthetic tests exercise this contract, not real extraction quality.
+
 ## Corpus Evidence Queue
 
 For independent per-episode evidence extraction, use a private `profile_batch.v1`
