@@ -19,7 +19,7 @@ from transcription.common import atomic_write_json, child_path, private_path, re
 from . import pipeline
 
 SOURCE_OPTIONS = ("model", "reasoning_effort", "timeout_seconds", "max_input_chars", "retry_count",
-                  "episodes", "reserved_episode_ids", "catalog")
+                  "episodes", "reserved_episode_ids", "catalog", "commentary_scope")
 STATES = {"pending", "running", "interrupted", "deferred", "failed", "completed_candidate"}
 
 

@@ -6,6 +6,7 @@ import copy
 from knowledge.schemas import TEXT, STRINGS, IDS, OPTIONAL_TEXT, array, enum, obj
 
 VERSION = "profile.v1"
+EPISODE_CONTEXT = "episode_context.v1"
 DIMENSION = obj(value=enum("low", "medium", "high", "unknown"), reason=TEXT)
 CATEGORIES = array(enum("investment_decision_behavior", "general_decision_preference", "values_and_beliefs",
                         "emotional_response_or_possible_bias", "other"), 1)
@@ -87,6 +88,20 @@ Confidence dimensions are proposed judgments, not approvals. All output remains 
 dynamic-retrieval usage undecided. Source notes and interpretations are commentary, not additional speaker evidence.
 Return only the supplied schema.""",
 }
+
+
+def prompt(stage: str, commentary_scope=None) -> str:
+    base = PROMPTS[stage]
+    if commentary_scope == EPISODE_CONTEXT:
+        base += "\ncommentary_scope: episode_context.v1. Supplementary notes are model_analyst_not_speaker commentary."
+        if stage == "evidence":
+            base += (" Each supplementary note may cite any existing merged IDs from this SAME episode, including"
+                     " regions fully disjoint from the item's primary anchors. Note IDs must be nonempty and unique."
+                     " Keep primary merged_ids and exact quotes limited to the observation's own evidence."
+                     " Notes do not supply inferred-tendency basis anchors or account for unselected regions.")
+        base += (" Supplementary context is never additional independent evidence or primary source coverage."
+                 " Preserve source warnings; do not fill missing facts, motives, context or reasoning.")
+    return base
 
 
 def schema(stage: str) -> dict:

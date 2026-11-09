@@ -22,6 +22,27 @@ Optional `catalog: {path, sha256}` binds selection metadata without model input.
 Reserved IDs cannot appear in the extraction selection. No sources are discovered
 implicitly and knowledge-layer outputs are not extraction inputs.
 
+### Supplementary Context
+
+Omitting `commentary_scope` preserves the item-only `profile.v1` grounding and
+prompt. New run or batch configs may opt in with
+`"commentary_scope": "episode_context.v1"`. Each supplementary note then resolves
+its own nonempty, unique merged IDs against the same episode's pinned source,
+even when fully disjoint from the item's primary anchors. Grounding adds a
+separate `supplementary_context` list per item, in note order, with exact source
+mapping, source warnings, reviewed annotations and
+`authority: model_analyst_not_speaker`. Primary merged IDs, quotes, inference
+basis checks, source-region accounting and synthesis counts are unchanged.
+Notes do not cover unselected regions or become additional independent evidence.
+All source holds and provisional policies remain in force.
+
+The mode is pinned in config, request context/prompt and fingerprints. Config or
+implementation changes still require new run/batch IDs; existing manifests are
+not migrated. Explicit evidence reuse validates with the original run's scope,
+not the new run's scope. This option does not recover failed historical responses
+or rewrite their call records; that requires a separate provenance-bound recovery
+operation. Code validation does not approve commentary semantics or source quality.
+
 ## Corpus Evidence Queue
 
 For independent per-episode evidence extraction, use a private `profile_batch.v1`

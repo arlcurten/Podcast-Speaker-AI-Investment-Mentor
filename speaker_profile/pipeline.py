@@ -32,7 +32,7 @@ def _config(value: dict) -> dict:
     cfg = copy.deepcopy(value)
     allowed = {"schema_version", "run_id", "output_root", "model", "reasoning_effort", "timeout_seconds",
                "max_input_chars", "max_calls", "retry_count", "episodes", "reserved_episode_ids", "catalog",
-               "context_format", "reuse_evidence", "reuse_failed_synthesis"}
+               "context_format", "reuse_evidence", "reuse_failed_synthesis", "commentary_scope"}
     if not isinstance(cfg, dict) or set(cfg) - allowed or cfg.get("schema_version") != "profile_config.v1":
         raise ValueError("Expected profile_config.v1 with only supported fields.")
     common.safe_id(cfg["run_id"])
@@ -83,6 +83,8 @@ def _config(value: dict) -> dict:
             raise ValueError("Catalog must be outside the output run.")
     if "context_format" in cfg and cfg["context_format"] != serialization.FORMAT:
         raise ValueError("Unsupported explicit profile context format.")
+    if "commentary_scope" in cfg and cfg["commentary_scope"] != schemas.EPISODE_CONTEXT:
+        raise ValueError("Unsupported explicit profile commentary scope.")
     if "reuse_evidence" in cfg:
         reuse = cfg["reuse_evidence"]
         if (not isinstance(reuse, dict) or set(reuse) != {"manifest", "artifacts"}
@@ -150,7 +152,9 @@ def _unique(values):
     return set(values)
 
 
-def _derive_evidence(content, source):
+def _derive_evidence(content, source, commentary_scope=None):
+    if commentary_scope is not None and commentary_scope != schemas.EPISODE_CONTEXT:
+        raise ValueError("Unsupported explicit profile commentary scope.")
     validate("evidence", content)
     eid = source["episode_id"]
     if content["episode_id"] != eid:
@@ -189,9 +193,17 @@ def _derive_evidence(content, source):
                 row["decision_context"]["mode"] == "hypothetical"
                 or (row["action"] is not None and row["action"]["kind"] == "hypothetical")):
             raise ValueError("A hypothetical choice cannot be represented as a reported action.")
+        supplementary_context = []
         for note in row["supplementary_notes"]:
-            if not set(note["merged_ids"]) <= mids:
+            if commentary_scope == schemas.EPISODE_CONTEXT:
+                grounded = evidence(note["merged_ids"], source)
+                grounded["source_issues"] = [i for i in issues if set(note["merged_ids"]).intersection(i["merged_ids"])]
+                supplementary_context.append({"grounding": grounded, "note": note["note"],
+                                              "authority": "model_analyst_not_speaker"})
+            elif not set(note["merged_ids"]) <= mids:
                 raise ValueError("Supplementary commentary must stay within its item's anchors.")
+        if commentary_scope == schemas.EPISODE_CONTEXT:
+            resolved["supplementary_context"] = supplementary_context
         resolved.update(interpretation_authority="model_analyst_not_speaker",
                         supplementary_notes_authority="model_analyst_not_speaker",
                         source_issues=[i for i in issues if mids.intersection(i["merged_ids"])])
@@ -204,8 +216,11 @@ def _derive_evidence(content, source):
         accounted.update(note["merged_ids"])
     if accounted != set(merged):
         raise ValueError("Every source region needs evidence or an explicit unselected-region note.")
-    return {"items": result, "unselected_regions": omissions,
-            "scope": "Exact source mapping, not semantic completeness, source acceptance or verified events."}
+    grounding = {"items": result, "unselected_regions": omissions,
+                 "scope": "Exact source mapping, not semantic completeness, source acceptance or verified events."}
+    if commentary_scope == schemas.EPISODE_CONTEXT:
+        grounding["commentary_scope"] = commentary_scope
+    return grounding
 
 
 def _catalog(upstream):
@@ -291,12 +306,15 @@ def _derive_synthesis(content, upstream):
             "ungrouped_evidence_ids": sorted(r for r, links in usage.items() if not links)}
 
 
-def _context(stage, source, upstream, context_format=None):
+def _context(stage, source, upstream, context_format=None, commentary_scope=None):
     if stage == "evidence":
-        return {"source": _meta(source), "merged_segments": source["segments"],
+        context = {"source": _meta(source), "merged_segments": source["segments"],
                 "raw_segments": [{k: row[k] for k in ("segment_id", "start", "end", "text")}
                                  for row in source["raw_segments"].values()],
                 "source_issues": candidates.source_issues(source)}
+        if commentary_scope == schemas.EPISODE_CONTEXT:
+            context["commentary_scope"] = commentary_scope
+        return context
     def references(grounding):
         result = copy.deepcopy(grounding)
         notes = result.pop("reviewed_annotations", None)
@@ -304,6 +322,9 @@ def _context(stage, source, upstream, context_format=None):
             result["annotations_sha256"] = notes["sha256"]
             result["reviewed_annotation_ids"] = [n["annotation_id"] for n in notes["annotations"]]
         result["source_issue_ids"] = [n["issue_id"] for n in result.pop("source_issues", [])]
+        if "supplementary_context" in result:
+            result["supplementary_context"] = [
+                {**note, "grounding": references(note["grounding"])} for note in result["supplementary_context"]]
         return result
     rows = copy.deepcopy(list(_catalog(upstream).values()))
     for row in rows:
@@ -370,7 +391,7 @@ def _reused_evidence(cfg, sources, pins):
         artifact = _pinned_json(path, ref["sha256"], pins)
         if (artifact.get("schema_version") != VERSION or artifact.get("stage") != "evidence"
                 or artifact.get("policy") != POLICY or artifact.get("source") != _meta(source)
-                or artifact.get("grounding") != _derive_evidence(artifact["content"], source)):
+                or artifact.get("grounding") != _derive_evidence(artifact["content"], source, old_cfg.get("commentary_scope"))):
             raise ValueError("Reused evidence binding or recomputed grounding differs.")
         matched = False
         for attempt in range(1, old_cfg["retry_count"] + 2):
@@ -393,7 +414,7 @@ def _reused_evidence(cfg, sources, pins):
                        and request.get("stage") == "evidence" and request.get("episode_id") == eid
                        and request.get("attempt") == attempt and isinstance(request.get("schema"), dict)
                        and isinstance(request.get("prompt"), str) and bool(request["prompt"])
-                       and context == _context("evidence", source, [])
+                       and context == _context("evidence", source, [], commentary_scope=old_cfg.get("commentary_scope"))
                        and artifact.get("fingerprint") == request.get("fingerprint") == result.get("fingerprint") == fingerprint
                        and result.get("request_sha256") == artifact["request_sha256"]
                        and result.get("status") == "completed" and result.get("response") == artifact["content"]
@@ -405,8 +426,9 @@ def _reused_evidence(cfg, sources, pins):
     return reused
 
 
-def _derive(stage, content, source, upstream):
-    return _derive_evidence(content, source) if stage == "evidence" else _derive_synthesis(content, upstream)
+def _derive(stage, content, source, upstream, commentary_scope=None):
+    return (_derive_evidence(content, source, commentary_scope) if stage == "evidence"
+            else _derive_synthesis(content, upstream))
 
 
 def _reused_failed_synthesis(cfg, sources, reused, pins):
@@ -492,6 +514,8 @@ def run(config: dict, *, through="synthesis", dry_run=False, validate_only=False
     if through not in ("evidence", "synthesis") or (dry_run and validate_only):
         raise ValueError("Choose evidence/synthesis and one operation.")
     cfg = _config(config)
+    commentary_scope = cfg.get("commentary_scope")
+    prompts = {stage: schemas.prompt(stage, commentary_scope) for stage in PROMPTS}
     sources = _sources(cfg)
     implementation = _implementation()
     root = child_path(Path(cfg["output_root"]), cfg["run_id"])
@@ -525,7 +549,7 @@ def run(config: dict, *, through="synthesis", dry_run=False, validate_only=False
         path = evidence_path(identity) if source else root / "synthesis.json"
         source_meta = _meta(source) if source else {"episodes": [_meta(s) for s in sources.values()]}
         fingerprint = digest({"run": manifest, "stage": stage, "source": source_meta,
-                              "upstream": [digest(a) for a in upstream], "schema": schema(stage), "prompt": PROMPTS[stage]})
+                              "upstream": [digest(a) for a in upstream], "schema": schema(stage), "prompt": prompts[stage]})
         return identity, path, source_meta, fingerprint
 
     def checked(stage, source, upstream):
@@ -539,7 +563,7 @@ def run(config: dict, *, through="synthesis", dry_run=False, validate_only=False
         if (a.get("schema_version") != VERSION or a.get("stage") != stage or a.get("fingerprint") != fingerprint
                 or a.get("source") != source_meta or a.get("policy") != POLICY):
             raise ValueError("Existing profile artifact binding differs; no overwrite or automatic migration.")
-        if a.get("grounding") != _derive(stage, a["content"], source, upstream):
+        if a.get("grounding") != _derive(stage, a["content"], source, upstream, commentary_scope):
             raise ValueError("Stored profile grounding differs from exact reconstruction.")
         if stage == "synthesis" and a.get("reused_evidence") != cfg.get("reuse_evidence"):
             raise ValueError("Synthesis evidence reuse lineage differs.")
@@ -577,8 +601,8 @@ def run(config: dict, *, through="synthesis", dry_run=False, validate_only=False
         planned.append({"stage": "synthesis", "episode_id": None, "action": "reused" if a else "planned"})
         if all(a is not None for a in existing):
             context = _context("synthesis", None, existing, cfg.get("context_format"))
-            base_size = _input_chars(PROMPTS["synthesis"], context)
-            size = _input_chars(PROMPTS["synthesis"], _repair_context(context, repair_seed))
+            base_size = _input_chars(prompts["synthesis"], context)
+            size = _input_chars(prompts["synthesis"], _repair_context(context, repair_seed))
             planned[-1].update(input_chars=size, max_input_chars=cfg["max_input_chars"],
                                base_input_chars=base_size, repair_input_chars=size - base_size,
                                seeded_validation_repair=repair_seed is not None,
@@ -625,21 +649,21 @@ def run(config: dict, *, through="synthesis", dry_run=False, validate_only=False
                             raise ValueError("Recorded input failure is not repair-retryable; use an explicit new run configuration.")
                         continue
                     response, usage = previous["response"], previous.get("usage")
-                    grounding = _derive(stage, response, source, ancestors)
+                    grounding = _derive(stage, response, source, ancestors, commentary_scope)
                 else:
                     if result_path.exists():
                         raise ValueError("Profile result lacks its original request.")
                     if len(list((root / "calls").glob("*.request.json"))) >= cfg["max_calls"]:
                         raise ValueError("Immutable run model-call budget exhausted.")
                     unchanged()
-                    context = _repair_context(_context(stage, source, ancestors, cfg.get("context_format")), previous)
+                    context = _repair_context(_context(stage, source, ancestors, cfg.get("context_format"), commentary_scope), previous)
                     request = {"schema_version": "profile_call.v1", "stage": stage, "episode_id": identity,
                                "fingerprint": fingerprint, "attempt": attempt, "created_at": utc_now(),
-                               "prompt": PROMPTS[stage], "context": context, "schema": schema(stage)}
+                               "prompt": prompts[stage], "context": context, "schema": schema(stage)}
                     atomic_write_json(request_path, request, overwrite=False)
                     response, usage, phase = None, None, "input"
                     try:
-                        input_chars = _input_chars(PROMPTS[stage], context)
+                        input_chars = _input_chars(prompts[stage], context)
                         if input_chars > cfg["max_input_chars"]:
                             raise ValueError(f"Profile input exceeds the configured local character limit: "
                                              f"input_chars={input_chars}, max_input_chars={cfg['max_input_chars']}; "
@@ -649,9 +673,9 @@ def run(config: dict, *, through="synthesis", dry_run=False, validate_only=False
                             model = CodexBackend(cfg["model"], root / "tmp", timeout_seconds=cfg["timeout_seconds"],
                                                  reasoning_effort=cfg["reasoning_effort"], max_input_chars=cfg["max_input_chars"])
                         calls += 1
-                        response, usage = model.complete(PROMPTS[stage], context, schema(stage))
+                        response, usage = model.complete(prompts[stage], context, schema(stage))
                         phase = "validation"
-                        grounding = _derive(stage, response, source, ancestors)
+                        grounding = _derive(stage, response, source, ancestors, commentary_scope)
                         phase = "provenance"
                         unchanged()
                         for ancestor in ancestors:

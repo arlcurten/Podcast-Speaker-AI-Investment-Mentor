@@ -166,7 +166,8 @@ def test_zero_items_and_zero_hypotheses_are_valid(cfg):
 @pytest.mark.parametrize("fault", ["quote_text", "timestamp", "raw_id", "merged_id", "duplicate_id", "wrong_episode",
                                    "missing_interpretation", "recursive_basis", "foreign_basis", "basis_anchor",
                                    "note_anchor", "commentary_observation", "unaccounted_source", "fake_eligibility"])
-def test_invalid_evidence_rejected(mapped, fault):
+@pytest.mark.parametrize("commentary_scope", [None, "episode_context.v1"])
+def test_invalid_evidence_rejected(mapped, fault, commentary_scope):
     source, content, _ = mapped
     row = content["items"][0]
     if fault == "quote_text": row["quotes"][0]["text"] = "Invented quote"
@@ -179,11 +180,11 @@ def test_invalid_evidence_rejected(mapped, fault):
     elif fault == "recursive_basis": content["items"][2]["basis_evidence_ids"] = ["SYN1:E3"]
     elif fault == "foreign_basis": content["items"][2]["basis_evidence_ids"] = ["OTHER:E1"]
     elif fault == "basis_anchor": content["items"][2]["basis_evidence_ids"] = ["SYN1:E2"]
-    elif fault == "note_anchor": row["supplementary_notes"][0]["merged_ids"] = [1]
+    elif fault == "note_anchor": row["supplementary_notes"][0]["merged_ids"] = [999] if commentary_scope else [1]
     elif fault == "commentary_observation": row["source_observation"] = "[Agent clarification] Invented motive"
     elif fault == "unaccounted_source": content["unselected_regions"] = []
     else: row["eligible_for_serving"] = True
-    with pytest.raises(ValueError): pipeline._derive_evidence(content, source)
+    with pytest.raises(ValueError): pipeline._derive_evidence(content, source, commentary_scope)
 
 
 def test_exact_separate_regions_and_unknown_event_not_fabricated(mapped):
