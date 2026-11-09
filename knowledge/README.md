@@ -451,6 +451,29 @@ new release. This does not require re-transcription. `knowledge_config.v1`,
 review and release descriptor envelopes are unchanged; their hashes pin the new
 v2 artifacts. Do not reuse an old acceptance as approval of regenerated content.
 
+## Bounded Corpus Discovery
+
+An explicitly frozen private inventory can be organized into candidate reasoning
+families before cross-episode consolidation:
+
+```bash
+python -m knowledge.corpus_discovery plan --config "$DISCOVERY_CONFIG" --sha256 "$CONFIG_SHA256"
+python -m knowledge.corpus_discovery run --config "$DISCOVERY_CONFIG" --sha256 "$CONFIG_SHA256" --max-packets 1
+python -m knowledge.corpus_discovery validate --config "$DISCOVERY_CONFIG" --sha256 "$CONFIG_SHA256"
+```
+
+Use a private `knowledge_discovery_config.v1` with `inventory: {path, sha256}`,
+`run_id`, `output_root`, model/effort, timeout, input/response character limits,
+cumulative `max_calls` and `retry_count` (0 or 1). Planning and validation make
+no model calls. Matching completed packets are reused; failed packets require
+explicit `--retry-failed`, and interrupted requests require inspection.
+
+Complete evidence and counter-context are retained; oversized bundles are not
+silently truncated. Families are packet-local navigation proposals, not Level 4
+principles or independent evidence. Global reconciliation, counter-review and
+semantic acceptance remain separate work. Preserve old runs when creating new
+versions after input or implementation changes.
+
 ## Validation and Limits
 
 ```bash

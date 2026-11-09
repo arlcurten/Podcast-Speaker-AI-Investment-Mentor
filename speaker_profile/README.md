@@ -4,6 +4,32 @@ Independent offline extraction from explicitly selected, hash-bound transcripts.
 Artifacts use `profile.v1`; they do not grant source acceptance, publication,
 serving eligibility or automatic inclusion in a global profile.
 
+## Corpus Discovery
+
+For an explicitly frozen private Profile inventory, use bounded discovery to
+organize evidence into candidate behavioral families:
+
+```bash
+python -m speaker_profile.corpus_discovery plan --config "$DISCOVERY_CONFIG" --sha256 "$CONFIG_SHA256"
+python -m speaker_profile.corpus_discovery run --config "$DISCOVERY_CONFIG" --sha256 "$CONFIG_SHA256" --max-packets 1
+python -m speaker_profile.corpus_discovery validate --config "$DISCOVERY_CONFIG" --sha256 "$CONFIG_SHA256"
+```
+
+The private `profile_discovery_config.v1` pins `inventory: {path, sha256}`,
+`run_id`, `output_root`, model/effort, timeout, input/response character limits,
+`max_calls` (the run's cumulative admission budget), and `retry_count` (0 or 1).
+`plan` and `validate` make no model calls. Repeat `run` to skip matching completed
+packets; use `--retry-failed` only after inspecting a failed result. An admitted
+request without a result requires inspection, not an automatic retry.
+
+Rare, non-investment and ungrouped evidence remains accounted for. Hypotheses
+provide navigation, not additional evidence. Source notes retain their original
+authority. Discovery is packet-local grouping, **not** global reconciliation,
+semantic approval, a final Speaker Profile, or serving authorization. Changed
+inputs or implementation require a new inventory/run version; preserve old ones.
+
+## Episode Extraction
+
 ```bash
 python -m speaker_profile plan --config "$PROFILE_CONFIG"
 python -m speaker_profile extract --config "$PROFILE_CONFIG" --through evidence
