@@ -79,6 +79,7 @@ def citation(case: dict) -> dict:
     return {"episode_id": case["episode_id"], "record_id": case["record_id"], "regions": regions,
             "source_raw_sha256": evidence["source_raw_sha256"],
             "knowledge_artifact_sha256": case["knowledge_artifact_sha256"],
+            **({"leaf_release_sha256": case["leaf_release_sha256"]} if "leaf_release_sha256" in case else {}),
             "label": f"Source: {case['episode_id']}, " + "; ".join(timestamp(r["start"]) + "-" + timestamp(r["end"]) for r in regions) + f", record {case['record_id']}"}
 
 

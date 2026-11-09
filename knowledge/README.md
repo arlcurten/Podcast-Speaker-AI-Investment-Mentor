@@ -465,6 +465,19 @@ release. Old flat-confidence outputs are not silently upgraded. Archived data
 stays untouched; regenerate a new version only
 after source acceptance.
 
+An immutable `knowledge_release_collection.v1` can serve disjoint reviewed
+selections together without copying corpus data. Its only fields are
+`schema_version`, `created_at` (ISO timestamp with timezone),
+`scope: reviewed_leaf_union`, and a nonempty `leaves: [{path, sha256}]` list.
+Create one with `knowledge.release.publish_collection(leaves, output_path)`;
+all references must identify private `knowledge_release.v1` or
+`knowledge_case_release.v1` descriptors. Each leaf must validate independently,
+including its own principle support/counterevidence. Collections cannot nest,
+repeat paths/hashes, override duplicate case/principle IDs, or mix source/L1/L2
+versions of a shared episode. Disjoint selections of the same episode version
+are allowed. Leaf reviews, holds and limitations remain authoritative; collection
+membership is not additional evidence or a new review approval.
+
 ## Schema Migration
 
 ### Selected Case Use

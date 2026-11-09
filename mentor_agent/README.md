@@ -24,6 +24,15 @@ the ignored root `.env` or environment. Set `MENTOR_RELEASE` to a reviewed
 `knowledge_case_release.v1` produced by `python3 -m knowledge publish-cases`.
 The latter requires an explicit source-grounded, hash-bound selected-case review;
 it provides case-only evidence and never upgrades the original episode hold.
+`MENTOR_RELEASE` may also point to a `knowledge_release_collection.v1` descriptor
+created by `knowledge.release.publish_collection`. Every leaf is independently
+revalidated; no leaf can supply missing evidence to make another leaf valid.
+All leaf dependencies are rechecked together before loading completes. The index
+and reasoning flow are unchanged, and collection citations include
+`leaf_release_sha256` alongside source/artifact hashes. Changed or revoked
+dependencies invalidate the entire collection, including an already loaded index.
+Add/remove leaves through a new immutable collection and restart; the runtime
+does not discover newer releases or separate revocation files automatically.
 For live `ask` or `serve`, set `OPENROUTER_API_KEY`; optionally override
 `MENTOR_MODEL_ID`. Local `validate-data`, `retrieve` and `read-case` do not need
 an API key. Never use a public sample or bypass review to manufacture a live demo.

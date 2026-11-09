@@ -282,8 +282,8 @@ def _load_review(config_ref, review_ref):
     return review, cases, pins
 
 
-def load_payload(data):
-    """Validate all private dependencies before returning approved cases and no principles."""
+def _validated_payload(data):
+    """Return approved cases and the exact dependency pins checked for this leaf."""
     data = copy.deepcopy(data)
     _validate(data, RELEASE_SCHEMA)
     review, cases, pins = _load_review(data["candidate_config"], data["review"])
@@ -291,6 +291,12 @@ def load_payload(data):
     if data["dependencies"] != expected or data["accepted_case_ids"] != review["accepted_case_ids"]:
         raise ValueError("Scoped release dependency/selection manifest differs from its reviewed inputs.")
     _check_pins(pins)
+    return cases, pins
+
+
+def load_payload(data):
+    """Validate all private dependencies before returning approved cases and no principles."""
+    cases, _ = _validated_payload(data)
     return cases, {}
 
 
