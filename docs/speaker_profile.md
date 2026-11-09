@@ -28,3 +28,9 @@ independent observations.
 Specific selections, schemas under discussion, evaluation protocols, tuning
 decisions and experimental results remain private. No deployed profile integration
 is claimed by this overview.
+
+The implemented [scoped release workflow](../speaker_profile/README.md#reviewed-native-teaching-context)
+supports explicit reviewed context for a personal assistant. Its `validate` and
+`read` commands recheck source and review bindings without inference. They do not
+approve a global persona, change source holds or enable automatic API serving.
+Reading private output with a hosted assistant sends that context to its provider.

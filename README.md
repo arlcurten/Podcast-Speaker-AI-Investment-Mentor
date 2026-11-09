@@ -113,6 +113,20 @@ for that workflow; private evidence read by a hosted assistant enters its contex
 Add `--json --output "$PRIVATE_TRACE"` to an `ask --query` command to save
 diagnostics privately. [Mentor configuration and API](mentor_agent/README.md).
 
+For personal assistant use, a separately reviewed behavioral Profile can supply
+additional source-linked context. Set the following shell variables to an
+absolute private scoped release path and its recorded checksum:
+
+```bash
+python3 -m speaker_profile.release validate --input "$PROFILE_RELEASE" --sha256 "$PROFILE_RELEASE_SHA256"
+python3 -m speaker_profile.release read --input "$PROFILE_RELEASE" --sha256 "$PROFILE_RELEASE_SHA256"
+```
+
+These commands make no model calls. Let the assistant read relevant observations,
+conditions and contrary evidence before reasoning; hypotheses are not extra
+evidence or a fixed personality. This is not automatic integration into `ask` or
+HTTP serving. Full output stays private. [Profile workflow](speaker_profile/README.md).
+
 ### Tests
 
 ```bash
@@ -126,6 +140,7 @@ Default tests use synthetic data and mocked inference; no GPU or API key is requ
 ```text
 transcription/       acquisition, Whisper worker, normalization, quality gate
 knowledge/           L1-L4 extraction, schemas, prompts, release validation
+speaker_profile/     independent behavioral evidence, hypotheses, scoped review
 mentor_agent/        retrieval, applicability, answers, local HTTP API
 legacy/              frozen implementations and comparison baselines
 docs/                setup, architecture and artifact policies
@@ -162,6 +177,17 @@ flowchart TD
         l2 --> release["Source acceptance + semantic review + private release"]
         l4 --> release
     end
+
+    subgraph profile["Independent behavioral Profile"]
+        prepare --> observations["Source-linked observations + limitations"]
+        observations --> hypotheses["Conditional hypotheses + counterevidence"]
+        hypotheses --> profileReview["Scoped source and semantic review"]
+        profileReview --> profileRead["Explicit private context read"]
+    end
+
+    release --> caseRead["Local retrieve / read-case"]
+    caseRead --> native["Personal hosted assistant: reason with source citations"]
+    profileRead --> native
 
     subgraph online["Local Mentor: CLI / loopback HTTP API"]
         question["User question"] --> analysis["Scenario and search analysis"]
