@@ -316,7 +316,7 @@ def test_incomplete_parent_is_rejected_before_any_comparison(ready):
     path = ready["parent"]["root"] / "packet_000002/attempt_0001.result.json"
     path.unlink()
     model = Model()
-    with pytest.raises(ValueError, match="completed discovery"):
+    with pytest.raises(ValueError, match="completed discovery|seal lacks its result"):
         reconcile.execute(pin(ready["path"]), command="run", backend=model)
     assert not model.calls and not ready["root"].exists()
 

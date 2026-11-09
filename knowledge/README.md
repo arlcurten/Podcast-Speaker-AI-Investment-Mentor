@@ -647,6 +647,16 @@ not implemented. Changed family/source/code versions require new runs.
 
 ## Validation and Limits
 
+New discovery runs preserve each closed attempt's request/result hashes in a
+separate immutable `attempt_*.seal.json`, including failed attempts. Resume checks
+that retained seal before interpreting the result, so editing a paused receipt
+cannot silently become validated history. A crash after saving a result but before
+sealing it requires inspection; the runner neither recreates the seal nor blindly
+retries. Preserve all three files. This detects corruption against the retained
+seal, not coordinated rewriting of the receipt and its seal or authenticated
+model authorship. Back up exact artifacts separately. Existing run implementation
+pins require historical code or a new version; no seals are fabricated for old runs.
+
 ```bash
 python3 -m pytest -q knowledge/tests
 python3 -m compileall -q knowledge

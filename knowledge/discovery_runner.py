@@ -44,6 +44,21 @@ def _result(entry):
     return inventory._read({"path": str(entry["result"]), "sha256": entry["result_sha256"]}, {})
 
 
+def _seal(manifest, packet_id, attempt, request_sha, result_sha):
+    return {"schema_version": "discovery_receipt_seal.v1",
+            "run_sha256": provenance.digest(manifest), "packet_id": packet_id,
+            "attempt": attempt, "request_sha256": request_sha, "result_sha256": result_sha}
+
+
+def _write_result(req, res, seal, result, manifest, packet_id, attempt, pins):
+    # A separate immutable digest prevents a changed receipt becoming new history
+    # on resume. This is corruption detection, not authenticated model authorship.
+    atomic_write_json(res, result, overwrite=False)
+    pins[res] = sha256_file(res)
+    atomic_write_json(seal, _seal(manifest, packet_id, attempt, pins[req], pins[res]), overwrite=False)
+    pins[seal] = sha256_file(seal)
+
+
 def read_history(adapter, root, manifest, packets, prompt, catalog, pins):
     path = root / "run_manifest.json"
     if not path.exists():
@@ -60,8 +75,9 @@ def read_history(adapter, root, manifest, packets, prompt, catalog, pins):
             folder = root / packet["packet_id"]
             req = folder / f"attempt_{attempt:04d}.request.json"
             res = folder / f"attempt_{attempt:04d}.result.json"
+            seal = folder / f"attempt_{attempt:04d}.seal.json"
             if not req.exists():
-                if res.exists():
+                if res.exists() or seal.exists():
                     raise ValueError("Discovery result lacks its admitted request.")
                 break
             if attempt > manifest["config"]["retry_count"] + 1 or (history and previous["status"] == "completed"):
@@ -76,8 +92,20 @@ def read_history(adapter, root, manifest, packets, prompt, catalog, pins):
             count += 1
             known.add(req)
             if not res.exists():
+                if seal.exists():
+                    raise ValueError("Discovery receipt seal lacks its result.")
                 history.append({"status": "interrupted", "request": req})
                 break
+            if not seal.exists():
+                raise ValueError("Unsealed discovery receipt requires inspection; never adopt or retry automatically.")
+            recorded_seal = _read_json(seal, pins)
+            result_sha = sha256_file(res)
+            if provenance.digest(recorded_seal) != provenance.digest(
+                    _seal(manifest, packet["packet_id"], attempt, pins[req], result_sha)):
+                raise ValueError("Discovery receipt seal mismatch; preserve and inspect original history.")
+            del recorded_seal
+            known.add(seal)
+            inventory._pin_file({"path": str(res), "sha256": result_sha}, pins)
             result = _read_json(res, pins)
             if (set(result) != {"schema_version", "request_sha256", "status", "response", "usage", "error"}
                     or result["schema_version"] != adapter.RESULT_VERSION
@@ -168,6 +196,7 @@ def execute(adapter, config_ref: dict, *, command="plan", backend=None, max_pack
             folder = child_path(root, packet["packet_id"])
             req_path = folder / f"attempt_{len(history) + 1:04d}.request.json"
             res_path = folder / f"attempt_{len(history) + 1:04d}.result.json"
+            seal_path = folder / f"attempt_{len(history) + 1:04d}.seal.json"
             atomic_write_json(req_path, request, overwrite=False)
             pins[req_path] = sha256_file(req_path)
             count += 1
@@ -189,14 +218,15 @@ def execute(adapter, config_ref: dict, *, command="plan", backend=None, max_pack
                 result = {"schema_version": adapter.RESULT_VERSION, "request_sha256": pins[req_path],
                           "status": "failed", "response": response, "usage": usage,
                           "error": {"phase": phase, "message": str(exc)[:1200]}}
-                atomic_write_json(res_path, result, overwrite=False)
+                _write_result(req_path, res_path, seal_path, result, manifest,
+                              packet["packet_id"], len(history) + 1, pins)
                 histories[packet["packet_id"]] = [*history, {"status": "failed", "request": req_path, "result": res_path,
                                                           "result_sha256": sha256_file(res_path)}]
                 return summary("failed_needs_explicit_retry")
             result = {"schema_version": adapter.RESULT_VERSION, "request_sha256": pins[req_path],
                       "status": "completed", "response": response, "usage": usage, "error": None}
-            atomic_write_json(res_path, result, overwrite=False)
-            pins[res_path] = sha256_file(res_path)
+            _write_result(req_path, res_path, seal_path, result, manifest,
+                          packet["packet_id"], len(history) + 1, pins)
             histories[packet["packet_id"]] = [*history, {"status": "completed", "request": req_path, "result": res_path,
                                                        "result_sha256": pins[res_path]}]
             del context, request, previous, response, result, usage
