@@ -83,6 +83,30 @@ discovery does not automatically consume v3; new consumers must opt in explicitl
 Closure is seed-relative and non-transitive: a returned hypothesis does not imply
 that every comparison involving all of its other evidence has been expanded.
 
+### Synthesis Over An Extended Inventory
+
+`speaker_profile.native_synthesis_extension` explicitly consumes a checked v3
+inventory. Select a private evidence workset and author from its returned packet:
+
+```bash
+python -m speaker_profile.native_synthesis_extension schema --kind config
+python -m speaker_profile.native_synthesis_extension prepare --input "$SYNTHESIS_CONFIG" --sha256 "$CONFIG_SHA256"
+python -m speaker_profile.native_synthesis_extension schema --kind submission
+python -m speaker_profile.native_synthesis_extension preview --input "$SUBMISSION" --sha256 "$SUBMISSION_SHA256" --output "$NEW_CANDIDATE"
+python -m speaker_profile.native_synthesis_extension apply --input "$SUBMISSION" --sha256 "$SUBMISSION_SHA256" --output "$NEW_CANDIDATE"
+python -m speaker_profile.native_synthesis_extension validate --input "$NEW_CANDIDATE" --sha256 "$CANDIDATE_SHA256"
+```
+
+Preparation is read-only and includes primary source rows, separate analyst notes,
+and incident inherited support, counters and pending comparisons. Keep its full
+output private. Bind the returned packet hash in the submission and distinguish
+inspected evidence from pending evidence. Outside-workset items remain in the
+pinned inventory; they are not implicitly read or discarded. Inherited hypotheses
+are context, not additional observations. Only `apply` writes a new candidate.
+This format does not yet feed publication or recursive indexing. No operation
+calls a model or certifies semantic fidelity; originating agent usage is unknown.
+Byte limits reject oversized packets without truncation, not bound replay RAM.
+
 ## Corpus Discovery
 
 For an explicitly frozen private Profile inventory, use bounded discovery to
