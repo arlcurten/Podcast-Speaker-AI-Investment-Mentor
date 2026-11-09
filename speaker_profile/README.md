@@ -107,6 +107,25 @@ This format does not yet feed publication or recursive indexing. No operation
 calls a model or certifies semantic fidelity; originating agent usage is unknown.
 Byte limits reject oversized packets without truncation, not bound replay RAM.
 
+### Cross-Version Comparisons
+
+`speaker_profile.native_synthesis_reconciliation` compares explicitly pinned native
+and extension candidates over their shared checked inventory. It preserves source
+versions, counterevidence and pending comparisons; additional raw context uses
+separate citations, not extra evidence. Comparison-only submissions are supported.
+
+```bash
+python -m speaker_profile.native_synthesis_reconciliation schema --kind config
+python -m speaker_profile.native_synthesis_reconciliation prepare --input "$CONFIG" --sha256 "$CONFIG_SHA256"
+python -m speaker_profile.native_synthesis_reconciliation schema --kind submission
+python -m speaker_profile.native_synthesis_reconciliation preview --input "$SUBMISSION" --sha256 "$SUBMISSION_SHA256" --output "$NEW_CANDIDATE"
+python -m speaker_profile.native_synthesis_reconciliation apply --input "$SUBMISSION" --sha256 "$SUBMISSION_SHA256" --output "$NEW_CANDIDATE"
+python -m speaker_profile.native_synthesis_reconciliation validate --input "$NEW_CANDIDATE" --sha256 "$CANDIDATE_SHA256"
+```
+
+Keep configurations and full command output private. No command runs inference or
+publishes a profile. Recursive reconciliation and automatic serving are unsupported.
+
 ## Corpus Discovery
 
 For an explicitly frozen private Profile inventory, use bounded discovery to
