@@ -43,6 +43,56 @@ at most one retry is configurable. A per-execution call cap bounds work.
 
 ## Incremental Updates
 
+### Candidate Case Revisions
+
+`python3 -B -m knowledge.case_revision --proposal "$REVISION_PROPOSAL"
+--proposal-sha256 "$REVISION_SHA256"` defaults to a read-only plan. Add `--apply`
+only after reviewing that exact proposal and implementation. This narrowly
+revises one completed, pending candidate L2 using existing primary evidence.
+It never invokes a backend, creates a model-call record, publishes a release,
+or grants source/semantic acceptance. It references L1, creates only a new L2,
+and does not copy or reuse L3. The existing pipeline/backend is unchanged.
+
+The strict `knowledge_case_revision.v1` JSON proposal contains:
+
+- `run_id` (different from the parent) and `output_root` (an existing private
+  directory). Their combined output directory must not exist or overlap the
+  original run. Failed partial applications are retained, never resumed.
+- `parent_config`, `level1`, `level2`, `original_call`, `review_report`, each an
+  absolute private `{path, sha256}` reference. Symlink paths are rejected.
+  The config must contain one candidate episode and explicit source hashes;
+  its model identity is file-bound, not replaced by an environment variable.
+  The original call must be completed and match the L2 fingerprint, metadata
+  and base request context. Repair-context or incompatible-prompt parents fail
+  closed; this interface does not reconstruct or regenerate them.
+- `reviewer: {identity, method}` describing the actual review, not an approval.
+- Nonempty `edits`, each `{record_id, field, expected, value,
+  primary_evidence_sha256, anchors}`. Replacements are whole top-level fields,
+  including the full `decision_context` object; duplicate fields and no-ops
+  are rejected. Only title, claims, reasoning, assumptions, conditions, risks,
+  exceptions, uncertainty, contradictions, actions/preferences, view-change
+  conditions, behavior, tags, domains and decision context may change. IDs,
+  attribution, threads, evidence and original assessments cannot change.
+- Each edit's nonempty `anchors` contains exact `{merged_id, segment_id, start,
+  end, text_sha256}` rows inside that case's existing primary evidence. Text
+  hashes use exact raw UTF-8, not normalized or stripped text. Anchor checking
+  proves source binding, not semantic support for arbitrary replacement prose.
+- `revision_notes`, nonempty `{record_id, merged_ids, note}` reviewer-commentary
+  rows covering exactly the edited cases, and `revision_notes_sha256`. Notes
+  and their separate digest are retained in new artifact metadata. Object
+  digests use `knowledge.provenance.digest`; file/text hashes use exact bytes.
+
+Episode-specific review proposals are not implicitly converted. Prepare and
+review a separate generic proposal, retaining every material caveat and exact
+approved replacement; do not modify a frozen source proposal to fit this API.
+Qualification/warnings are freshly derived and validated, never copied to force
+agreement. Original model assessments remain historical diagnostics, **not a
+re-review of the revised text**; the retained reviewer notes identify that
+boundary. Metadata records `provider=agent_review_revision`, `model=null`, and
+`model_call_performed=false`; the receipt reports zero model calls. The result
+remains candidate-only with source hold and semantic review pending. A later
+source-grounded review must bind the new L2 hash before any selected-case use.
+
 ### Bounded Corpus Jobs
 
 `python3 -m knowledge.batch --config "$BATCH_CONFIG" --dry-run` plans explicit
