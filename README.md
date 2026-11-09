@@ -24,7 +24,7 @@ Configure the ignored `.env`:
 | `PIPELINE_DATA_ROOT` | Private pipeline outputs, knowledge and releases |
 | `PRIVATE_DOCS_ROOT` | Private reviews and internal documents |
 | `KNOWLEDGE_MODEL_ID` | Model available to the locally authenticated Codex CLI |
-| `OPENROUTER_API_KEY` | Credential for online Mentor reasoning |
+| `OPENROUTER_API_KEY` | Required for `ask` / `serve`, not local evidence tools |
 | `MENTOR_MODEL_ID` | Optional override of the configured Mentor model |
 | `MENTOR_RELEASE` | Path to a reviewed knowledge release descriptor |
 
@@ -100,12 +100,16 @@ python3 -m knowledge run --config "$L4_CONFIG" --through level4
 ```bash
 python3 -m mentor_agent --no-llm validate-data
 python3 -m mentor_agent retrieve --query "When should I change a position?"
+python3 -m mentor_agent read-case --record-id "$REVIEWED_CASE_ID"
 python3 -m mentor_agent ask --query "Evidence is incomplete. Should I wait or use a small position?"
 python3 -m mentor_agent serve --port 8765
 ```
 
 The local API exposes `/health`, `/docs` and `POST /ask` at
-`http://127.0.0.1:8765`. `retrieve` makes no model calls; `ask` uses OpenRouter.
+`http://127.0.0.1:8765`. `retrieve` and `read-case` make no model calls;
+`ask` uses OpenRouter. For personal Codex use, retrieve IDs, read their reviewed
+cases, then reason with citations and source limitations. OpenRouter is optional
+for that workflow; private evidence read by a hosted assistant enters its context.
 Add `--json --output "$PRIVATE_TRACE"` to an `ask --query` command to save
 diagnostics privately. [Mentor configuration and API](mentor_agent/README.md).
 
