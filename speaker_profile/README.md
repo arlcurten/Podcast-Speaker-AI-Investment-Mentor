@@ -78,6 +78,87 @@ semantic approval, a final Speaker Profile, or serving authorization. Changed
 discovery inputs or implementation require a new run version; preserve old ones.
 An existing inventory remains reusable only when its own validation pins match.
 
+## Standalone Native Synthesis
+
+`speaker_profile.native_synthesis` adopts genuinely agent-authored synthesis over
+one checked inventory, including native-only or mixed evidence. It does not run a
+backend, modify the pipeline, register a new inventory parent, or grant serving
+approval. A candidate can be useful provisionally with explicitly pending work.
+
+```bash
+python -m speaker_profile.native_synthesis schema --kind config
+python -m speaker_profile.native_synthesis schema --kind submission
+python -m speaker_profile.native_synthesis prepare --input "$SUBMISSION" --sha256 "$SUBMISSION_SHA256" --output "$NEW_CANDIDATE"
+python -m speaker_profile.native_synthesis apply --input "$SUBMISSION" --sha256 "$SUBMISSION_SHA256" --output "$NEW_CANDIDATE"
+python -m speaker_profile.native_synthesis validate --input "$CANDIDATE" --sha256 "$CANDIDATE_SHA256"
+```
+
+Omitting the command defaults to read-only `prepare`; only `apply` writes a new
+immutable private candidate. Python equivalents are `prepare(submission_ref,
+output)`, `apply(submission_ref, output)`, and `load_checked(candidate_ref)`.
+Existing outputs and protected input directories are rejected. Schema export is
+the authoritative field list; all references are private `{path, sha256}` objects.
+
+The `profile_native_synthesis_config.v1` config pins an inventory, an `actor`
+(`identity`, `session_id`), and actual `reports` (`ref`, `authored_at`, `method`).
+Its `reading` contains `inspected_evidence_ids`, `pending_evidence_ids`, `method`,
+and `limitations`. These ID lists partition the inventory, not the entire corpus.
+`comparison_coverage` lists only declared tasks: `comparison_id`, `evidence_ids`,
+`status` (`inspected` or `pending`), and `method`. No Cartesian task set is required.
+
+The `profile_native_synthesis_submission.v1` wrapper supplies the config ref,
+matching actor, actual `authored_at`, `method`, `limitations`, and `content` in the
+unchanged synthesis schema. `model_metadata` is exactly
+`{"provider":"native_agent_candidate","model":null,"usage":null,"cost_usd":null}`.
+There is no pre-authoring freeze assertion: authors may structure existing reports
+later, recording that method honestly. A report about an older evidence version
+is historical context, not evidence that its author inspected a newer version;
+pin an actual amendment reread report and identify it in the relevant bindings.
+
+Each `hypothesis_anchors` row has `hypothesis_id`, `source_anchors`, and configured
+`report_refs`. Each anchor is `{evidence_id, segment_id, start, end, text}`, matching
+an exact full raw row in that item's **primary** source region. Supplementary
+commentary cannot substitute for primary hypothesis support, counters or bases.
+Anchor every support, counter, and inference basis; these IDs must be declared
+inspected. Distinct items can cite the same raw row without becoming independent
+events. Text/timestamp binding does not certify that a claim follows from a quote.
+
+`comparisons` is a general ledger, separate from strict statement/action links:
+each row has `comparison_id`, `endpoints` (`evidence_id`, actual `evidence_kind`),
+`relationship`, `reason`, `hypothesis_ids`, `source_anchors`, and `report_refs`.
+For example, two `direct_statement` endpoints may have `relationship: unresolved`
+and `hypothesis_ids: []`. Action/action pairs also work. Relationship values are
+`agreement`, `apparent_mismatch`, `context_resolved_difference`, `unresolved`, or
+`not_comparable`. Ledger IDs must exactly match inspected comparison tasks; pending
+tasks have no ledger row. Linked hypotheses must contain the endpoints or bases.
+Comparison/context anchors may separately cite a supplementary note's source:
+add `scope: supplementary_context`, `authority: model_analyst_not_speaker`, and
+`note_index` (zero-based in that item's `grounding.supplementary_context`). Such
+anchors are checked against that exact note and remain analyst context, not
+speaker evidence. Unmarked anchors always mean primary evidence.
+
+`context_dispositions` can be empty. The bridge retains every prior hypothesis
+reference and its indexed links/limitations, including recovered comparisons.
+For each new hypothesis or inspected comparison it identifies incident links from
+both support and counter sides, including inference bases. These are automatically
+retained as pending context, not silently dropped or declared resolved. An authored
+override names `claim_id` (`hypothesis:PROFILE:H1` or `comparison:<id>`),
+`prior_hypothesis_key`, `disposition` (`retained` or `contextualized`), `reason`, and
+exact `source_anchors` for all its `required_evidence_ids` (also inspected).
+This is one incident pass, not transitive closure or proof of complete recall.
+
+Every operation replays the inventory once, then checks pinned materials and all
+submitted anchors without repeated source replay per claim. Raw anchor checks
+parse one referenced episode at a time; inventory replay and synthesis derivation
+still hold larger structures in memory. JSON inputs/candidates use the existing
+32 MB native replay limit without truncation; it is not a hard RAM limit.
+All items, source holds, notes and omissions remain reachable through exact
+evidence refs; item accounting does not imply inspection. Code validates bindings,
+accounting and kinds, not semantic fidelity or author identity authentication.
+Import call count is zero; originating native reasoning usage remains unknown.
+Changed implementation pins require a new candidate version and historical code
+for old replay. Existing pipeline/native evidence pins are unchanged by this module.
+
 ## Episode Extraction
 
 ```bash
