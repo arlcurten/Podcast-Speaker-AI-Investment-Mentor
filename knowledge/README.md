@@ -678,6 +678,22 @@ not implemented. Changed family/source/code versions require new runs.
 
 ## Validation and Limits
 
+### Native Candidate Synthesis
+
+`python -m knowledge.native_synthesis schema --kind config` describes a bounded,
+hash-bound authoring workset over a checked corpus inventory. Use `prepare` to
+read selected cases, raw anchors and incident L3 support/counter context; then
+submit explicit case and inherited-principle accounting with `preview` / `apply`.
+Commands require `--input` and `--sha256`; only `apply` takes a new private
+`--output`. `schema --kind submission` describes the submission contract, and
+`validate` replays a saved candidate without model calls.
+
+Outside-workset material remains explicitly uninspected. Only inspected selected
+cases can support principles; inherited counterevidence remains an obligation.
+Native authorship does not fabricate API receipts or measured token usage.
+Candidates remain unavailable for serving until separate source and semantic
+review. This is not whole-corpus consolidation or automatic approval.
+
 New discovery runs preserve each closed attempt's request/result hashes in a
 separate immutable `attempt_*.seal.json`, including failed attempts. Resume checks
 that retained seal before interpreting the result, so editing a paused receipt
