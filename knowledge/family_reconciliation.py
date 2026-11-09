@@ -6,8 +6,10 @@ settings, replacing inventory with parent={config: REF, artifact: REF}, plus an
 explicit max_pairs preflight ceiling (required, no default). The parent
 must be an immutable, completed discovery validated by its current implementation.
 The shared runner writes discovery.json with a distinct reconciliation schema.
+Config v2 additionally pins selection={path, sha256}, a completed family_routing
+artifact; it preflights only that exact selected union, never the all-pair schedule.
 
-All cross-packet unordered family pairs are streamed, not stored as a matrix.
+In v1 all cross-packet unordered family pairs are streamed, not stored as a matrix.
 Each admitted pair costs a full-source call. Planning and every resume reopen all
 pairs below max_pairs: quadratic time, not a scalable discovery solution. Memory
 includes inventory/family indices and the runner's admitted-receipt history.
@@ -127,20 +129,12 @@ def _materialize(packet, catalog, pins, prompt, max_chars):
     return _context(packet, catalog, pins, prompt, max_chars)
 
 
-def _prepare(config_ref):
-    pins = {}
-    config_ref = inventory._ref(config_ref)
-    cfg = inventory._read(config_ref, pins)
-    discovery._validate(cfg, CONFIG)
-    implementation, prompt = _implementation(), PROMPT_PATH.read_text(encoding="utf-8")
-    safe_id(cfg["run_id"])
-    cfg = {**cfg, "output_root": str(private_path(cfg["output_root"])),
-           "parent": {key: inventory._ref(value) for key, value in cfg["parent"].items()}}
-    root = child_path(Path(cfg["output_root"]), cfg["run_id"])
-    parent_ref = cfg["parent"]["artifact"]
+def _load_parent(parent_refs, pins):
+    """Replay a completed discovery without generating or trusting its summary."""
+    parent_ref = parent_refs["artifact"]
     parent = inventory._read(parent_ref, pins)
     # Validate closed requests/results, exact accounting and source pins without inference.
-    _, parent_root, source_catalog, parent_packets, parent_manifest, parent_pins, parent_prompt = discovery._prepare(cfg["parent"]["config"])
+    _, parent_root, source_catalog, parent_packets, parent_manifest, parent_pins, parent_prompt = discovery._prepare(parent_refs["config"])
     if Path(parent_ref["path"]) != parent_root / "discovery.json":
         raise ValueError("Parent artifact is outside its pinned completed discovery run.")
     histories, _ = discovery._history(parent_root, parent_manifest, parent_packets, parent_prompt, source_catalog, parent_pins)
@@ -157,8 +151,6 @@ def _prepare(config_ref):
         for state in entry["stages"].values():
             folder = Path(state["artifact"]["path"]).parent
             protected.append(folder.parent if folder.name == eid else folder)
-    if any(root.is_relative_to(path) for path in protected) or any(path.is_relative_to(root) for path in pins):
-        raise ValueError("Reconciliation output must not overlap parent runs or pinned inputs.")
     families = {}
     for family in parent["families"]:
         fid = family["family_id"]
@@ -169,9 +161,31 @@ def _prepare(config_ref):
     for rid, row in parent["case_accounting"].items():
         for member in row["memberships"]:
             by_id[member["family_id"]]["memberships"][rid] = copy.deepcopy(member)
+    return {"families": families, "parent": parent, "parent_ref": parent_ref,
+            "inventory": source_catalog, "protected_roots": protected}
+
+
+def _protect_output(root, catalog, pins):
+    if any(root.is_relative_to(path) for path in catalog["protected_roots"]) or any(path.is_relative_to(root) for path in pins):
+        raise ValueError("Reconciliation output must not overlap parent runs or pinned inputs.")
+
+
+def _prepare(config_ref):
+    pins = {}
+    config_ref = inventory._ref(config_ref)
+    cfg = inventory._read(config_ref, pins)
+    discovery._validate(cfg, CONFIG)
+    implementation, prompt = _implementation(), PROMPT_PATH.read_text(encoding="utf-8")
+    safe_id(cfg["run_id"])
+    cfg = {**cfg, "output_root": str(private_path(cfg["output_root"])),
+           "parent": {key: inventory._ref(value) for key, value in cfg["parent"].items()}}
+    root = child_path(Path(cfg["output_root"]), cfg["run_id"])
+    catalog = _load_parent(cfg["parent"], pins)
+    _protect_output(root, catalog, pins)
+    families, parent = catalog["families"], catalog["parent"]
+    parent_ref, source_catalog = catalog["parent_ref"], catalog["inventory"]
     packets = PairSchedule(families)
-    catalog = {"families": families, "parent": parent, "parent_ref": parent_ref, "inventory": source_catalog,
-               "pair_count": len(packets), "max_pairs": cfg["max_pairs"]}
+    catalog.update(pair_count=len(packets), max_pairs=cfg["max_pairs"])
     schedule = {"kind": "all_unordered_cross_packet_pairs.v1", "family_order": sorted(families),
                 "parent": parent_ref, "pair_count": len(packets), "max_pairs": cfg["max_pairs"],
                 "planned_first_attempt_calls": len(packets), "potential_calls_with_retries": len(packets) * (cfg["retry_count"] + 1),
@@ -300,6 +314,11 @@ def _aggregate(catalog, packets, histories, manifest):
 
 
 def execute(config_ref, *, command="plan", backend=None, max_packets=None, retry_failed=False):
+    config = inventory._read(config_ref, {})
+    if isinstance(config, dict) and config.get("schema_version") == "knowledge_reconciliation_config.v2":
+        from . import family_verification
+        return family_verification.execute(config_ref, command=command, backend=backend,
+                                            max_packets=max_packets, retry_failed=retry_failed)
     try:
         result = runner.execute(sys.modules[__name__], config_ref, command=command, backend=backend,
                                 max_packets=max_packets, retry_failed=retry_failed)

@@ -483,6 +483,29 @@ This source-backed pair verifier is quadratic, not a full-corpus scheduler:
 it retains conditional differences, unresolved relations and ungrouped cases,
 but does not transitively merge families or perform global counter-review.
 
+For descriptor-page routing, use `python -m knowledge.family_routing
+plan|run|validate --config "$ROUTING_CONFIG" --sha256 "$CONFIG_SHA256"`.
+`knowledge_family_routing_config.v1` uses the same runtime and `parent` fields,
+replacing `max_pairs` with required `max_response_entries` (positive integer)
+and `audit_pairs` (an explicit list, possibly empty, of ordered versioned family
+key pairs). Plan reports actual packet counts and call-budget fit. Choose the
+explicit lifetime `max_calls` from that plan plus an approved retry reserve;
+`--max-packets` only pauses an invocation. There is no default one-call limit.
+Descriptor fields are preserved; every cross-packet pair receives a routing
+disposition. Routing negatives are not source-verified unrelatedness.
+
+The completed routing `discovery.json` pins the exact positive/uncertain,
+known-counter and audit selection. Pass its `{path, sha256}` as `selection` in
+`knowledge_reconciliation_config.v2`, retaining the verifier's `parent`, runtime
+and `max_pairs` fields. Use the existing `knowledge.family_reconciliation` CLI.
+Only selected pairs receive source preflight and verification. Parent/routing
+receipts are replayed; altered selections or parents fail closed. Both stages
+retain all item accounting and explicit mandatory future global/ungrouped
+challenge references; neither implements that challenge or authorizes release.
+Oversized descriptors/source closure remain incomplete, never truncated. Routing
+still has quadratic descriptor work and selected source work can be large.
+Changed pins require new runs; no historical receipt migration is provided.
+
 ## Validation and Limits
 
 ```bash
