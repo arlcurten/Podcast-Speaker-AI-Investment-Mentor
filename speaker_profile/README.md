@@ -186,6 +186,25 @@ Synthesis revisions follow the parent's explicit completed and recovered evidenc
 references. Recovered artifacts retain their distinct recovery provenance; they
 are not copied into the synthesis run or relabeled as successful extraction.
 
+For a `profile_recovered_synthesis.v1` parent, use the separate explicit
+`profile_recovered_synthesis_revision.v1` proposal. It contains `parent_artifact:
+{path, sha256}`, `reviewer`, `method`, `rationale`, and the same anchored `edits`
+contract above; it does not contain `parent_config`.
+
+```bash
+python -m speaker_profile.review_recovered apply --proposal "$PROFILE_REVISION" --output "$PROFILE_REVISED"
+python -m speaker_profile.review_recovered validate --artifact "$PROFILE_REVISED" --sha256 "$PROFILE_REVISED_SHA256"
+```
+
+The immutable `profile_reviewed_recovered_revision.v1` retains the original failed
+call references, error, historical usage, recovery comparison ledger and source
+holds. Recovery comparison limitations cannot be changed, removed or relocated,
+including through whole-list edits. Validation replays the recovered parent and
+all edits with current validators; historical implementation hashes remain lineage,
+not a claim that historical code is executing. Changed replay results fail closed.
+This separate format leaves completed-parent revision replay unchanged. Neither
+format grants acceptance or certifies the semantic truth of reviewer prose.
+
 Run `plan` before extraction. For a fresh recovery it reports `base_input_chars`,
 `repair_input_chars` (added overhead), and total `input_chars`, including the prompt
 and transport envelope, plus `seeded_validation_repair` and `input_fits`. Set
