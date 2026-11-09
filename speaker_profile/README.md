@@ -43,6 +43,25 @@ not the new run's scope. This option does not recover failed historical response
 or rewrite their call records; that requires a separate provenance-bound recovery
 operation. Code validation does not approve commentary semantics or source quality.
 
+For an existing response rejected specifically by the old item-only commentary
+rule, use explicit zero-call recovery instead of repeating extraction:
+
+```bash
+python -m speaker_profile.recover_evidence validate --config "$PROFILE_RECOVERY"
+python -m speaker_profile.recover_evidence apply --config "$PROFILE_RECOVERY" --output "$RECOVERED_CANDIDATE"
+python -m speaker_profile.recover_evidence validate --artifact "$RECOVERED_CANDIDATE" --sha256 "$RECOVERED_SHA256"
+```
+
+The private `profile_evidence_recovery_config.v1` contains `commentary_scope:
+episode_context.v1` and `manifest`, `request`, `result` references, each with
+`path` and `sha256`. Recovery verifies the original failed call and source mapping,
+then separately grounds the unchanged response. The new
+`profile_recovered_evidence.v1` preserves the original failure and historical
+model usage; recovery itself makes zero calls. It does not overwrite later
+repairs, automatically prefer one response version, grant acceptance, or create
+a successful model receipt. Downstream synthesis must explicitly support this
+distinct provenance contract; ordinary `reuse_evidence` does not accept it.
+
 ## Corpus Evidence Queue
 
 For independent per-episode evidence extraction, use a private `profile_batch.v1`
