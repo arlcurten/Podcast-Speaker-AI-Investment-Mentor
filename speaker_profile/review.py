@@ -114,6 +114,35 @@ def _anchors(edit, hypothesis, catalog, sources):
         raise ValueError("Every cited evidence ID needs an exact raw source anchor.")
 
 
+def _edited_content(proposal, parent, upstream, sources):
+    """Pure editorial replay shared by strict and historical validation."""
+    if _json(parent["grounding"]) != _json(pipeline._derive("synthesis", parent["content"], None, upstream)):
+        raise ValueError("Parent grounding changed during replay.")
+    content = copy.deepcopy(parent["content"])
+    hypotheses = {h["hypothesis_id"]: h for h in content["hypotheses"]}
+    catalog, seen = pipeline._catalog(upstream), {}
+    for edit in proposal["edits"]:
+        hid = edit["hypothesis_id"]
+        if hid not in hypotheses:
+            raise ValueError("Unknown hypothesis ID.")
+        hypothesis = hypotheses[hid]
+        container, key, parts = _target(hypothesis, edit["field"])
+        for previous in seen.setdefault(hid, []):
+            if parts[:len(previous)] == previous or previous[:len(parts)] == parts:
+                raise ValueError("Duplicate or conflicting editorial paths.")
+        seen[hid].append(parts)
+        if _json(container[key]) != _json(edit["expected"]):
+            raise ValueError("Expected old value does not exactly match the parent.")
+        if parts[0] == "statement_action_relationships" and key == "relationship" and edit["value"] != "unresolved":
+            raise ValueError("Relationship revisions may only downgrade to unresolved.")
+        _anchors(edit, hypothesis, catalog, sources)
+        container[key] = copy.deepcopy(edit["value"])
+    grounding = pipeline._derive("synthesis", content, None, upstream)
+    if _json(content["evidence_accounting"]) != _json(parent["content"]["evidence_accounting"]):
+        raise ValueError("Editorial revisions cannot change evidence accounting.")
+    return content, grounding
+
+
 def _replay(proposal_path, output_path):
     pins = {}
     implementation = _implementation()
@@ -140,30 +169,7 @@ def _replay(proposal_path, output_path):
         artifact, pin = _read(path, pins, ref["sha256"] if ref else None)
         upstream.append(artifact)
         evidence_pins[eid] = pin
-    if _json(parent["grounding"]) != _json(pipeline._derive("synthesis", parent["content"], None, upstream)):
-        raise ValueError("Parent grounding changed during replay.")
-    content = copy.deepcopy(parent["content"])
-    hypotheses = {h["hypothesis_id"]: h for h in content["hypotheses"]}
-    catalog, seen = pipeline._catalog(upstream), {}
-    for edit in proposal["edits"]:
-        hid = edit["hypothesis_id"]
-        if hid not in hypotheses:
-            raise ValueError("Unknown hypothesis ID.")
-        hypothesis = hypotheses[hid]
-        container, key, parts = _target(hypothesis, edit["field"])
-        for previous in seen.setdefault(hid, []):
-            if parts[:len(previous)] == previous or previous[:len(parts)] == parts:
-                raise ValueError("Duplicate or conflicting editorial paths.")
-        seen[hid].append(parts)
-        if _json(container[key]) != _json(edit["expected"]):
-            raise ValueError("Expected old value does not exactly match the parent.")
-        if parts[0] == "statement_action_relationships" and key == "relationship" and edit["value"] != "unresolved":
-            raise ValueError("Relationship revisions may only downgrade to unresolved.")
-        _anchors(edit, hypothesis, catalog, sources)
-        container[key] = copy.deepcopy(edit["value"])
-    grounding = pipeline._derive("synthesis", content, None, upstream)
-    if _json(content["evidence_accounting"]) != _json(parent["content"]["evidence_accounting"]):
-        raise ValueError("Editorial revisions cannot change evidence accounting.")
+    content, grounding = _edited_content(proposal, parent, upstream, sources)
     result = {"schema_version": "profile_reviewed_revision.v1", "authority": AUTHORITY,
               "additional_model_calls": 0, "model_usage": None, "output_path": str(output_path),
               "parent_config": config_pin, "parent_artifact": parent_pin, "parent_manifest": manifest_pin,
@@ -179,6 +185,58 @@ def _replay(proposal_path, output_path):
         if str(private_path(original)) != pin["path"] or sha256_file(Path(pin["path"])) != pin["sha256"]:
             raise ValueError("Revision input hash or path changed during replay.")
     return result
+
+
+def _historical_completed(ref, evidence_pins, pins):
+    """Inventory-only replay after its completed-parent call-chain validation.
+
+    The caller supplies the verified parent's evidence refs and dependency pins.
+    Historical implementation identifies the original revision, not this validator;
+    the inventory separately pins today's implementation. This never resumes a run.
+    """
+    from . import evidence_revision, recover_evidence
+
+    current = _implementation()
+    ref = recover_evidence._ref(ref)
+    stored = evidence_revision._read(ref, pins)
+    if not isinstance(stored, dict) or stored.get("schema_version") != "profile_reviewed_revision.v1":
+        raise ValueError("Expected a completed-parent editorial revision.")
+    recorded = stored.get("implementation")
+    recover_evidence._profile_lineage(recorded, current)
+    proposal = evidence_revision._read(stored["proposal"], pins)
+    if next(Draft202012Validator(PROPOSAL_SCHEMA).iter_errors(proposal), None) is not None:
+        raise ValueError("Invalid profile_synthesis_revision.v1 proposal.")
+    config = evidence_revision._read(proposal["parent_config"], pins)
+    cfg = pipeline._config(config)
+    parent = evidence_revision._read(proposal["parent_artifact"], pins)
+    manifest = evidence_revision._read(stored["parent_manifest"], pins)
+    root = child_path(Path(cfg["output_root"]), cfg["run_id"])
+    path = private_path(ref["path"])
+    if (private_path(proposal["parent_artifact"]["path"]) != root / "synthesis.json"
+            or private_path(stored["parent_manifest"]["path"]) != root / "run_manifest.json"
+            or manifest.get("schema_version") != "profile_run.v1" or manifest.get("config") != cfg
+            or manifest.get("config_digest") != pipeline.digest(cfg) or manifest.get("policy") != pipeline.POLICY
+            or path.is_relative_to(root)):
+        raise ValueError("Historical editorial parent manifest/configuration differs.")
+    if evidence_pins != stored.get("evidence") or set(evidence_pins) != {e["episode_id"] for e in cfg["episodes"]}:
+        raise ValueError("Historical editorial evidence differs from its checked parent.")
+    sources = evidence_revision._sources(cfg, pins)
+    upstream = [evidence_revision._read(evidence_pins[e["episode_id"]], pins) for e in cfg["episodes"]]
+    content, grounding = _edited_content(proposal, parent, upstream, sources)
+    expected = {"schema_version": "profile_reviewed_revision.v1", "authority": AUTHORITY,
+                "additional_model_calls": 0, "model_usage": None, "output_path": str(path),
+                "parent_config": proposal["parent_config"], "parent_artifact": proposal["parent_artifact"],
+                "parent_manifest": stored["parent_manifest"], "proposal": stored["proposal"],
+                "implementation": recorded, "evidence": evidence_pins,
+                "editorial_review": {k: copy.deepcopy(proposal[k]) for k in ("reviewer", "method", "rationale", "edits")},
+                "source": copy.deepcopy(parent["source"]), "content": content, "grounding": grounding,
+                "policy": copy.deepcopy(parent["policy"])}
+    if _json(stored) != _json(expected):
+        raise ValueError("Historical editorial output differs from independently replayed revision.")
+    if pipeline._sources(cfg) != sources or _implementation() != current or private_path(ref["path"]) != path:
+        raise ValueError("Historical editorial inputs or validator changed during replay.")
+    recover_evidence._recheck(pins)
+    return stored
 
 
 def apply(proposal: str | Path, output: str | Path) -> dict:

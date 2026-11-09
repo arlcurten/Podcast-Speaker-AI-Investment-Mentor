@@ -275,12 +275,10 @@ def _load_synthesis(descriptor, pins, reserved, protected):
         checked = shared._read(ref, pins)
     elif kind == "editorial_completed":
         proposal = shared._read(artifact["proposal"], pins)
-        checked = review.validate(artifact["proposal"]["path"], ref["path"])
         shared._read(proposal["parent_config"], pins)
         shared._read(proposal["parent_artifact"], pins)
         evidence_refs = _completed_synthesis({"artifact": proposal["parent_artifact"]}, cfg, pins)
-        if evidence_refs != checked["evidence"]:
-            raise ValueError("Editorial synthesis evidence lineage differs.")
+        checked = review._historical_completed(ref, evidence_refs, pins)
     else:
         loader = recover_synthesis.load_checked if kind == "recovered" else review_recovered.load_checked
         checked = loader(ref, pins)
