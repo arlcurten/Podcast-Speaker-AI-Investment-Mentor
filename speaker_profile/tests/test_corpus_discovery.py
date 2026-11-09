@@ -1,6 +1,7 @@
 """Synthetic native Profile packets and receipts; no providers or private corpus."""
 import copy
 import gc
+import json
 import weakref
 from pathlib import Path
 from unittest.mock import Mock
@@ -88,13 +89,14 @@ class SyntheticDiscovery:
     def complete(self, prompt, context, schema):
         self.calls += 1
         assert schema == discovery.PROPOSAL
+        context = discovery._expand(context)
         response = proposal(context)
         return self.mutate(response, context) if self.mutate else response, {"provider": "synthetic", "model_call_performed": False}
 
 
 def packet_context(ready):
     cfg, _, catalog, packets, _, pins, prompt = discovery._prepare(pin(ready["path"]))
-    return discovery._materialize(packets[0], catalog, pins, prompt, cfg["max_input_chars"])
+    return discovery._expand(discovery._materialize(packets[0], catalog, pins, prompt, cfg["max_input_chars"]))
 
 
 def test_plan_owns_every_item_and_preserves_authority_closure_and_notes(ready, tmp_path, monkeypatch):
@@ -111,7 +113,7 @@ def test_plan_owns_every_item_and_preserves_authority_closure_and_notes(ready, t
     assert set(navigation) == set(catalog["hypotheses"]) and len(navigation) == 2
     assert manifest["implementation"]["runner_sha256"] == discovery.sha256_file(Path(discovery_runner.__file__))
     for packet in packets:
-        context = discovery._materialize(packet, catalog, pins, prompt, cfg["max_input_chars"])
+        context = discovery._expand(discovery._materialize(packet, catalog, pins, prompt, cfg["max_input_chars"]))
         for row in context["evidence"]:
             index = catalog["evidence"][row["evidence_id"]]
             artifact = read_json(Path(index["artifact"]["path"]))
@@ -122,7 +124,7 @@ def test_plan_owns_every_item_and_preserves_authority_closure_and_notes(ready, t
             assert set(r["segment_id"] for r in context["raw_regions"][row["episode_id"]]) >= {2}
         assert context["policy"]["independent_event_count"] is None
         assert all(s["source"]["source_acceptance"] == "not_granted" for s in context["sources"].values())
-    first = discovery._materialize(packets[0], catalog, pins, prompt, cfg["max_input_chars"])
+    first = discovery._expand(discovery._materialize(packets[0], catalog, pins, prompt, cfg["max_input_chars"]))
     assert {o["kind"] for o in first["known_relationship_closure"]["obligations"]} == {
         "counterevidence", "statement_action_comparison"}
     assert any(row["evidence_kind"] == "inferred_tendency" for row in first["evidence"])
@@ -174,7 +176,7 @@ def test_invalid_model_accounting_fails_closed(ready, fault):
         context["evidence"][0]["speaker_attribution"] = "guest"
         rows[0]["memberships"][0]["role"] = "potential_support"
     else: value["families"][0]["independent_event_count"] = 3
-    with pytest.raises(ValueError): discovery._derive(value, context)
+    with pytest.raises(ValueError): discovery._derive(value, discovery._pack(context))
 
 
 def test_zero_families_and_zero_evidence_are_valid(ready, cfg, tmp_path):
@@ -412,7 +414,7 @@ def test_cross_episode_relationship_closure_is_indivisible(cfg, tmp_path):
     prompt = discovery.PROMPT_PATH.read_text()
     context = discovery._context(["SYN1:E3"], catalog, discovery._Materials(catalog, {}), ref, prompt=prompt, max_chars=1000000)
     assert set(context["known_relationship_closure"]["required_evidence_ids"]) == {"SYN1:E1", "SYN1:E3", "SYN2:E1", "SYN2:E2"}
-    assert set(context["sources"]) == {"SYN1", "SYN2"}
+    assert set(discovery._expand(context)["sources"]) == {"SYN1", "SYN2"}
     with pytest.raises(discovery._PacketTooLarge):
         discovery._context(["SYN1:E3"], catalog, discovery._Materials(catalog, {}), ref,
                            prompt=prompt, max_chars=discovery._size(prompt, context) - 1)
@@ -442,3 +444,128 @@ def test_incomplete_inventory_fails_without_output(cfg, tmp_path):
     with pytest.raises(ValueError, match="complete explicit inventory"):
         discovery.execute(pin(path), command="run")
     assert not root(config).exists()
+
+
+def test_compact_transport_roundtrip_preserves_notes_closure_missing_and_null(ready):
+    plain = packet_context(ready)
+    plain["evidence"][0]["optional_context"] = None
+    plain["evidence"][2]["optional_context"] = False
+    eid = next(iter(plain["sources"]))
+    raw = plain["raw_regions"][eid][0]
+    annotations = {"sha256": "c" * 64, "review": {"method": "Synthetic context review"}, "annotations": [
+        {"annotation_id": "synthetic:I1", "severity": "critical", "note": "Unresolved synthetic source meaning",
+         "anchors": [{"segment_id": raw["segment_id"], "start": raw["start"], "end": raw["end"], "raw_text": raw["text"]}]}]}
+    plain["sources"][eid]["source"]["reviewed_annotations"] = annotations
+    for row in plain["evidence"]:
+        row["grounding"]["reviewed_annotations"] = copy.deepcopy(annotations)
+        row["uncertainty"] = ["Synthetic shared uncertainty; not speaker evidence. " * 100]
+    before = copy.deepcopy(plain)
+    packed = discovery._pack(plain)
+    expanded = discovery._expand(packed)
+    assert expanded == before == plain
+    assert discovery.serialization.expand(packed) == {**plain, "sources": list(plain["sources"].values())}
+    assert expanded["evidence"][0]["optional_context"] is None
+    assert "optional_context" not in expanded["evidence"][1]
+    assert expanded["evidence"][2]["optional_context"] is False
+    assert expanded["known_relationship_closure"] == before["known_relationship_closure"]
+    assert packed["context_format"] == discovery.CONTEXT_FORMAT == "compact_profile.v1"
+    assert "missing" in packed["serialization_legend"] and "not extra observations" in packed["serialization_legend"]
+    response = proposal(plain)
+    assert discovery._derive(response, packed) == discovery._derive_plain(response, plain)
+    assert len(json.dumps(packed)) < len(json.dumps(plain))
+
+
+def test_incremental_planning_and_admission_sizes_are_actual_packed_characters(ready, monkeypatch):
+    plain = packet_context(ready)
+    prompt = discovery.PROMPT_PATH.read_text()
+    assert discovery._size(prompt, plain) > ready["config"]["max_input_chars"]
+    sizes = []
+    original = discovery._size
+    def checked(prompt, context):
+        assert context["context_format"] == discovery.CONTEXT_FORMAT
+        assert isinstance(context["sources"], list) and isinstance(context["evidence"], dict)
+        size = original(prompt, context)
+        sizes.append(size)
+        return size
+    monkeypatch.setattr(discovery, "_size", checked)
+    plan = discovery.execute(pin(ready["path"]))
+    assert len(sizes) > len(plan["packet_plan"])
+    assert plan["owned_evidence"] == 6 and plan["owned_hypotheses"] == 2
+    assert all(p["input_chars"] <= ready["config"]["max_input_chars"] for p in plan["packet_plan"])
+    result = discovery.execute(pin(ready["path"]), command="run", backend=SyntheticDiscovery())
+    assert result["status"] == "completed"
+    request = read_json(root(ready["config"]) / "packet_000001/attempt_0001.request.json")
+    assert original(prompt, request["context"]) == plan["packet_plan"][0]["input_chars"]
+
+
+@pytest.mark.parametrize("fault", ["format", "legend", "quote_index", "quote_range", "duplicate_source", "missing_table"])
+def test_noncanonical_compact_transport_is_rejected(ready, fault):
+    plain = packet_context(ready)
+    packed = discovery._pack(plain)
+    if fault == "format": packed["context_format"] = "compact_profile.v999"
+    elif fault == "legend": packed["serialization_legend"] = "Changed decoding instructions"
+    elif fault in {"quote_index", "quote_range"}:
+        table = packed["evidence"]
+        assert "quotes" not in table["shared_columns"]
+        table["rows"][0][table["columns"].index("quotes")] = [-1 if fault == "quote_index" else 999999]
+    elif fault == "duplicate_source": packed["sources"].append(copy.deepcopy(packed["sources"][0]))
+    else: packed["evidence"]["missing"]["999999"] = [0]
+    with pytest.raises(ValueError): discovery._derive(proposal(plain), packed)
+
+
+@pytest.mark.parametrize("pin_name", ["codec_sha256", "context_format"])
+def test_codec_and_format_pins_require_new_runs(ready, monkeypatch, pin_name):
+    ref = pin(ready["path"])
+    discovery.execute(ref, command="run", backend=SyntheticDiscovery())
+    directory = root(ready["config"])
+    manifest = read_json(directory / "run_manifest.json")
+    assert manifest["schema_version"] == "profile_discovery_run.v2"
+    assert manifest["implementation"]["codec_sha256"] == discovery.sha256_file(Path(discovery.serialization.__file__))
+    before = {p: p.read_bytes() for p in directory.rglob("*") if p.is_file()}
+    changed = copy.deepcopy(discovery._implementation())
+    changed[pin_name] = "0" * 64 if pin_name == "codec_sha256" else "compact_profile.v999"
+    monkeypatch.setattr(discovery, "_implementation", lambda: changed)
+    for command in ("plan", "run", "validate"):
+        with pytest.raises(ValueError, match="new run version"):
+            discovery.execute(ref, command=command)
+    assert {p: p.read_bytes() for p in directory.rglob("*") if p.is_file()} == before
+
+
+def test_compact_request_tampering_cannot_change_anchors_or_closure(ready):
+    ref = pin(ready["path"])
+    discovery.execute(ref, command="run", backend=SyntheticDiscovery())
+    path = root(ready["config"]) / "packet_000001/attempt_0001.request.json"
+    original = path.read_bytes()
+    for fault in ("quote", "counter", "notes", "plain_context"):
+        request = json.loads(original)
+        plain = discovery._expand(request["context"])
+        if fault == "quote":
+            plain["evidence"][0]["quotes"][0]["text"] += " Synthetic tampering"
+            # Repack remains internally consistent; the receipt must still fail its source binding.
+            plain["evidence"][2]["quotes"][0]["text"] = plain["evidence"][0]["quotes"][0]["text"]
+        elif fault == "counter": plain["known_relationship_closure"]["obligations"] = []
+        elif fault == "notes": plain["evidence"][0]["grounding"]["supplementary_context"] = []
+        request["context"] = plain if fault == "plain_context" else discovery._pack(plain)
+        atomic_write_json(path, request)
+        with pytest.raises(ValueError, match="exact planned input"):
+            discovery.execute(ref, command="validate")
+
+
+def test_history_releases_expanded_plain_packets(ready, monkeypatch):
+    class Tracked(dict): pass
+    refs = []
+    original = discovery._expand
+    def expand(context):
+        gc.collect()
+        assert all(ref() is None for ref in refs)
+        result = Tracked(original(context))
+        refs.append(weakref.ref(result))
+        return result
+    ref = pin(ready["path"])
+    discovery.execute(ref, command="run", backend=SyntheticDiscovery())
+    _, directory, catalog, packets, manifest, pins, prompt = discovery._prepare(ref)
+    monkeypatch.setattr(discovery, "_expand", expand)
+    histories, count = discovery_runner.read_history(discovery, directory, manifest, packets, prompt, catalog, pins)
+    gc.collect()
+    assert len(refs) == count == 2 and all(ref() is None for ref in refs)
+    assert all(set(row) == {"status", "request", "result", "result_sha256"} for rows in histories.values() for row in rows)

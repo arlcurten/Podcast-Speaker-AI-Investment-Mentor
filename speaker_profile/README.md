@@ -22,11 +22,18 @@ The private `profile_discovery_config.v1` pins `inventory: {path, sha256}`,
 packets; use `--retry-failed` only after inspecting a failed result. An admitted
 request without a result requires inspection, not an automatic retry.
 
+New discovery runs use lossless `compact_profile.v1` tables, with the codec hash
+and format pinned in implementation metadata. Input limits measure the packed
+request, including its legend and schema; validators expand it before applying
+the unchanged evidence rules. Missing values remain distinct from explicit nulls.
+Request/run v2 receipts cannot resume old plain-context runs.
+
 Rare, non-investment and ungrouped evidence remains accounted for. Hypotheses
 provide navigation, not additional evidence. Source notes retain their original
 authority. Discovery is packet-local grouping, **not** global reconciliation,
 semantic approval, a final Speaker Profile, or serving authorization. Changed
-inputs or implementation require a new inventory/run version; preserve old ones.
+discovery inputs or implementation require a new run version; preserve old ones.
+An existing inventory remains reusable only when its own validation pins match.
 
 ## Episode Extraction
 

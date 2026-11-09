@@ -5,6 +5,8 @@ run accepts --max-packets and --retry-failed. No automatic retry or old-pin migr
 profile_discovery_config.v1 pins inventory, run_id, output_root, model,
 reasoning_effort, timeout_seconds, max_input_chars, max_response_chars, max_calls
 (lifetime admissions), retry_count (0 or 1). Outputs remain private candidates.
+New runs use pinned compact_profile.v1 transport; max_input_chars bounds the
+actual packed request (including schema/envelope). Semantic validation expands it.
 Materialization caches one episode and one synthesis payload. Plans/history hold
 descriptors/receipt refs only. Startup inventory replay has separate memory needs;
 this is not a hard one-episode memory guarantee for inventory validation.
@@ -21,10 +23,11 @@ from pathlib import Path
 from knowledge import codex_backend, corpus_inventory as shared, discovery_runner, provenance
 from knowledge.schemas import TEXT, STRINGS, array, enum, obj
 from transcription.common import child_path, private_path, safe_id, sha256_file
-from . import corpus_inventory as inventory
+from . import corpus_inventory as inventory, serialization
 
-REQUEST_VERSION = "profile_discovery_request.v1"
+REQUEST_VERSION = "profile_discovery_request.v2"
 RESULT_VERSION = "profile_discovery_result.v1"
+CONTEXT_FORMAT = serialization.FORMAT
 PROMPT_PATH = Path(__file__).parent / "prompts" / "corpus_discovery.md"
 POSITIVE = {"type": "integer", "minimum": 1}
 CONFIG = obj(schema_version=enum("profile_discovery_config.v1"), run_id=TEXT, output_root=TEXT,
@@ -53,7 +56,27 @@ def _implementation():
     return {"discovery_sha256": sha256_file(Path(__file__)), "prompt_sha256": sha256_file(PROMPT_PATH),
             "runner_sha256": sha256_file(Path(discovery_runner.__file__)),
             "backend_sha256": sha256_file(Path(codex_backend.__file__)), "proposal_sha256": provenance.digest(PROPOSAL),
+            "context_format": CONTEXT_FORMAT, "codec_sha256": sha256_file(Path(serialization.__file__)),
             "inventory": inventory._implementation()}
+
+
+def _pack(context):
+    if any(eid != row["source"]["episode_id"] for eid, row in context["sources"].items()):
+        raise ValueError("Discovery source keys must match their episodes.")
+    return serialization.compact({**context, "sources": list(context["sources"].values())})
+
+
+def _expand(context):
+    """Require the exact lossless wire form before applying plain semantic rules."""
+    try:
+        plain = serialization.expand(context)
+        sources = plain["sources"]
+        plain["sources"] = {row["source"]["episode_id"]: row for row in sources}
+        if len(plain["sources"]) != len(sources) or _pack(plain) != context:
+            raise ValueError("Noncanonical compact discovery context.")
+        return plain
+    except (KeyError, IndexError, TypeError) as exc:
+        raise ValueError("Invalid compact discovery context.") from exc
 
 
 def _pointer(value, pointer):
@@ -123,9 +146,11 @@ def _context(owned, catalog, materials, inventory_ref, *, prompt, max_chars):
         "policy": copy.deepcopy(POLICY)}
 
     def check_size():
-        if (size := _size(prompt, context)) > max_chars:
+        packed = _pack(context)
+        if (size := _size(prompt, packed)) > max_chars:
             raise _PacketTooLarge(f"needs at least {size} input characters for complete relationship/context closure; "
                                   f"cap={max_chars}. Use a reviewed new limit/run; no truncation.")
+        return packed
 
     check_size()
     for key in closure["matched_hypothesis_keys"]:
@@ -133,6 +158,9 @@ def _context(owned, catalog, materials, inventory_ref, *, prompt, max_chars):
         check_size()
     for eid in sorted({catalog["evidence"][rid]["episode_id"] for rid in refs}):
         artifact, raw = materials.episode(eid)
+        context["sources"][eid] = {"source": copy.deepcopy(artifact["source"]),
+            "policy": copy.deepcopy(artifact["policy"]),
+            "unselected_regions": copy.deepcopy(artifact["grounding"]["unselected_regions"])}
         raw_ids = set()
         for rid in refs:
             entry = catalog["evidence"][rid]
@@ -144,15 +172,12 @@ def _context(owned, catalog, materials, inventory_ref, *, prompt, max_chars):
                 "authority": catalog["episodes"][eid]["authority"], "grounding": copy.deepcopy(grounding)})
             raw_ids.update(_raw_ids(grounding))
             check_size()
-        context["sources"][eid] = {"source": copy.deepcopy(artifact["source"]),
-            "policy": copy.deepcopy(artifact["policy"]),
-            "unselected_regions": copy.deepcopy(artifact["grounding"]["unselected_regions"])}
         context["raw_regions"][eid] = [{k: raw[sid][k] for k in ("segment_id", "start", "end", "text")}
                                       for sid in sorted(raw_ids)]
         check_size()
         del artifact, raw, grounding
     context["evidence"].sort(key=lambda row: row["evidence_id"])
-    return context
+    return check_size()
 
 
 def _materialize(packet, catalog, pins, prompt, max_chars):
@@ -211,7 +236,7 @@ def _prepare(config_ref):
         del context
     if last is not None:
         packets.append(last)
-    manifest = {"schema_version": "profile_discovery_run.v1", "config": cfg, "config_ref": config_ref,
+    manifest = {"schema_version": "profile_discovery_run.v2", "config": cfg, "config_ref": config_ref,
                 "implementation": implementation, "policy": copy.deepcopy(POLICY), "packets": packets}
     _check_pins(pins)
     if _implementation() != implementation:
@@ -220,6 +245,10 @@ def _prepare(config_ref):
 
 
 def _derive(response, context):
+    return _derive_plain(response, _expand(context))
+
+
+def _derive_plain(response, context):
     shared._validate(response, PROPOSAL)
     families = [row["family_id"] for row in response["families"]]
     if len(families) != len(set(families)) or any(not re.fullmatch(r"F[1-9][0-9]*", fid) for fid in families):
