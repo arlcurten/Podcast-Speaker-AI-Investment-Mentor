@@ -74,6 +74,46 @@ def test_dry_run_never_calls_review_or_model(cfg):
     assert not (Path(settings["output_root"]) / settings["batch_id"]).exists()
 
 
+@pytest.mark.parametrize("value", [None, True, "unknown", [], {}])
+def test_invalid_transport_rejected_before_planning(cfg, value):
+    settings, path = make_batch(cfg)
+    settings["level3_transport"] = value
+    atomic_write_json(path, settings)
+    with pytest.raises(ValueError, match="transport"):
+        batch.load_batch(path)
+    with pytest.raises(ValueError, match="transport"):
+        batch.execute(settings, dry_run=True)
+
+
+def test_reference_transport_selected_without_changing_semantic_config(cfg, monkeypatch, candidate_pipeline):
+    from knowledge import transport
+    settings, path = make_candidate_batch(cfg)
+    original_episode = batch._episode_config(settings, settings["episodes"][0],
+        Path(settings["output_root"]) / settings["batch_id"], Path(settings["episodes"][0]["draft"]), None)
+    settings["level3_transport"] = transport.FORMAT
+    atomic_write_json(path, settings)
+    settings = batch.load_batch(path)
+    wrapped = Mock(return_value=object())
+    ordinary = Mock(side_effect=AssertionError("Must use configured transport"))
+    monkeypatch.setattr(transport, "L3ReferenceBackend", wrapped)
+    monkeypatch.setattr(batch, "CodexBackend", ordinary)
+    batch.execute(settings, dry_run=True)
+    wrapped.assert_not_called()
+    result = batch.execute(settings)
+    assert result["counts"] == {"completed_candidate": 2}
+    assert wrapped.call_count == 2
+    ordinary.assert_not_called()
+    root = Path(settings["output_root"]) / settings["batch_id"]
+    assert read_json(root / "batch_manifest.json")["level3_transport"] == transport.FORMAT
+    assert read_json(root / "SYN1/extraction_config.json") == original_episode
+    forbidden = Mock(side_effect=AssertionError("Completed episodes must only validate"))
+    batch.execute(settings, backend_factory=forbidden)
+    forbidden.assert_not_called()
+    settings["level3_transport"] = "expanded"
+    with pytest.raises(ValueError, match="Batch settings changed"):
+        batch.execute(settings)
+
+
 def test_episode_isolation_resume_and_no_level4(cfg):
     settings, _ = make_batch(cfg)
     model = FakeModel()

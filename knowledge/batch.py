@@ -18,6 +18,13 @@ from .codex_backend import CodexBackend
 from .provenance import digest
 
 
+def _level3_transport(cfg):
+    value = cfg.get("level3_transport", "expanded")
+    if value not in ("expanded", "knowledge_l3_reference.v1"):
+        raise ValueError("Unsupported explicit Level 3 transport.")
+    return value
+
+
 def _reuse_artifacts(entry: dict, mode: str) -> dict:
     if "reuse_artifacts" not in entry:
         return {}
@@ -61,6 +68,7 @@ def _episode_config(cfg: dict, entry: dict, root: Path, normalized: Path, review
 
 def load_batch(path: Path) -> dict:
     cfg = read_json(private_path(path.resolve()))
+    _level3_transport(cfg)
     if cfg.get("schema_version") != "knowledge_batch.v1":
         raise ValueError("Expected knowledge_batch.v1.")
     cfg.setdefault("extraction_mode", "reviewed")
@@ -113,6 +121,7 @@ def load_batch(path: Path) -> dict:
 
 def execute(cfg: dict, *, workers: int = 1, max_episodes: int | None = None,
             dry_run: bool = False, retry_failed: bool = False, reviewer=None, backend_factory=None) -> dict:
+    _level3_transport(cfg)
     mode = cfg.get("extraction_mode", "reviewed")
     if mode not in ("reviewed", "candidate"):
         raise ValueError("extraction_mode must be reviewed or candidate.")
@@ -149,7 +158,11 @@ def execute(cfg: dict, *, workers: int = 1, max_episodes: int | None = None,
                 "maximum_initial_calls": len(selected) * (3 if mode == "candidate" else 4) - reused, "workers": workers,
                 "through": "level3", "extraction_mode": mode, "automatic_release": False,
                 "ready_for_serving": False, **reuse_details}
-    backend_factory = backend_factory or CodexBackend
+    if _level3_transport(cfg) == "knowledge_l3_reference.v1":
+        from .transport import L3ReferenceBackend
+        backend_factory = backend_factory or L3ReferenceBackend
+    else:
+        backend_factory = backend_factory or CodexBackend
     root.mkdir(parents=True, exist_ok=True)
     with (root / ".batch.lock").open("a") as lock:
         fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)

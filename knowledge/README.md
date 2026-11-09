@@ -135,6 +135,15 @@ without a successful application receipt; it cannot be resumed in place.
 
 ### Bounded Corpus Jobs
 
+New batch configurations may explicitly set
+`"level3_transport": "knowledge_l3_reference.v1"` to share repeated annotation
+and source-issue objects by reference without dropping any case or source text.
+The existing transport verifies exact reconstruction and records its format and
+hashes in call metadata. L1/L2 are unchanged. The default remains `expanded`;
+old manifests are not rewritten. Changing this setting requires a new batch ID.
+Dry-run does not initialize either backend. This reduces redundant input, not
+the actual evidence scope, and does not bypass the configured input limit.
+
 `python3 -m knowledge.batch --config "$BATCH_CONFIG" --dry-run` plans explicit
 private sources without inference. Remove `--dry-run` and optionally set
 `--workers 2 --max-episodes 8` for a measured batch. Each episode has its own
