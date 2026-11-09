@@ -5,13 +5,15 @@ immutable private index; load_checked(ref) independently reconstructs it.
 known_closure(ref, support_ids) retains recorded counter/basis/comparison links,
 not semantic discovery or acceptance. No source items are copied or filtered.
 
-profile_corpus_selection.v1 requires corpus_id, expected_episode_ids,
+profile_corpus_selection.v2 requires corpus_id, expected_episode_ids,
 reserved_episode_ids, episodes, expected_synthesis_ids and syntheses. An episode
 has episode_id and evidence; a synthesis has synthesis_id and synthesis.
 Each state is {status: available, input: descriptor}, or
 {status: missing|failed|held, reason: text, record: {path, sha256}|null}.
 Evidence descriptors are {kind: completed, manifest: REF, artifact: REF}, or
-{kind: recovered|editorial, artifact: REF}. Synthesis descriptors additionally
+{kind: recovered|editorial|native, artifact: REF}. Native evidence has no original
+backend manifest; its submission/packet/config lineage is independently checked.
+Synthesis descriptors additionally
 support editorial_completed and editorial_recovered; completed needs manifest.
 Every chosen synthesis must reference the exact selected evidence versions.
 One evidence artifact is chosen per episode; all its items remain in the index.
@@ -33,13 +35,15 @@ from pathlib import Path
 from knowledge import corpus_inventory as shared
 from knowledge.schemas import TEXT, array, enum, obj
 from transcription.common import atomic_write_json, child_path, private_path, safe_id, sha256_file
-from . import evidence_revision, pipeline, recover_evidence, recover_synthesis, review, review_recovered, schemas
+from . import evidence_revision, native_evidence, pipeline, recover_evidence, recover_synthesis, review, review_recovered, schemas
 
-VERSION = "profile_corpus_inventory.v1"
-SELECTION_VERSION = "profile_corpus_selection.v1"
+VERSION = "profile_corpus_inventory.v2"
+SELECTION_VERSION = "profile_corpus_selection.v2"
+REGENERATION = ("Create a new explicit selection/inventory and discovery run; preserve old files. "
+                "Use code 8c91e87 for historical contract replay; no automatic migration.")
 REF = shared.REF
 COMPLETED = obj(kind=enum("completed"), manifest=REF, artifact=REF)
-EVIDENCE = {"oneOf": [COMPLETED, obj(kind=enum("recovered", "editorial"), artifact=REF)]}
+EVIDENCE = {"oneOf": [COMPLETED, obj(kind=enum("recovered", "editorial", "native"), artifact=REF)]}
 SYNTHESIS = {"oneOf": [COMPLETED, obj(kind=enum("recovered", "editorial_completed", "editorial_recovered"), artifact=REF)]}
 
 
@@ -62,7 +66,7 @@ POLICY = {**shared.POLICY, "independent_event_count": None,
 def _implementation():
     modules = {"inventory_helpers": shared, "evidence_revision": evidence_revision,
                "recover_evidence": recover_evidence, "recover_synthesis": recover_synthesis,
-               "review": review, "review_recovered": review_recovered}
+               "review": review, "review_recovered": review_recovered, "native_evidence": native_evidence}
     return {"profile": pipeline._implementation(),
             "code": {**{name: sha256_file(Path(module.__file__)) for name, module in modules.items()},
                      "profile_inventory": sha256_file(Path(__file__))},
@@ -97,6 +101,33 @@ def _manifest(ref, pins, reserved, protected, active=None):
     return cfg
 
 
+def _native_lineage(descriptor, artifact, pins, reserved, protected):
+    """Metadata-only preflight: never trust an artifact's duplicated packet/source header."""
+    if (not isinstance(artifact, dict) or artifact.get("schema_version") != native_evidence.VERSION
+            or artifact.get("stage") != "evidence"):
+        raise ValueError("Native kind requires an adopted native evidence candidate.")
+    submission_ref = shared._ref(artifact["submission"])
+    submission = native_evidence._read(submission_ref, pins)
+    shared._validate(submission, native_evidence.submission_schema())
+    packet_ref = shared._ref(submission["packet"])
+    packet = native_evidence._read(packet_ref, pins)
+    if packet.get("schema_version") != native_evidence.PACKET_VERSION:
+        raise ValueError("Native submission must reference its frozen authoring packet.")
+    config_ref = shared._ref(packet["config"])
+    config = native_evidence._read(config_ref, pins)
+    shared._validate(config, native_evidence.CONFIG_SCHEMA)
+    eid = safe_id(config["episode"]["episode_id"])
+    if eid in set(reserved) | set(config["reserved_episode_ids"]):
+        raise ValueError("Inventory reserved sources must not be loaded, including native authoring configs.")
+    if (artifact["source"]["episode_id"] != eid or submission["content"]["episode_id"] != eid
+            or shared._ref(artifact["packet"]) != packet_ref):
+        raise ValueError("Native evidence header differs from its authoritative submission/packet/config lineage.")
+    refs = {"submission": submission_ref, "packet": packet_ref, "config": config_ref}
+    protected.update(Path(ref["path"]).parent for ref in [descriptor["artifact"], *refs.values()])
+    return {**refs, "source_files": {key: shared._ref(config["episode"][key]) if config["episode"][key] else None
+                                    for key in ("raw", "normalized", "source_review")}}
+
+
 def _lineage_manifest(descriptor, artifact, evidence, pins, reserved, protected, active=None):
     """Follow authoritative configs/proposals before any replay can load sources."""
     active = set() if active is None else active
@@ -106,7 +137,7 @@ def _lineage_manifest(descriptor, artifact, evidence, pins, reserved, protected,
     active.add(path)
     kind = descriptor["kind"]
     formats = ({"completed": schemas.VERSION, "recovered": recover_evidence.VERSION,
-                "editorial": evidence_revision.VERSION} if evidence else
+                "editorial": evidence_revision.VERSION, "native": native_evidence.VERSION} if evidence else
                {"completed": schemas.VERSION, "recovered": recover_synthesis.VERSION,
                 "editorial_completed": "profile_reviewed_revision.v1", "editorial_recovered": review_recovered.VERSION})
     stage = "evidence" if evidence else "synthesis"
@@ -114,7 +145,11 @@ def _lineage_manifest(descriptor, artifact, evidence, pins, reserved, protected,
             or artifact.get("stage", None if evidence else "synthesis") != stage):
         raise ValueError("Artifact kind must name its actual Profile format and stage.")
     claimed = None
-    if kind == "completed":
+    if kind == "native":
+        _native_lineage(descriptor, artifact, pins, reserved, protected)
+        active.remove(path)
+        return None
+    elif kind == "completed":
         manifest_ref = descriptor["manifest"]
     elif evidence and kind == "recovered":
         manifest_ref = recover_evidence._config(artifact["recovery_config"])["manifest"]
@@ -164,10 +199,16 @@ def _load_evidence(descriptor, pins, reserved, protected, check_path):
     descriptor = copy.deepcopy(descriptor)
     ref = descriptor["artifact"] = shared._ref(descriptor["artifact"])
     artifact = shared._read(ref, pins)
-    manifest_ref = _lineage_manifest(descriptor, artifact, True, pins, reserved, protected)
+    lineage = None
+    if descriptor["kind"] == "native":
+        lineage = _native_lineage(descriptor, artifact, pins, reserved, protected)
+        manifest_ref = None
+        checked = native_evidence.load_checked(ref, pins)
+    else:
+        manifest_ref = _lineage_manifest(descriptor, artifact, True, pins, reserved, protected)
     if descriptor["kind"] == "editorial":
         checked = evidence_revision.load_checked(ref, pins)
-    else:
+    elif descriptor["kind"] != "native":
         descriptor["manifest"] = manifest_ref
         checked, _, checked_manifest = evidence_revision._parent({"parent": descriptor}, pins, check_path)
         if shared._ref(checked_manifest) != manifest_ref:
@@ -175,7 +216,7 @@ def _load_evidence(descriptor, pins, reserved, protected, check_path):
     if checked != artifact or checked["policy"] != pipeline.POLICY:
         raise ValueError("Evidence changed during independent replay.")
     protected.add(Path(ref["path"]).parent)
-    return checked, manifest_ref
+    return checked, manifest_ref, lineage
 
 
 def _completed_synthesis(descriptor, cfg, pins):
@@ -294,6 +335,8 @@ def inspect(selection_ref: dict) -> dict:
     implementation = _implementation()
     selection_ref = shared._ref(selection_ref)
     selection = shared._read(selection_ref, pins)
+    if not isinstance(selection, dict) or selection.get("schema_version") != SELECTION_VERSION:
+        raise ValueError("Expected " + SELECTION_VERSION + ". " + REGENERATION)
     shared._validate(selection, SELECTION)
     safe_id(selection["corpus_id"])
     expected, reserved = selection["expected_episode_ids"], selection["reserved_episode_ids"]
@@ -313,8 +356,11 @@ def inspect(selection_ref: dict) -> dict:
             state = entry[stage]
             if state["status"] == "available":
                 descriptor = state["input"]
-                _lineage_manifest(descriptor, shared._read(descriptor["artifact"], pins),
-                                  stage == "evidence", pins, reserved, protected)
+                artifact = shared._read(descriptor["artifact"], pins)
+                _lineage_manifest(descriptor, artifact, stage == "evidence", pins, reserved, protected)
+                if (stage == "evidence" and descriptor["kind"] == "native"
+                        and artifact["source"]["episode_id"] != entry["episode_id"]):
+                    raise ValueError("Native authoring config episode differs from inventory selection.")
     episodes, evidence, syntheses, hypotheses, gaps = {}, {}, {}, {}, []
     check_path = Path(selection_ref["path"]).parent / ("inventory_check_" + selection_ref["sha256"][:24])
 
@@ -334,7 +380,7 @@ def inspect(selection_ref: dict) -> dict:
             episodes[eid] = {"evidence": gap(eid, state, "evidence"), "evidence_ids": []}
             continue
         descriptor = state["input"]
-        artifact, manifest_ref = _load_evidence(descriptor, pins, reserved, protected, check_path)
+        artifact, manifest_ref, native_lineage = _load_evidence(descriptor, pins, reserved, protected, check_path)
         if artifact["source"]["episode_id"] != eid:
             raise ValueError("Evidence episode differs from inventory selection.")
         ref = shared._ref(descriptor["artifact"])
@@ -356,6 +402,10 @@ def inspect(selection_ref: dict) -> dict:
             "unselected_regions_pointer": "/content/unselected_regions", "policy": copy.deepcopy(artifact["policy"]),
             "source_hashes": {key: artifact["source"][key] for key in
                               ("raw_sha256", "normalized_sha256", "review_sha256", "annotations_sha256") if key in artifact["source"]}}
+        if native_lineage is not None:
+            episodes[eid].update(native_lineage=native_lineage,
+                model_metadata=copy.deepcopy(artifact["model_metadata"]), adoption=copy.deepcopy(artifact["adoption"]),
+                authorship_pointer="/authorship")
     # All inference bases must resolve within the exact selected evidence versions.
     _basis_closure(evidence, list(evidence))
     seen_artifacts = set()
@@ -452,7 +502,7 @@ def load_checked(ref: dict) -> dict:
     pins = {}
     stored = shared._read(ref, pins)
     if not isinstance(stored, dict) or stored.get("schema_version") != VERSION:
-        raise ValueError("Expected an explicit Profile corpus inventory.")
+        raise ValueError("Expected " + VERSION + ". " + REGENERATION)
     current = inspect(stored["selection"])
     if pipeline.digest(stored) != pipeline.digest(current):
         raise ValueError("Profile inventory differs from independent reconstruction.")
@@ -525,7 +575,8 @@ def main(argv=None):
         else:
             result = load_checked(ref)
     except (ValueError, OSError, KeyError, TypeError, RuntimeError) as exc:
-        print(json.dumps({"status": "failed", "error_type": type(exc).__name__, "model_calls": 0}))
+        print(json.dumps({"status": "failed", "error_type": type(exc).__name__, "model_calls": 0,
+                          "note": REGENERATION}))
         return 2
     print(json.dumps({"status": "created" if args.command == "freeze" else "checked", "model_calls": 0,
         "inventory_complete": result["inventory_complete"], "evidence_count": len(result.get("evidence", {})),

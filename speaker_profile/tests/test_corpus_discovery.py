@@ -47,7 +47,7 @@ def configure(data, tmp_path):
     materials = discovery._Materials(catalog, {})
     sizes = [discovery._size(prompt, discovery._context(entry["evidence_ids"], catalog, materials, ref,
                 prompt=prompt, max_chars=1000000)) for entry in catalog["episodes"].values() if entry["evidence_ids"]]
-    config = {"schema_version": "profile_discovery_config.v1", "run_id": "synthetic_discovery",
+    config = {"schema_version": discovery.CONFIG_VERSION, "run_id": "synthetic_discovery",
               "output_root": str(tmp_path / "discovery"), "inventory": ref, "model": "synthetic",
               "reasoning_effort": "high", "timeout_seconds": 10, "max_input_chars": max(sizes, default=10000) + 500,
               "max_response_chars": 100000, "max_calls": 5, "retry_count": 1}
@@ -436,7 +436,7 @@ def test_incomplete_inventory_fails_without_output(cfg, tmp_path):
     data["selection"]["episodes"][0]["evidence"] = {"status": "held", "reason": "Synthetic unavailable input", "record": None}
     save_selection(data)
     ref = inventory.freeze(pin(data["path"]), data["output"])
-    config = {"schema_version": "profile_discovery_config.v1", "run_id": "incomplete", "output_root": str(tmp_path / "discovery"),
+    config = {"schema_version": discovery.CONFIG_VERSION, "run_id": "incomplete", "output_root": str(tmp_path / "discovery"),
               "inventory": ref, "model": "synthetic", "reasoning_effort": "high", "timeout_seconds": 10,
               "max_input_chars": 1000000, "max_response_chars": 100000, "max_calls": 1, "retry_count": 0}
     path = tmp_path / "discovery-config.json"
@@ -561,7 +561,7 @@ def test_codec_and_format_pins_require_new_runs(ready, monkeypatch, pin_name):
     discovery.execute(ref, command="run", backend=SyntheticDiscovery())
     directory = root(ready["config"])
     manifest = read_json(directory / "run_manifest.json")
-    assert manifest["schema_version"] == "profile_discovery_run.v4"
+    assert manifest["schema_version"] == "profile_discovery_run.v5"
     assert manifest["implementation"]["codec_sha256"] == discovery.sha256_file(Path(discovery.serialization.__file__))
     before = {p: p.read_bytes() for p in directory.rglob("*") if p.is_file()}
     changed = copy.deepcopy(discovery._implementation())
@@ -578,11 +578,11 @@ def test_old_planning_run_version_cannot_resume(ready):
     discovery.execute(ref, command="run", backend=SyntheticDiscovery())
     directory = root(ready["config"])
     request = read_json(directory / "packet_000001/attempt_0001.request.json")
-    assert request["schema_version"] == "profile_discovery_request.v4"
+    assert request["schema_version"] == "profile_discovery_request.v5"
     path = directory / "run_manifest.json"
     manifest = read_json(path)
-    assert manifest["schema_version"] == "profile_discovery_run.v4"
-    manifest["schema_version"] = "profile_discovery_run.v3"
+    assert manifest["schema_version"] == "profile_discovery_run.v5"
+    manifest["schema_version"] = "profile_discovery_run.v4"
     atomic_write_json(path, manifest)
     before = {p: p.read_bytes() for p in directory.rglob("*") if p.is_file()}
     for command in ("plan", "run", "validate"):

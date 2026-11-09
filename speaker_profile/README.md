@@ -4,6 +4,37 @@ Independent offline extraction from explicitly selected, hash-bound transcripts.
 Artifacts use `profile.v1`; they do not grant source acceptance, publication,
 serving eligibility or automatic inclusion in a global profile.
 
+## Corpus Inventory
+
+Use `speaker_profile.corpus_inventory inspect|freeze|validate|closure` with an
+explicit private selection. New selections use `profile_corpus_selection.v2`;
+new frozen indexes use `profile_corpus_inventory.v2`. The selection declares all
+expected episode/synthesis IDs, reserved IDs and each input's available/missing/
+failed/held state. All evidence items remain indexed; availability is not approval.
+
+An available episode accepts `{kind: completed, manifest: REF, artifact: REF}`
+or `{kind: recovered|editorial|native, artifact: REF}`, where every `REF` is a
+private `{path, sha256}`. Native kind requires an adopted
+`profile_native_evidence_candidate.v1`, not a packet, submission or backend result.
+All authoritative lineage is preflighted before source replay. Native lineage
+follows the submission's packet and config, not duplicated artifact headers;
+reserved episodes in that config cannot be concealed by a different header.
+
+Native entries retain `original_manifest: null`, explicit submission/packet/config
+and source-file references, unmeasured model/usage metadata and import-only call
+accounting. Discovery reads their checked raw references directly and preserves
+native authorship, source holds, notes and omissions. Native evidence cannot act
+as a synthesis parent under an invented backend manifest. Existing completed,
+recovered and editorial artifacts retain their original bytes and provenance;
+known syntheses still require the exact selected evidence versions.
+
+Old selection/inventory schemas and discovery configs are rejected with new-version
+guidance, not automatically migrated. Preserve their files/reports and use code
+`8c91e87` for the pre-native-inventory contracts. Create an explicit new selection,
+freeze a new index, then create a new discovery config/run. This zero-inference
+revalidation includes source and provenance checks, not merely trusting old index
+headers. Neither structural replay nor inventory completeness certifies semantics.
+
 ## Corpus Discovery
 
 For an explicitly frozen private Profile inventory, use bounded discovery to
@@ -15,7 +46,7 @@ python -m speaker_profile.corpus_discovery run --config "$DISCOVERY_CONFIG" --sh
 python -m speaker_profile.corpus_discovery validate --config "$DISCOVERY_CONFIG" --sha256 "$CONFIG_SHA256"
 ```
 
-The private `profile_discovery_config.v1` pins `inventory: {path, sha256}`,
+The private `profile_discovery_config.v2` pins `inventory: {path, sha256}`,
 `run_id`, `output_root`, model/effort, timeout, input/response character limits,
 `max_calls` (the run's cumulative admission budget), and `retry_count` (0 or 1).
 `plan` and `validate` make no model calls. Repeat `run` to skip matching completed
@@ -29,12 +60,13 @@ Source catalogs, inline extensions, issues and commentary authority are preserve
 Input limits measure the packed request, including its legend and schema;
 validators expand it before applying
 the unchanged evidence rules. Missing values remain distinct from explicit nulls.
-Request/run v4 measures each complete candidate once after final sorting; the
+Request/run v5 measures each complete candidate once after final sorting; the
 outer greedy planner still checks every ownership-prefix candidate. Partial
 packed sizes are not assumed monotone. Oversized candidates are fully constructed
 before the packed-cap check: `max_input_chars` is not an unpacked RAM bound.
 The one-episode materialization cache is unchanged. Changed planning pins require
-new runs; request/run v4 receipts cannot resume older runs.
+new runs; request/run v5 receipts cannot resume older runs. The base serializer and
+compact transport remain unchanged; native provenance is retained losslessly.
 
 Rare, non-investment and ungrouped evidence remains accounted for. Hypotheses
 provide navigation, not additional evidence. Source notes retain their original
@@ -133,7 +165,8 @@ exactly the same completed and recovered references as its parent.
 
 `speaker_profile.native_evidence` is a standalone, single-episode authoring and
 import contract. It does not launch an agent, call a provider, create backend call
-receipts, or integrate candidates into extraction, inventory or synthesis.
+receipts, or automatically register candidates in extraction, inventory or synthesis.
+Inventory adoption is a separate explicit `native` descriptor under the v2 contract.
 An already available agent must genuinely read and author against the frozen
 packet. Do not relabel an earlier response as having used a later packet.
 

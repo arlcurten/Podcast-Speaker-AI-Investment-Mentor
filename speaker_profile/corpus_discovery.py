@@ -2,7 +2,7 @@
 
 CLI: python -m speaker_profile.corpus_discovery plan|run|validate --config PATH --sha256 HASH
 run accepts --max-packets and --retry-failed. No automatic retry or old-pin migration.
-profile_discovery_config.v1 pins inventory, run_id, output_root, model,
+profile_discovery_config.v2 pins inventory, run_id, output_root, model,
 reasoning_effort, timeout_seconds, max_input_chars, max_response_chars, max_calls
 (lifetime admissions), retry_count (0 or 1). Outputs remain private candidates.
 New runs use pinned compact_profile_discovery.v2 transport; max_input_chars bounds the
@@ -27,12 +27,14 @@ from knowledge.schemas import TEXT, STRINGS, array, enum, obj
 from transcription.common import child_path, private_path, safe_id, sha256_file
 from . import corpus_inventory as inventory, discovery_annotations, serialization
 
-REQUEST_VERSION = "profile_discovery_request.v4"
+CONFIG_VERSION = "profile_discovery_config.v2"
+REQUEST_VERSION = "profile_discovery_request.v5"
+RUN_VERSION = "profile_discovery_run.v5"
 RESULT_VERSION = "profile_discovery_result.v1"
 CONTEXT_FORMAT = "compact_profile_discovery.v2"
 PROMPT_PATH = Path(__file__).parent / "prompts" / "corpus_discovery.md"
 POSITIVE = {"type": "integer", "minimum": 1}
-CONFIG = obj(schema_version=enum("profile_discovery_config.v1"), run_id=TEXT, output_root=TEXT,
+CONFIG = obj(schema_version=enum(CONFIG_VERSION), run_id=TEXT, output_root=TEXT,
     inventory=inventory.REF, model=TEXT, reasoning_effort=enum("low", "medium", "high", "xhigh"),
     timeout_seconds=POSITIVE, max_input_chars=POSITIVE, max_response_chars=POSITIVE, max_calls=POSITIVE,
     retry_count={"type": "integer", "minimum": 0, "maximum": 1})
@@ -121,9 +123,17 @@ class _Materials:
         self.episode_id, self.cached = None, None
         entry = self.catalog["episodes"][eid]
         artifact = shared._read(entry["evidence"]["input"]["artifact"], self.pins)
-        manifest = shared._read(entry["original_manifest"], self.pins)
-        original = next(e for e in manifest["config"]["episodes"] if e["episode_id"] == eid)
-        raw = shared._read({"path": original["raw"], "sha256": entry["source_hashes"]["raw_sha256"]}, self.pins)
+        if entry["evidence"]["input"]["kind"] == "native":
+            if entry["original_manifest"] is not None:
+                raise ValueError("Native evidence cannot acquire a backend manifest.")
+            raw_ref = entry["native_lineage"]["source_files"]["raw"]
+            if raw_ref["sha256"] != entry["source_hashes"]["raw_sha256"]:
+                raise ValueError("Native raw reference differs from the checked source.")
+        else:
+            manifest = shared._read(entry["original_manifest"], self.pins)
+            original = next(e for e in manifest["config"]["episodes"] if e["episode_id"] == eid)
+            raw_ref = {"path": original["raw"], "sha256": entry["source_hashes"]["raw_sha256"]}
+        raw = shared._read(raw_ref, self.pins)
         self.episode_id, self.cached = eid, (artifact, {r["segment_id"]: r for r in raw["segments"]})
         return self.cached
 
@@ -174,6 +184,9 @@ def _context(owned, catalog, materials, inventory_ref, *, prompt, max_chars):
         context["sources"][eid] = {"source": copy.deepcopy(artifact["source"]),
             "policy": copy.deepcopy(artifact["policy"]),
             "unselected_regions": copy.deepcopy(artifact["grounding"]["unselected_regions"])}
+        if catalog["episodes"][eid]["evidence"]["input"]["kind"] == "native":
+            context["sources"][eid]["native_provenance"] = {
+                key: copy.deepcopy(artifact[key]) for key in ("authority", "authorship", "model_metadata", "adoption")}
         raw_ids = set()
         for rid in refs:
             entry = catalog["evidence"][rid]
@@ -209,6 +222,8 @@ def _prepare(config_ref):
     pins = {}
     config_ref = shared._ref(config_ref)
     cfg = shared._read(config_ref, pins)
+    if not isinstance(cfg, dict) or cfg.get("schema_version") != CONFIG_VERSION:
+        raise ValueError("Expected " + CONFIG_VERSION + ". " + inventory.REGENERATION)
     shared._validate(cfg, CONFIG)
     safe_id(cfg["run_id"])
     cfg = {**cfg, "output_root": str(private_path(cfg["output_root"])), "inventory": shared._ref(cfg["inventory"])}
@@ -252,7 +267,7 @@ def _prepare(config_ref):
         del context
     if last is not None:
         packets.append(last)
-    manifest = {"schema_version": "profile_discovery_run.v4", "config": cfg, "config_ref": config_ref,
+    manifest = {"schema_version": RUN_VERSION, "config": cfg, "config_ref": config_ref,
                 "implementation": implementation, "policy": copy.deepcopy(POLICY), "packets": packets}
     _check_pins(pins)
     if _implementation() != implementation:
@@ -365,7 +380,7 @@ def main(argv=None):
                          max_packets=args.max_packets, retry_failed=args.retry_failed)
     except (ValueError, OSError, KeyError, TypeError, RuntimeError) as exc:
         print(json.dumps({"status": "failed", "error_type": type(exc).__name__,
-                          "note": "Inspect private Profile inventory and immutable discovery receipts."}))
+                          "note": inventory.REGENERATION}))
         return 2
     print(json.dumps({key: value for key, value in result.items() if key != "packet_plan"}))
     return 0 if result["status"] in {"planned", "completed", "validated", "paused_at_packet_limit"} else 2
