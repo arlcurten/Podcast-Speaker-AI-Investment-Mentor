@@ -5,7 +5,7 @@ run accepts --max-packets and --retry-failed. No automatic retry or old-pin migr
 profile_discovery_config.v1 pins inventory, run_id, output_root, model,
 reasoning_effort, timeout_seconds, max_input_chars, max_response_chars, max_calls
 (lifetime admissions), retry_count (0 or 1). Outputs remain private candidates.
-New runs use pinned compact_profile.v1 transport; max_input_chars bounds the
+New runs use pinned compact_profile_discovery.v2 transport; max_input_chars bounds the
 actual packed request (including schema/envelope). Semantic validation expands it.
 Materialization caches one episode and one synthesis payload. Plans/history hold
 descriptors/receipt refs only. Startup inventory replay has separate memory needs;
@@ -23,11 +23,11 @@ from pathlib import Path
 from knowledge import codex_backend, corpus_inventory as shared, discovery_runner, provenance
 from knowledge.schemas import TEXT, STRINGS, array, enum, obj
 from transcription.common import child_path, private_path, safe_id, sha256_file
-from . import corpus_inventory as inventory, serialization
+from . import corpus_inventory as inventory, discovery_annotations, serialization
 
-REQUEST_VERSION = "profile_discovery_request.v2"
+REQUEST_VERSION = "profile_discovery_request.v3"
 RESULT_VERSION = "profile_discovery_result.v1"
-CONTEXT_FORMAT = serialization.FORMAT
+CONTEXT_FORMAT = "compact_profile_discovery.v2"
 PROMPT_PATH = Path(__file__).parent / "prompts" / "corpus_discovery.md"
 POSITIVE = {"type": "integer", "minimum": 1}
 CONFIG = obj(schema_version=enum("profile_discovery_config.v1"), run_id=TEXT, output_root=TEXT,
@@ -57,22 +57,42 @@ def _implementation():
             "runner_sha256": sha256_file(Path(discovery_runner.__file__)),
             "backend_sha256": sha256_file(Path(codex_backend.__file__)), "proposal_sha256": provenance.digest(PROPOSAL),
             "context_format": CONTEXT_FORMAT, "codec_sha256": sha256_file(Path(serialization.__file__)),
+            "base_context_format": serialization.FORMAT, "annotation_reference_format": discovery_annotations.FORMAT,
+            "annotation_refs_sha256": sha256_file(Path(discovery_annotations.__file__)),
             "inventory": inventory._implementation()}
 
 
 def _pack(context):
     if any(eid != row["source"]["episode_id"] for eid, row in context["sources"].items()):
         raise ValueError("Discovery source keys must match their episodes.")
-    return serialization.compact({**context, "sources": list(context["sources"].values())})
+    if {"context_format", "base_context_format", "annotation_reference_format", "serialization_legend"} & context.keys():
+        raise ValueError("Plain discovery context contains reserved transport metadata.")
+    factored = discovery_annotations.factor(context)
+    if not discovery_annotations.same(discovery_annotations.restore(factored), context):
+        raise ValueError("Annotation references failed exact round-trip validation.")
+    packed = serialization.compact({**factored, "sources": list(factored["sources"].values())})
+    packed.update(context_format=CONTEXT_FORMAT, base_context_format=serialization.FORMAT,
+                  annotation_reference_format=discovery_annotations.FORMAT)
+    packed["serialization_legend"] += "\n" + discovery_annotations.LEGEND
+    return packed
 
 
 def _expand(context):
     """Require the exact lossless wire form before applying plain semantic rules."""
     try:
-        plain = serialization.expand(context)
+        base = dict(context)
+        if (base.get("context_format") != CONTEXT_FORMAT
+                or base.pop("base_context_format") != serialization.FORMAT
+                or base.pop("annotation_reference_format") != discovery_annotations.FORMAT):
+            raise ValueError("Unknown discovery annotation transport.")
+        base["context_format"] = serialization.FORMAT
+        plain = serialization.expand(base)
         sources = plain["sources"]
         plain["sources"] = {row["source"]["episode_id"]: row for row in sources}
-        if len(plain["sources"]) != len(sources) or _pack(plain) != context:
+        if len(plain["sources"]) != len(sources):
+            raise ValueError("Duplicate discovery source episodes.")
+        plain = discovery_annotations.restore(plain)
+        if not discovery_annotations.same(_pack(plain), context):
             raise ValueError("Noncanonical compact discovery context.")
         return plain
     except (KeyError, IndexError, TypeError) as exc:
@@ -236,7 +256,7 @@ def _prepare(config_ref):
         del context
     if last is not None:
         packets.append(last)
-    manifest = {"schema_version": "profile_discovery_run.v2", "config": cfg, "config_ref": config_ref,
+    manifest = {"schema_version": "profile_discovery_run.v3", "config": cfg, "config_ref": config_ref,
                 "implementation": implementation, "policy": copy.deepcopy(POLICY), "packets": packets}
     _check_pins(pins)
     if _implementation() != implementation:

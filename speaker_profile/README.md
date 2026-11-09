@@ -22,11 +22,14 @@ The private `profile_discovery_config.v1` pins `inventory: {path, sha256}`,
 packets; use `--retry-failed` only after inspecting a failed result. An admitted
 request without a result requires inspection, not an automatic retry.
 
-New discovery runs use lossless `compact_profile.v1` tables, with the codec hash
-and format pinned in implementation metadata. Input limits measure the packed
-request, including its legend and schema; validators expand it before applying
+New discovery runs use `compact_profile_discovery.v2`: lossless `compact_profile.v1`
+tables plus ordered, SHA-bound references to exact source annotation subsets.
+The codec, reference helper, and formats are pinned in implementation metadata.
+Source catalogs, inline extensions, issues and commentary authority are preserved.
+Input limits measure the packed request, including its legend and schema;
+validators expand it before applying
 the unchanged evidence rules. Missing values remain distinct from explicit nulls.
-Request/run v2 receipts cannot resume old plain-context runs.
+Request/run v3 receipts cannot resume older transport runs.
 
 Rare, non-investment and ungrouped evidence remains accounted for. Hypotheses
 provide navigation, not additional evidence. Source notes retain their original

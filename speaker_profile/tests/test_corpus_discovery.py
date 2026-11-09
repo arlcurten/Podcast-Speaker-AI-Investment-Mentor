@@ -463,12 +463,12 @@ def test_compact_transport_roundtrip_preserves_notes_closure_missing_and_null(re
     packed = discovery._pack(plain)
     expanded = discovery._expand(packed)
     assert expanded == before == plain
-    assert discovery.serialization.expand(packed) == {**plain, "sources": list(plain["sources"].values())}
     assert expanded["evidence"][0]["optional_context"] is None
     assert "optional_context" not in expanded["evidence"][1]
     assert expanded["evidence"][2]["optional_context"] is False
     assert expanded["known_relationship_closure"] == before["known_relationship_closure"]
-    assert packed["context_format"] == discovery.CONTEXT_FORMAT == "compact_profile.v1"
+    assert packed["context_format"] == discovery.CONTEXT_FORMAT == "compact_profile_discovery.v2"
+    assert packed["base_context_format"] == discovery.serialization.FORMAT
     assert "missing" in packed["serialization_legend"] and "not extra observations" in packed["serialization_legend"]
     response = proposal(plain)
     assert discovery._derive(response, packed) == discovery._derive_plain(response, plain)
@@ -513,17 +513,18 @@ def test_noncanonical_compact_transport_is_rejected(ready, fault):
     with pytest.raises(ValueError): discovery._derive(proposal(plain), packed)
 
 
-@pytest.mark.parametrize("pin_name", ["codec_sha256", "context_format"])
+@pytest.mark.parametrize("pin_name", ["codec_sha256", "context_format", "annotation_refs_sha256",
+                                    "annotation_reference_format", "base_context_format"])
 def test_codec_and_format_pins_require_new_runs(ready, monkeypatch, pin_name):
     ref = pin(ready["path"])
     discovery.execute(ref, command="run", backend=SyntheticDiscovery())
     directory = root(ready["config"])
     manifest = read_json(directory / "run_manifest.json")
-    assert manifest["schema_version"] == "profile_discovery_run.v2"
+    assert manifest["schema_version"] == "profile_discovery_run.v3"
     assert manifest["implementation"]["codec_sha256"] == discovery.sha256_file(Path(discovery.serialization.__file__))
     before = {p: p.read_bytes() for p in directory.rglob("*") if p.is_file()}
     changed = copy.deepcopy(discovery._implementation())
-    changed[pin_name] = "0" * 64 if pin_name == "codec_sha256" else "compact_profile.v999"
+    changed[pin_name] = "0" * 64 if pin_name.endswith("sha256") else "compact_profile.v999"
     monkeypatch.setattr(discovery, "_implementation", lambda: changed)
     for command in ("plan", "run", "validate"):
         with pytest.raises(ValueError, match="new run version"):
@@ -569,3 +570,41 @@ def test_history_releases_expanded_plain_packets(ready, monkeypatch):
     gc.collect()
     assert len(refs) == count == 2 and all(ref() is None for ref in refs)
     assert all(set(row) == {"status", "request", "result", "result_sha256"} for rows in histories.values() for row in rows)
+
+
+def test_annotation_subset_receipts_resume_and_reject_valid_but_changed_ids(ready, monkeypatch):
+    original = discovery._Materials.episode
+    def annotated_episode(self, eid):
+        artifact, raw = original(self, eid)
+        artifact = copy.deepcopy(artifact)
+        anchor = next(iter(raw.values()))
+        envelope = {"sha256": "c" * 64, "review": {"method": "Synthetic metadata fixture"}, "annotations": [
+            {"annotation_id": f"A{i}", "note": f"Fictional reviewer context {i}",
+             "anchors": [{"segment_id": anchor["segment_id"], "start": anchor["start"],
+                          "end": anchor["end"], "raw_text": anchor["text"]}]} for i in (1, 2)]}
+        artifact["source"]["reviewed_annotations"] = envelope
+        for grounding in artifact["grounding"]["items"].values():
+            grounding["reviewed_annotations"] = copy.deepcopy(envelope)
+        return artifact, raw
+    monkeypatch.setattr(discovery._Materials, "episode", annotated_episode)
+    ready["config"]["max_input_chars"] = 1000000
+    ref = save(ready)
+    model = SyntheticDiscovery()
+    assert discovery.execute(ref, command="run", backend=model)["status"] == "completed"
+    directory = root(ready["config"])
+    before = {p: p.read_bytes() for p in directory.rglob("*") if p.is_file()}
+    assert discovery.execute(ref, command="run")["model_calls_this_execution"] == 0
+    assert discovery.execute(ref, command="validate")["status"] == "validated"
+    assert {p: p.read_bytes() for p in directory.rglob("*") if p.is_file()} == before
+    path = directory / "packet_000001/attempt_0001.request.json"
+    request = read_json(path)
+    assert discovery.discovery_annotations.MARKER in json.dumps(request["context"])
+    plain = discovery._expand(request["context"])
+    plain["evidence"][0]["grounding"]["reviewed_annotations"]["annotations"].reverse()
+    request["context"] = discovery._pack(plain)
+    # This remains a valid reference to exact catalog records, but is not the planned subset.
+    assert discovery._expand(request["context"]) == plain
+    atomic_write_json(path, request)
+    for command in ("validate", "run"):
+        with pytest.raises(ValueError, match="exact planned input"):
+            discovery.execute(ref, command=command)

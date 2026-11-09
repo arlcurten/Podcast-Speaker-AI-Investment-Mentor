@@ -1,6 +1,9 @@
 Propose packet-local conditional behavioral families from ALL supplied Profile evidence.
-Input uses lossless compact_profile.v1 tables; read serialization_legend before interpreting
+Input uses compact_profile_discovery.v2: lossless compact_profile.v1 tables plus exact
+source_annotation_subset.v1 references. Read serialization_legend before interpreting
 columns, shared values, missing-versus-null cells, quote indices and grounding references.
+Annotation subset references resolve ordered IDs against the same episode's SHA-bound source
+catalog; the header comes from that source or an explicit inline envelope. Do not infer issues.
 Each sources entry is identified by its source.episode_id. Expand references conceptually without
 tools; no semantic fields are omitted and repeated table references add no evidence weight.
 The packet is a transport bound, not a semantic segmentation or an importance ranking.
