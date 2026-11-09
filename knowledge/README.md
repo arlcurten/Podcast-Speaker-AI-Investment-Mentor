@@ -609,6 +609,42 @@ Oversized descriptors/source closure remain incomplete, never truncated. Routing
 still has quadratic descriptor work and selected source work can be large.
 Changed pins require new runs; no historical receipt migration is provided.
 
+For the separate exhaustive item-to-family challenge, use
+`python -m knowledge.item_family_challenge plan|run|validate --config PATH --sha256 HASH`.
+Its `knowledge_item_family_challenge_config.v1` pins the completed discovery
+`parent`, the same explicit runtime limits, positive `max_items_per_page`,
+`max_families_per_page`, `max_response_entries`, and `audit_pairs` containing
+`{record_id, family_key}` objects (possibly empty). Every inventory L2 item,
+including ungrouped, rare and non-host items, is inspected against every frozen
+family version. No topic or L3-eligibility filter changes that Cartesian scope.
+
+Pass the completed challenge `discovery.json` reference as `selection` to
+`knowledge_item_family_verification_config.v1`, with the same `parent`, separate
+runtime limits and explicit `max_pairs`, using
+`python -m knowledge.item_family_verification plan|run|validate --config PATH --sha256 HASH`.
+This second stage reconstructs the exact positive/uncertain/known/audit union
+from receipts, then reopens both the L2 item and all target family members with
+connected support/counter closure. Known obligations cannot be removed by a
+negative inspection; direct L2 links acquire no invented L3 ancestor. Source
+verification requires exact raw anchors and all case/counter dispositions.
+
+The two stages have separate lifetime budgets, not an atomic cross-run spending
+cap. Plans report measured request sizes and first-pass budget fit. Partial
+cells and pending selected verifications remain incomplete; unresolved semantic
+judgments remain quarantined. With no targets, all item accounting is retained
+and coverage is `no_targets`, not completed global counterreview. No automatic
+family membership changes, merges, event-independence counts, principles or
+publication follow. Negative recall still needs independent source review.
+
+Schedules and selections are streamed without a global pair matrix; results
+live in immutable receipts. Planning and replay still traverse the Cartesian
+cells, and verification replays the challenge selection. Inventory and runner
+receipt history remain memory costs. Complete connected source closure is built
+before checking the actual request size: the character cap does not bound
+unpacked RAM. Oversized closure is reported with references, never trimmed;
+dependent oversized-bundle decomposition and cross-run incremental reuse are
+not implemented. Changed family/source/code versions require new runs.
+
 ## Validation and Limits
 
 ```bash
