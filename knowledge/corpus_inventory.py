@@ -129,6 +129,73 @@ def _source_dependencies(cfg, sources, pins):
                 _pin_file({"path": str(path), "sha256": checksum}, pins)
 
 
+def _inspect_episode(entry, config_ref, cfg, pins, cases, principles, gaps):
+    """Keep raw sources and full artifacts local to one episode's validation."""
+    eid = entry["episode_id"]
+    stages = copy.deepcopy(entry["stages"])
+    available = [stage for stage in pipeline.STAGES[:3] if stages[stage]["status"] == "available"]
+    if available != list(pipeline.STAGES[:len(available)]):
+        raise ValueError("Available inventory stages must form a validated L1-L3 prefix.")
+    if available and cfg is None:
+        raise ValueError("Available stages require a pinned original configuration.")
+    sources, source_cfg = None, None
+    if cfg is not None:
+        selected = [row for row in cfg["episodes"] if row["episode_id"] == eid]
+        if not selected:
+            raise ValueError("Inventory episode does not belong to its pinned configuration.")
+        if available:
+            source_cfg = {**cfg, "episodes": selected}
+            sources = pipeline.sources(source_cfg)
+            _source_dependencies(source_cfg, sources, pins)
+    source = sources[eid] if available else None
+    row = {"config": config_ref, "stages": stages,
+           "source": pipeline._source_meta(source) if source is not None else None,
+           "extraction_mode": cfg.get("extraction_mode", "reviewed") if cfg is not None else None,
+           "level2_record_ids": [], "level3_principle_ids": []}
+    upstream = []
+    for stage in pipeline.STAGES[:3]:
+        state = stages[stage]
+        if state["status"] != "available":
+            if state["record"] is not None:
+                state["record"] = _ref(state["record"])
+                _pin_file(state["record"], pins)
+            gaps.append({"episode_id": eid, "stage": stage, **copy.deepcopy(state)})
+            continue
+        ref = state["artifact"] = _ref(state["artifact"])
+        path, configured_hash = pipeline.stage_location(cfg, stage, eid)
+        if Path(ref["path"]) != path or configured_hash not in (None, ref["sha256"]):
+            raise ValueError("Inventory artifact differs from the pinned configuration's stage reference.")
+        raw = _read(ref, pins)
+        # Only source loading is narrowed; artifact fingerprints use the original full config.
+        artifact, checksum = pipeline.checked_artifact(cfg, sources, stage, source, upstream, path, ref["sha256"])
+        if artifact != raw or checksum != ref["sha256"]:
+            raise ValueError("Inventory artifact changed during validation.")
+        if stage == "level1":
+            upstream = [artifact]
+        elif stage == "level2":
+            for index, (rid, case) in enumerate(provenance.case_catalog([artifact]).items()):
+                if rid in cases:
+                    raise ValueError("Duplicate global case ID.")
+                cases[rid] = {"episode_id": case["episode_id"], "artifact": copy.deepcopy(ref),
+                              "content_pointer": f"/content/cases/{index}",
+                              "merged_ids": copy.deepcopy(case["merged_ids"])}
+                row["level2_record_ids"].append(rid)
+            upstream = [artifact]
+        else:
+            for index, principle in enumerate(artifact["content"]["principles"]):
+                pid = principle["principle_id"]
+                if pid in principles:
+                    raise ValueError("Duplicate principle identity across inventory inputs.")
+                principles[pid] = {
+                    "episode_id": eid, "artifact": copy.deepcopy(ref), "content_pointer": f"/content/principles/{index}",
+                    **{key: copy.deepcopy(principle[key]) for key in ("supporting_records", "counterexamples", "contradictions")},
+                    "qualification": copy.deepcopy(artifact["qualification"][pid])}
+                row["level3_principle_ids"].append(pid)
+    if sources is not None and pipeline.sources(source_cfg) != sources:
+        raise ValueError("Inventory sources changed during reconstruction.")
+    return row
+
+
 def inspect(selection_ref: dict) -> dict:
     """Validate all declared available stages; never discover or generate missing ones."""
     pins, loaded_configs = {}, {}
@@ -143,17 +210,10 @@ def inspect(selection_ref: dict) -> dict:
         raise ValueError("Every expected episode needs exactly one explicit inventory entry.")
     for eid in expected:
         safe_id(eid)
-    episodes, gaps, l2_artifacts, l3_artifacts = {}, [], [], []
+    episodes, gaps, cases, principles = {}, [], {}, {}
     for entry in selection["episodes"]:
-        eid = entry["episode_id"]
-        stages = copy.deepcopy(entry["stages"])
-        available = [stage for stage in pipeline.STAGES[:3] if stages[stage]["status"] == "available"]
-        if available != list(pipeline.STAGES[:len(available)]):
-            raise ValueError("Available inventory stages must form a validated L1-L3 prefix.")
-        if available and entry["config"] is None:
-            raise ValueError("Available stages require a pinned original configuration.")
         config_ref = _ref(entry["config"]) if entry["config"] is not None else None
-        cfg, sources = None, None
+        cfg = None
         if config_ref is not None:
             key = (config_ref["path"], config_ref["sha256"])
             if key not in loaded_configs:
@@ -161,67 +221,9 @@ def inspect(selection_ref: dict) -> dict:
                 cfg = pipeline.load_config(Path(config_ref["path"]))
                 if cfg["model"] != original.get("model"):
                     raise ValueError("Inventory cannot substitute the original model through the environment.")
-                loaded_configs[key] = (cfg, None)
-            cfg, sources = loaded_configs[key]
-            if eid not in {row["episode_id"] for row in cfg["episodes"]}:
-                raise ValueError("Inventory episode does not belong to its pinned configuration.")
-            if available and sources is None:
-                sources = pipeline.sources(cfg)
-                _source_dependencies(cfg, sources, pins)
-                loaded_configs[key] = (cfg, sources)
-        source = sources[eid] if available else None
-        row = {"config": config_ref, "stages": stages,
-               "source": pipeline._source_meta(source) if source is not None else None,
-               "extraction_mode": cfg.get("extraction_mode", "reviewed") if cfg is not None else None,
-               "level2_record_ids": [], "level3_principle_ids": []}
-        upstream = []
-        for stage in pipeline.STAGES[:3]:
-            state = stages[stage]
-            if state["status"] != "available":
-                if state["record"] is not None:
-                    state["record"] = _ref(state["record"])
-                    _pin_file(state["record"], pins)
-                gaps.append({"episode_id": eid, "stage": stage, **copy.deepcopy(state)})
-                continue
-            ref = state["artifact"] = _ref(state["artifact"])
-            path, configured_hash = pipeline.stage_location(cfg, stage, eid)
-            if Path(ref["path"]) != path or configured_hash not in (None, ref["sha256"]):
-                raise ValueError("Inventory artifact differs from the pinned configuration's stage reference.")
-            raw = _read(ref, pins)
-            artifact, checksum = pipeline.checked_artifact(cfg, sources, stage, source, upstream, path, ref["sha256"])
-            if artifact != raw or checksum != ref["sha256"]:
-                raise ValueError("Inventory artifact changed during validation.")
-            if stage == "level1":
-                upstream = [artifact]
-            elif stage == "level2":
-                l2_artifacts.append(artifact)
-                row["level2_record_ids"] = [item["record_id"] for item in artifact["content"]["cases"]]
-                upstream = [artifact]
-            else:
-                l3_artifacts.append(artifact)
-                row["level3_principle_ids"] = [item["principle_id"] for item in artifact["content"]["principles"]]
-        episodes[eid] = row
-    # Index every record; references point to the original content, never a second evidence copy.
-    catalog = provenance.case_catalog(l2_artifacts)
-    cases = {rid: {"episode_id": case["episode_id"],
-                   "artifact": copy.deepcopy(episodes[case["episode_id"]]["stages"]["level2"]["artifact"]),
-                   "content_pointer": f"/content/cases/{episodes[case['episode_id']]['level2_record_ids'].index(rid)}",
-                   "merged_ids": copy.deepcopy(case["merged_ids"])} for rid, case in catalog.items()}
-    principles = {}
-    for artifact in l3_artifacts:
-        eid = artifact["source"]["episode_id"]
-        for index, principle in enumerate(artifact["content"]["principles"]):
-            pid = principle["principle_id"]
-            if pid in principles:
-                raise ValueError("Duplicate principle identity across inventory inputs.")
-            principles[pid] = {
-                "episode_id": eid, "artifact": copy.deepcopy(episodes[eid]["stages"]["level3"]["artifact"]),
-                "content_pointer": f"/content/principles/{index}",
-                **{key: copy.deepcopy(principle[key]) for key in ("supporting_records", "counterexamples", "contradictions")},
-                "qualification": copy.deepcopy(artifact["qualification"][pid])}
-    for cfg, source_map in loaded_configs.values():
-        if source_map is not None and pipeline.sources(cfg) != source_map:
-            raise ValueError("Inventory sources changed during reconstruction.")
+                loaded_configs[key] = cfg
+            cfg = loaded_configs[key]
+        episodes[entry["episode_id"]] = _inspect_episode(entry, config_ref, cfg, pins, cases, principles, gaps)
     case_release._check_pins(pins)
     if _implementation() != implementation:
         raise ValueError("Inventory implementation changed during reconstruction.")

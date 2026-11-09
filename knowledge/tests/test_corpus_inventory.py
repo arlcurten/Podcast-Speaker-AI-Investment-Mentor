@@ -1,5 +1,7 @@
 """Synthetic corpus inventory and known-link checks; no real sources or inference."""
 import copy
+import gc
+import weakref
 from pathlib import Path
 from unittest.mock import Mock
 
@@ -96,6 +98,135 @@ def test_complete_freeze_replays_without_changes_or_pipeline_execution(ready, tm
     with pytest.raises(FileExistsError): inventory.freeze(pin(ready["path"]), ready["output"])
     assert inventory.load_checked(ref) == frozen
     forbidden.assert_not_called()
+
+
+@pytest.mark.parametrize("mode", ["reviewed", "candidate"])
+def test_episode_sources_and_full_artifacts_are_freed_before_next_load(cfg, tmp_path, monkeypatch, mode):
+    data = selection_for(candidate(cfg) if mode == "candidate" else cfg, tmp_path)
+    original_sources, original_checked, original_read = pipeline.sources, pipeline.checked_artifact, inventory._read
+    tracked, loaded = [], []
+
+    class TrackedDict(dict):
+        pass
+
+    class TrackedList(list):
+        pass
+
+    def track(value):
+        value = TrackedDict(value) if isinstance(value, dict) else TrackedList(value)
+        tracked.append(weakref.ref(value))
+        return value
+
+    def sources(config):
+        ids = [entry["episode_id"] for entry in config["episodes"]]
+        assert len(ids) == 1
+        if loaded and loaded[-1] != ids[0]:
+            gc.collect()
+            assert all(ref() is None for ref in tracked), "Previous episode's raw sources/artifacts are still retained"
+        loaded.append(ids[0])
+        result = track(original_sources(config))
+        for eid, source in result.items():
+            result[eid] = track(source)
+            result[eid]["segments"] = track(source["segments"])
+            result[eid]["raw_segments"] = track(source["raw_segments"])
+        return result
+
+    def checked(*args, **kwargs):
+        artifact, checksum = original_checked(*args, **kwargs)
+        artifact = track(artifact)
+        artifact["content"] = track(artifact["content"])
+        return artifact, checksum
+
+    def read(*args, **kwargs):
+        value = original_read(*args, **kwargs)
+        return track(value) if isinstance(value, dict) and value.get("stage") in pipeline.STAGES[:3] else value
+
+    monkeypatch.setattr(pipeline, "sources", sources)
+    monkeypatch.setattr(pipeline, "checked_artifact", checked)
+    monkeypatch.setattr(inventory, "_read", read)
+    result = inventory.inspect(pin(data["path"]))
+    gc.collect()
+    assert all(ref() is None for ref in tracked)
+    assert loaded == ["SYN1", "SYN1", "SYN2", "SYN2"]
+    assert len(result["cases"]) == len(result["principles"]) == 4
+
+
+def test_subset_source_load_uses_full_original_config_for_artifact_validation(ready, monkeypatch):
+    expected = pipeline.load_config(Path(ready["selection"]["episodes"][0]["config"]["path"]))
+    original_sources, original_checked, original_load = pipeline.sources, pipeline.checked_artifact, pipeline.load_config
+    loads, source_calls, stages = [], [], []
+
+    def load(path):
+        loads.append(path)
+        return original_load(path)
+
+    def sources(config):
+        assert len(config["episodes"]) == 1
+        assert {k: v for k, v in config.items() if k != "episodes"} == {
+            k: v for k, v in expected.items() if k != "episodes"}
+        assert config["episodes"][0] in expected["episodes"]
+        source_calls.append(config["episodes"][0]["episode_id"])
+        return original_sources(config)
+
+    def checked(config, source_map, stage, source, *args, **kwargs):
+        assert config == expected and len(config["episodes"]) == 2
+        assert list(source_map) == [source["episode_id"]] and source_map[source["episode_id"]] is source
+        stages.append((source["episode_id"], stage))
+        return original_checked(config, source_map, stage, source, *args, **kwargs)
+
+    monkeypatch.setattr(pipeline, "load_config", load)
+    monkeypatch.setattr(pipeline, "sources", sources)
+    monkeypatch.setattr(pipeline, "checked_artifact", checked)
+    result = inventory.inspect(pin(ready["path"]))
+    assert len(loads) == 1  # Only parsed config is cached across the two episodes.
+    assert source_calls == ["SYN1", "SYN1", "SYN2", "SYN2"]
+    assert stages == [(eid, stage) for eid in ("SYN1", "SYN2") for stage in pipeline.STAGES[:3]]
+    assert result["inventory_complete"]
+
+
+def test_unselected_configured_episode_source_is_never_loaded(ready, monkeypatch):
+    ready["selection"]["expected_episode_ids"] = ["SYN1"]
+    ready["selection"]["episodes"] = ready["selection"]["episodes"][:1]
+    excluded = Path(ready["cfg"]["episodes"][1]["raw"])
+    excluded.write_text("Not JSON; this unselected source must not be opened")
+    original = pipeline.sources
+    def sources(config):
+        assert [entry["episode_id"] for entry in config["episodes"]] == ["SYN1"]
+        return original(config)
+    monkeypatch.setattr(pipeline, "sources", sources)
+    result = inventory.inspect(save_selection(ready))
+    assert set(result["episodes"]) == {"SYN1"}
+    assert set(result["cases"]) == {"SYN1:R1", "SYN1:R2"}
+    assert str(excluded) not in {ref["path"] for ref in result["dependencies"]}
+
+
+def test_prior_episode_drift_after_local_recheck_fails_final_global_pins(ready, monkeypatch):
+    original = pipeline.sources
+    prior = Path(ready["cfg"]["episodes"][0]["raw"])
+    loaded = []
+    def sources(config):
+        ids = [entry["episode_id"] for entry in config["episodes"]]
+        assert len(ids) == 1
+        if ids[0] == "SYN2" and "SYN2" not in loaded:
+            assert loaded == ["SYN1", "SYN1"]
+            value = read_json(prior); value["late_mutation"] = True; atomic_write_json(prior, value)
+        loaded.append(ids[0])
+        return original(config)
+    monkeypatch.setattr(pipeline, "sources", sources)
+    with pytest.raises(ValueError, match="changed"):
+        inventory.freeze(pin(ready["path"]), ready["output"])
+    assert loaded == ["SYN1", "SYN1", "SYN2", "SYN2"]
+    assert not ready["output"].exists()
+
+
+@pytest.mark.parametrize("kind", ["case", "principle"])
+def test_incremental_indexes_reject_duplicate_global_identity(ready, kind):
+    entry = ready["selection"]["episodes"][0]
+    cfg = pipeline.load_config(Path(entry["config"]["path"]))
+    cases = {"SYN1:R1": {}} if kind == "case" else {}
+    principles = {"SYN1:P1": {}} if kind == "principle" else {}
+    with pytest.raises(ValueError, match="Duplicate"):
+        inventory._inspect_episode(entry, entry["config"], cfg, {}, cases, principles, [])
 
 
 def test_known_closure_includes_all_overlapping_ineligible_parents_not_counter_as_support(ready):
