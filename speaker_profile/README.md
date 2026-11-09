@@ -95,6 +95,26 @@ The first new call contains `validation_repair.previous_response`, the original
 the new manifest and synthesis artifact retain the pinned recovery lineage.
 This does not accept or publish any evidence or weaken validation.
 
+## Source-Grounded Editorial Revisions
+
+For narrow prose or unresolved-relationship corrections after source review,
+keep the model artifact unchanged and create a separate private revision:
+
+```bash
+python -m speaker_profile.review apply --proposal "$PROFILE_REVISION" --output "$PROFILE_REVISED"
+python -m speaker_profile.review validate --proposal "$PROFILE_REVISION" --output "$PROFILE_REVISED"
+```
+
+The `profile_synthesis_revision.v1` proposal pins its parent config/artifact and
+specifies hypothesis-relative JSON pointers, exact old/new values, reviewer
+reasons, existing evidence IDs and exact raw segment anchors. Only descriptive
+fields and relationship downgrades to `unresolved` are editable. Validation
+replays provenance and edits; it does not judge the new prose's semantic truth.
+The immutable `profile_reviewed_revision.v1` result identifies amendments as
+reviewer commentary, not a new model response or source evidence. Evidence,
+source holds and serving policy remain unchanged. Neither command calls a model
+or publishes a global profile.
+
 Run `plan` before extraction. For a fresh recovery it reports `base_input_chars`,
 `repair_input_chars` (added overhead), and total `input_chars`, including the prompt
 and transport envelope, plus `seeded_validation_repair` and `input_fits`. Set
