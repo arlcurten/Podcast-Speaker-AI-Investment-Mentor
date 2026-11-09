@@ -14,6 +14,19 @@ from mentor_agent.tests.test_runtime import mentor_setup
 from transcription.common import PROJECT_ROOT, atomic_write_json, read_json
 
 
+def test_setup_error_guidance_includes_leaf_collections_without_loading_data(monkeypatch, capsys):
+    monkeypatch.setattr(cli, "load_project_dotenv", Mock())
+    monkeypatch.setattr(cli, "load_config", Mock(side_effect=ValueError("Synthetic invalid configuration")))
+    mentor = Mock(side_effect=AssertionError("No release or model loading for setup errors"))
+    monkeypatch.setattr(cli, "Mentor", mentor)
+    assert cli.main(["--no-llm", "validate-data"]) == 2
+    captured = capsys.readouterr()
+    assert not captured.out
+    for version in ("knowledge_release.v1", "knowledge_case_release.v1", "knowledge_release_collection.v1"):
+        assert version in captured.err
+    mentor.assert_not_called()
+
+
 @pytest.mark.parametrize("arguments", [["serve", "--port", "0"], ["serve", "--port", "65536"],
                                        ["--no-llm", "serve"]])
 def test_invalid_serve_options_fail_before_loading_data(monkeypatch, arguments):

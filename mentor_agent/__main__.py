@@ -87,7 +87,7 @@ def main(argv=None):
         if args.command == "read-case":
             print(f"read-case failed ({type(exc).__name__}); verify the reviewed release and its source/review pins, and use a new private --output path. No model credentials are required.", file=sys.stderr)
             return 2
-        print(f"Mentor setup/operation failed ({type(exc).__name__}); set MENTOR_RELEASE to a reviewed private knowledge_release.v1 or knowledge_case_release.v1, verify source reviews, and configure OPENROUTER_API_KEY / MENTOR_MODEL_ID for live calls.", file=sys.stderr)
+        print(f"Mentor setup/operation failed ({type(exc).__name__}); set MENTOR_RELEASE to a reviewed private knowledge_release.v1, knowledge_case_release.v1, or knowledge_release_collection.v1, verify source reviews, and configure OPENROUTER_API_KEY / MENTOR_MODEL_ID for live calls.", file=sys.stderr)
         return 2
 
 
