@@ -100,6 +100,20 @@ def test_known_counter_comparison_and_inferred_basis_closure(ready):
         assert row["hypothesis_key"].startswith(row["parent_artifact"]["sha256"] + ":")
 
 
+def test_checked_index_closure_matches_wrapper_without_replay_or_mutation(ready, monkeypatch):
+    ref = inventory.freeze(pin(ready["path"]), ready["output"])
+    catalog = inventory.load_checked(ref)
+    expected = inventory.known_closure(ref, ["SYN1:E3"])
+    before = copy.deepcopy(catalog)
+    forbidden = Mock(side_effect=AssertionError("Checked closure must not replay sources"))
+    monkeypatch.setattr(inventory, "load_checked", forbidden)
+    assert inventory.checked_index_closure(catalog, ref, ["SYN1:E3"]) == expected
+    assert catalog == before
+    for ids in ([], ["UNKNOWN"], ["SYN1:E3", "SYN1:E3"]):
+        with pytest.raises(ValueError): inventory.checked_index_closure(catalog, ref, ids)
+    forbidden.assert_not_called()
+
+
 @pytest.mark.parametrize("kind", ["completed", "recovered", "editorial"])
 def test_explicit_evidence_formats_and_commentary_authority(cfg, tmp_path, monkeypatch, kind):
     cfg["episodes"] = cfg["episodes"][:1]

@@ -370,6 +370,54 @@ def test_planning_releases_contexts_and_history_keeps_only_receipt_references(re
     assert all(ref() is None for ref in contexts)
 
 
+def test_shared_runner_pins_and_original_knowledge_receipt_contract(ready, monkeypatch):
+    from knowledge import discovery_runner
+
+    ref = pin(ready["path"])
+    discovery.execute(ref, command="run", backend=FakeBackend())
+    config, root, catalog, packets, manifest, pins, prompt = discovery._prepare(ref)
+    assert manifest["implementation"]["runner_sha256"] == sha256_file(Path(discovery_runner.__file__))
+    request_path = root / "packet_000001/attempt_0001.request.json"
+    result = read_json(root / "packet_000001/attempt_0001.result.json")
+    context = discovery._materialize(packets[0], catalog, pins, prompt, config["max_input_chars"])
+    assert read_json(request_path) == {
+        "schema_version": "knowledge_discovery_request.v1", "run_sha256": discovery.provenance.digest(manifest),
+        "packet_id": packets[0]["packet_id"], "attempt": 1, "prompt": prompt,
+        "context": context, "schema": discovery.PROPOSAL, "previous_result_digest": None}
+    assert set(result) == {"schema_version", "request_sha256", "status", "response", "usage", "error"}
+    assert result["schema_version"] == "knowledge_discovery_result.v1"
+    assert result["request_sha256"] == sha256_file(request_path)
+    old = copy.deepcopy(discovery._implementation())
+    old.pop("runner_sha256")
+    monkeypatch.setattr(discovery, "_implementation", lambda: old)
+    with pytest.raises(ValueError, match="new run version"):
+        discovery.execute(ref, command="validate")
+
+
+def test_history_drops_previous_packet_payload_before_next_materialization(ready, monkeypatch):
+    from knowledge import discovery_runner
+
+    class Tracked(dict): pass
+    discovery.execute(pin(ready["path"]), command="run", backend=FakeBackend())
+    _, root, catalog, packets, manifest, pins, prompt = discovery._prepare(pin(ready["path"]))
+    refs = []
+    original_read, original_materialize = discovery_runner._read_json, discovery._materialize
+    def read(path, pins=None):
+        value = original_read(path, pins)
+        if path.name.startswith("attempt_"):
+            value = Tracked(value)
+            refs.append(weakref.ref(value))
+        return value
+    def materialize(*args):
+        gc.collect()
+        assert all(ref() is None for ref in refs)
+        return original_materialize(*args)
+    monkeypatch.setattr(discovery_runner, "_read_json", read)
+    monkeypatch.setattr(discovery, "_materialize", materialize)
+    discovery._history(root, manifest, packets, prompt, catalog, pins)
+    assert refs and all(ref() is None for ref in refs)
+
+
 def test_rematerialization_rereads_exact_sources_and_rejects_descriptor_or_source_drift(ready, monkeypatch):
     config, _, catalog, packets, _, pins, prompt = discovery._prepare(pin(ready["path"]))
     raw_paths = {entry["raw"] for entry in ready["source_cfg"]["episodes"]}

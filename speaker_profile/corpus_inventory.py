@@ -461,7 +461,11 @@ def load_checked(ref: dict) -> dict:
 
 
 def known_closure(ref: dict, support_ids: list[str]) -> dict:
-    inventory = load_checked(ref)
+    return checked_index_closure(load_checked(ref), ref, support_ids)
+
+
+def checked_index_closure(inventory: dict, ref: dict, support_ids: list[str]) -> dict:
+    """Pure closure over an already load_checked index; caller retains dependency pins."""
     evidence = inventory["evidence"]
     if (not isinstance(support_ids, list) or not support_ids or any(not isinstance(x, str) for x in support_ids)
             or len(support_ids) != len(set(support_ids)) or not set(support_ids) <= evidence.keys()):
