@@ -6,7 +6,7 @@ import sys
 from pathlib import Path
 
 from transcription.common import atomic_write_json, private_path, load_project_dotenv
-from .runtime import Mentor, load_config
+from .runtime import Mentor, citation, evidence_review_limits, load_config
 
 
 def main(argv=None):
@@ -19,10 +19,18 @@ def main(argv=None):
         p.add_argument("--query", required=True)
         p.add_argument("--json", action="store_true")
         p.add_argument("--output", type=Path, help="Optional immutable full diagnostics, private path only")
+    p = sub.add_parser("read-case", help="Read exact selected reviewed cases without retrieval or model calls")
+    p.add_argument("--record-id", action="append", required=True, help="Exact reviewed ID; repeat for multiple cases")
+    p.add_argument("--output", type=Path, help="Optional immutable case JSON, private path only")
     sub.add_parser("validate-data")
     p = sub.add_parser("serve")
     p.add_argument("--port", type=int, default=8765)
     args = parser.parse_args(argv)
+    if args.command == "read-case":
+        if any(not rid.strip() for rid in args.record_id):
+            parser.error("read-case --record-id must not be blank")
+        if len(set(args.record_id)) != len(args.record_id):
+            parser.error("read-case received duplicate --record-id values")
     if args.command == "serve":
         if args.no_llm:
             parser.error("serve is a live API command; use --no-llm retrieve for diagnostics")
@@ -32,6 +40,22 @@ def main(argv=None):
     try:
         cfg = load_config(args.config)
         mentor = Mentor(cfg)
+        if args.command == "read-case":
+            mentor.validate_release()
+            unknown = [rid for rid in args.record_id if rid not in mentor.index.cases]
+            if unknown:
+                parser.error("read-case IDs not in the reviewed release: " + ", ".join(repr(rid) for rid in unknown))
+            cases = [mentor.index.cases[rid] for rid in args.record_id]
+            result = {"command": "read-case", "cases": cases, "citations": [citation(c) for c in cases],
+                      "evidence_review_limits": evidence_review_limits(cases),
+                      "release_sha256": mentor.release_hash, "model_calls": 0}
+            rendered = json.dumps(result, ensure_ascii=False, indent=2)
+            output = private_path(args.output) if args.output else None
+            mentor.validate_release()
+            if output:
+                atomic_write_json(output, result, overwrite=False)
+            print(rendered)
+            return 0
         if args.command == "validate-data":
             print(json.dumps({"valid": True, "cases": len(mentor.index.cases), "principles": len(mentor.index.principles), "model_calls": 0}))
             return 0
@@ -60,6 +84,9 @@ def main(argv=None):
                 print("Source review limits (" + review["record_id"] + "):", " / ".join(review["limitations"]))
         return 0
     except (ValueError, KeyError, OSError, RuntimeError) as exc:
+        if args.command == "read-case":
+            print(f"read-case failed ({type(exc).__name__}); verify the reviewed release and its source/review pins, and use a new private --output path. No model credentials are required.", file=sys.stderr)
+            return 2
         print(f"Mentor setup/operation failed ({type(exc).__name__}); set MENTOR_RELEASE to a reviewed private knowledge_release.v1 or knowledge_case_release.v1, verify source reviews, and configure OPENROUTER_API_KEY / MENTOR_MODEL_ID for live calls.", file=sys.stderr)
         return 2
 

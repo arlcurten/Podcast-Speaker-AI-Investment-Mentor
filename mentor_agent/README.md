@@ -24,13 +24,15 @@ the ignored root `.env` or environment. Set `MENTOR_RELEASE` to a reviewed
 `knowledge_case_release.v1` produced by `python3 -m knowledge publish-cases`.
 The latter requires an explicit source-grounded, hash-bound selected-case review;
 it provides case-only evidence and never upgrades the original episode hold.
-Set `OPENROUTER_API_KEY`; optionally override `MENTOR_MODEL_ID`. Never use a
-public sample or bypass review to manufacture a live demo.
+For live `ask` or `serve`, set `OPENROUTER_API_KEY`; optionally override
+`MENTOR_MODEL_ID`. Local `validate-data`, `retrieve` and `read-case` do not need
+an API key. Never use a public sample or bypass review to manufacture a live demo.
 
 ```bash
 python3 -m mentor_agent --help
 python3 -m mentor_agent --no-llm validate-data
 python3 -m mentor_agent retrieve --query "What conditions should change a position decision?"
+python3 -m mentor_agent read-case --record-id "$REVIEWED_CASE_ID"
 python3 -m mentor_agent ask --query "Evidence is incomplete; should I wait or use a small position?"
 python3 -m mentor_agent ask --query "Does the historical framework apply here?" --json --output "$PRIVATE_TRACE"
 python3 -m mentor_agent serve --port 8765
@@ -39,7 +41,7 @@ python3 -m mentor_agent serve --port 8765
 `--config` is a global option for a private copy of `config/default.yaml`.
 Normal CLI output is concise; JSON/output mode includes retrieval, assessment,
 guards and model metadata. Full diagnostics must remain private. No command
-commits or pushes. `retrieve` never calls a model. The HTTP API binds only
+commits or pushes. `retrieve` and `read-case` never call a model. The HTTP API binds only
 `127.0.0.1`; `/health`, `/docs` and `POST /ask` are available locally. No public
 deployment/authentication is provided. One request runs at a time; competing
 requests get 429. Access logs and persistent question history are disabled.
@@ -87,6 +89,31 @@ apply to each attempt. The provider connection timeout is 10 seconds and its
 read-inactivity timeout is `timeout_seconds` (90 by default); these are not a
 hard total wall-clock deadline for inference. The admission slot remains held
 until the operation ends, including retries and release checks.
+
+## Reading Cases With Codex
+
+Use `retrieve` to find relevant record IDs, then `read-case` to inspect the exact
+selected reviewed cases before asking Codex for conditional reasoning with
+citations. Repeat `--record-id` for multiple cases:
+
+```bash
+python3 -m mentor_agent read-case --record-id "$REVIEWED_CASE_ID" \
+  --record-id "$OTHER_REVIEWED_CASE_ID" --output "$PRIVATE_CASE_OUTPUT"
+```
+
+The command always returns JSON, in requested order: full selected case content
+and evidence, citations, visible source-review limits, the release hash and zero
+model calls. It does not retrieve neighbors, return principles, interpret cases
+or generate an answer. Unknown or duplicate IDs fail without partial output.
+`--output` is optional, private-only and must not already exist. The release and
+its source/review pins are revalidated before output; scoped case-use approval
+does not lift whole-source holds. Keep supplementary reviewer/model notes
+separate from speaker evidence, and carry conditions and limitations into any
+later reasoning. Citation validity does not guarantee semantic entailment.
+
+The command itself sends nothing to a model. Having Codex or another hosted
+assistant read its output can transmit that private evidence to the assistant's
+provider; local files and zero CLI model calls do not make that later use local.
 
 ## Evidence and Limits
 
