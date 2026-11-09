@@ -1,6 +1,7 @@
 """Look-ahead uses the original stage store, never a parallel corpus."""
 from pathlib import Path
 from concurrent.futures import ThreadPoolExecutor
+from datetime import datetime
 from threading import Event, Lock
 from unittest.mock import Mock
 import fcntl
@@ -542,3 +543,192 @@ def test_refill_preserves_per_episode_lock_collision(cfg):
     assert next(row for row in rows if row["episode_id"] == "SYN2")["status"] == "skipped_busy"
     assert refill(settings, runner=runner)["state"] == result["state"]
     assert len(model.calls) == 3
+
+
+BURST_UNTIL = "2030-01-01T00:00:00+00:00"
+BURST_EPOCH = datetime.fromisoformat(BURST_UNTIL).timestamp()
+
+
+@pytest.mark.parametrize("extra,until", [(True, BURST_UNTIL), (-1, BURST_UNTIL), (5, BURST_UNTIL),
+                                       (1, None), (0, BURST_UNTIL), (1, "2030-01-01T00:00:00"),
+                                       (1, "2030-01-01T00:00:00-08:00"), (1, "not-a-date")])
+def test_burst_requires_bounded_workers_and_explicit_utc_deadline(cfg, extra, until):
+    settings, root = setup(cfg)
+    with pytest.raises(ValueError):
+        refill(settings, extra_workers=extra, burst_until=until)
+    assert not (root / "controllers").exists()
+
+
+def test_chunk_and_standalone_worker_limits_remain_unchanged(cfg):
+    settings, _ = setup(cfg)
+    with pytest.raises(ValueError, match="continuous refill"):
+        prefetch.continue_pending(settings, "chunk", extra_workers=1, burst_until=BURST_UNTIL)
+    with pytest.raises(ValueError, match="1-4"):
+        refill(settings, workers=5, extra_workers=1, burst_until=BURST_UNTIL)
+
+
+@pytest.mark.parametrize("now", [BURST_EPOCH, BURST_EPOCH + 1])
+def test_burst_expired_before_start_uses_only_baseline_and_stays_expired(cfg, now):
+    settings, root = refill_settings(cfg, 6)
+    started, release, lock = Event(), Event(), Lock()
+    active, seen = set(), []
+    high_water = 0
+    def runner(config, ids, run_id, **kwargs):
+        nonlocal high_water
+        eid, = ids
+        with lock:
+            active.add(eid)
+            seen.append(eid)
+            high_water = max(high_water, len(active))
+            if len(active) == 2:
+                started.set()
+        assert release.wait(10)
+        with lock:
+            active.remove(eid)
+        return synthetic_outcome(root, eid, "succeeded")
+    options = dict(workers=2, extra_workers=2, burst_until=BURST_UNTIL)
+    with ThreadPoolExecutor(max_workers=1) as pool:
+        future = pool.submit(refill, settings, runner=runner, clock=lambda: now, **options)
+        try:
+            assert started.wait(10)
+            assert len(list((root / "controllers/rolling/admissions").glob("*.json"))) == 2
+        finally:
+            release.set()
+        result = future.result(timeout=10)
+    assert high_water == 2 and len(seen) == len(set(seen)) == 6
+    assert result["burst_expired"] and result["admission_worker_budget"] == 2
+    # A backwards wall clock on resume must not reactivate an expired burst.
+    again = refill(settings, runner=Mock(side_effect=AssertionError("No repeated calls")),
+                   clock=lambda: BURST_EPOCH - 100, **options)
+    assert again["burst_expired"] and again["admission_worker_budget"] == 2
+
+
+def test_burst_deadline_drains_inflight_then_continues_baseline(cfg, monkeypatch):
+    settings, root = refill_settings(cfg, 8)
+    now = [BURST_EPOCH - 10]
+    first = ["SYN7", "SYN6", "SYN5"]
+    releases = {eid: Event() for eid in first}
+    accounted = {eid: Event() for eid in first}
+    all_started, baseline_started, finish = Event(), Event(), Event()
+    lock, active, seen = Lock(), set(), []
+    original = prefetch.atomic_write_json
+    def write(path, payload, **kwargs):
+        result = original(path, payload, **kwargs)
+        if path.parent.name == "completions" and payload["episode_id"] in accounted:
+            accounted[payload["episode_id"]].set()
+        return result
+    monkeypatch.setattr(prefetch, "atomic_write_json", write)
+    def runner(config, ids, run_id, **kwargs):
+        eid, = ids
+        with lock:
+            assert eid not in seen
+            seen.append(eid)
+            active.add(eid)
+            if len(seen) == 3:
+                all_started.set()
+            if eid not in first:
+                assert now[0] >= BURST_EPOCH and len(active) == 1
+                baseline_started.set()
+        assert (releases[eid] if eid in releases else finish).wait(10)
+        with lock:
+            active.remove(eid)
+        return synthetic_outcome(root, eid, "succeeded")
+    with ThreadPoolExecutor(max_workers=1) as pool:
+        future = pool.submit(refill, settings, workers=1, extra_workers=2, burst_until=BURST_UNTIL,
+                             clock=lambda: now[0], runner=runner)
+        try:
+            assert all_started.wait(10)
+            now[0] = BURST_EPOCH
+            for eid in first[:2]:
+                releases[eid].set()
+                assert accounted[eid].wait(10)
+                assert len(list((root / "controllers/rolling/admissions").glob("*.json"))) == 3
+            assert not baseline_started.is_set()
+            releases[first[2]].set()
+            assert baseline_started.wait(10)
+        finally:
+            for event in releases.values():
+                event.set()
+            finish.set()
+        result = future.result(timeout=10)
+    assert result["state"] == "tail_drained_main_queue_remains"
+    assert result["failed_episode_ids"] == []
+    assert result["burst_expired"] and result["admission_worker_budget"] == 1
+    assert len(seen) == len(set(seen)) == 8
+
+
+def test_burst_expiry_is_rechecked_between_admissions(cfg, monkeypatch):
+    settings, root = refill_settings(cfg, 5)
+    now = [BURST_EPOCH - 1]
+    original = prefetch.atomic_write_json
+    def write(path, payload, **kwargs):
+        result = original(path, payload, **kwargs)
+        if path.parent.name == "admissions":
+            now[0] = BURST_EPOCH
+        return result
+    monkeypatch.setattr(prefetch, "atomic_write_json", write)
+    def runner(config, ids, run_id, **kwargs):
+        admissions = list((root / "controllers/rolling/admissions").glob("*.json"))
+        completions = list((root / "controllers/rolling/completions").glob("*.json"))
+        assert len(admissions) - len(completions) == 1
+        return synthetic_outcome(root, ids[0], "succeeded")
+    result = refill(settings, workers=1, extra_workers=4, burst_until=BURST_UNTIL,
+                    clock=lambda: now[0], runner=runner)
+    assert result["burst_expired"] and result["failed_episode_ids"] == []
+
+
+def test_burst_options_are_pinned_and_same_deadline_is_canonical(cfg):
+    settings, root = setup(cfg)
+    def runner(config, ids, run_id, **kwargs):
+        return synthetic_outcome(root, ids[0], "succeeded")
+    options = dict(workers=1, extra_workers=2, burst_until=BURST_UNTIL, clock=lambda: BURST_EPOCH - 1)
+    result = refill(settings, runner=runner, **options)
+    assert result["admission_worker_budget"] == 3 and not result["burst_expired"]
+    identity = read_json(root / "controllers/rolling/manifest.json")
+    assert identity["burst"] == {"extra_workers": 2, "admission_deadline_utc": BURST_UNTIL}
+    assert refill(settings, runner=Mock(side_effect=AssertionError("No repeats")),
+                  **{**options, "burst_until": "2030-01-01T00:00:00Z"})["state"] == result["state"]
+    for change in ({"extra_workers": 1}, {"burst_until": "2030-01-01T00:00:01Z"}):
+        with pytest.raises(ValueError, match="new run ID"):
+            refill(settings, **{**options, **change})
+
+
+def test_burst_keeps_exclusive_controller_lock(cfg):
+    settings, root = setup(cfg)
+    runner = Mock(side_effect=AssertionError("Do not bypass the existing controller"))
+    with (root / ".prefetch_controller.lock").open("a") as owner:
+        fcntl.flock(owner, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        with pytest.raises(BlockingIOError):
+            refill(settings, extra_workers=4, burst_until=BURST_UNTIL, runner=runner)
+    runner.assert_not_called()
+
+
+def test_maximum_burst_has_eight_distinct_active_jobs(cfg):
+    settings, root = refill_settings(cfg, 10)
+    started, release, lock = Event(), Event(), Lock()
+    active, seen = set(), []
+    high_water = 0
+    def runner(config, ids, run_id, **kwargs):
+        nonlocal high_water
+        eid, = ids
+        with lock:
+            assert eid not in seen
+            seen.append(eid)
+            active.add(eid)
+            high_water = max(high_water, len(active))
+            if len(active) == 8:
+                started.set()
+        assert release.wait(10)
+        with lock:
+            active.remove(eid)
+        return synthetic_outcome(root, eid, "succeeded")
+    with ThreadPoolExecutor(max_workers=1) as pool:
+        future = pool.submit(refill, settings, workers=4, extra_workers=4, burst_until=BURST_UNTIL,
+                             clock=lambda: BURST_EPOCH - 1, runner=runner)
+        try:
+            assert started.wait(10)
+        finally:
+            release.set()
+        result = future.result(timeout=10)
+    assert result["admission_worker_budget"] == 8 and result["failed_episode_ids"] == []
+    assert high_water == 8 and len(seen) == len(set(seen)) == 10

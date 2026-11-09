@@ -108,6 +108,19 @@ wait for its natural exit or a separately authorized cooperative handoff; do not
 assume editing source or writing the marker drains that process. No controller
 completion grants semantic acceptance or serving readiness.
 
+Continuous refill optionally accepts `--extra-workers 1` (up to 4) with
+`--burst-until "$UTC_DEADLINE"`, an explicit timezone-aware UTC ISO 8601
+timestamp. The existing `--workers` remains the 1-4-worker baseline. One
+controller owns the combined pool, capped at baseline plus extra workers; no
+second controller or lock bypass is needed. At the deadline it admits only up
+to the baseline budget: already admitted work finishes normally, and no jobs
+are cancelled. An already-expired deadline starts at baseline only. Expiry is
+latched in the checkpoint, including across resume and backwards clock changes.
+The deadline and extra budget are immutable controller identity fields; changing
+either requires a new controller ID. These options do not hot-reload a running
+controller or schedule a future launch. Account for other model services before
+explicitly enabling a burst; the bounded standalone/chunk interfaces are unchanged.
+
 For **candidate construction**, set `extraction_mode: candidate`. The same
 pipeline validates the raw/draft mapping, then extracts L1-L3 without requiring
 whole-episode acceptance or repeating a preliminary model review. Each L2 case

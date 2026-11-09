@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import argparse
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from datetime import datetime, timedelta
 import fcntl
 import json
 from pathlib import Path
@@ -162,13 +163,33 @@ def _historical_provider_failures(root, run_id):
     return len(episodes)
 
 
+def _burst_settings(extra_workers, until, continuous_refill):
+    if type(extra_workers) is not int or not 0 <= extra_workers <= 4:
+        raise ValueError("Use 0-4 optional burst workers.")
+    if not extra_workers:
+        if until is not None:
+            raise ValueError("A burst deadline requires extra_workers.")
+        return None
+    if not continuous_refill:
+        raise ValueError("Burst workers require continuous refill.")
+    try:
+        deadline = datetime.fromisoformat(until)
+    except (TypeError, ValueError):
+        raise ValueError("Burst requires an explicit timezone-aware UTC deadline.") from None
+    if deadline.utcoffset() != timedelta(0):
+        raise ValueError("Burst requires an explicit timezone-aware UTC deadline.")
+    return {"extra_workers": extra_workers, "admission_deadline_utc": deadline.isoformat()}
+
+
 def continue_pending(cfg, run_id, *, workers=4, minimum_queue_gap=128, poll_seconds=30,
-                     runner=None, sleeper=time.sleep, continuous_refill=False):
+                     runner=None, sleeper=time.sleep, continuous_refill=False,
+                     extra_workers=0, burst_until=None, clock=time.time):
     """Drain safe tail jobs in chunks, rather than stopping at the chunk size."""
     if cfg.get("extraction_mode") != "candidate" or type(workers) is not int or not 1 <= workers <= 4:
         raise ValueError("Continuous look-ahead requires candidate mode and 1-4 workers.")
     if type(minimum_queue_gap) is not int or minimum_queue_gap < 0 or poll_seconds <= 0:
         raise ValueError("Invalid queue distance or polling interval.")
+    burst = _burst_settings(extra_workers, burst_until, continuous_refill)
     root = child_path(private_path(cfg["output_root"]), safe_id(cfg["batch_id"]))
     if read_json(root / "batch_manifest.json") != cfg:
         raise ValueError("Existing batch manifest differs from supplied config.")
@@ -178,6 +199,8 @@ def continue_pending(cfg, run_id, *, workers=4, minimum_queue_gap=128, poll_seco
                 "workers": workers, "minimum_queue_gap": minimum_queue_gap}
     if continuous_refill:
         identity.update(schema_version="knowledge_continuation.v2", scheduling="continuous_refill")
+    if burst:
+        identity["burst"] = burst
     manifest = folder / "manifest.json"
     if manifest.exists() and read_json(manifest) != identity:
         raise ValueError("Controller config changed; use a new run ID.")
@@ -199,7 +222,7 @@ def continue_pending(cfg, run_id, *, workers=4, minimum_queue_gap=128, poll_seco
             atomic_write_json(manifest, identity, overwrite=False)
         if continuous_refill:
             return _continue_refill(cfg, run_id, root, folder, workers, minimum_queue_gap,
-                                    poll_seconds, runner, sleeper)
+                                    poll_seconds, runner, sleeper, burst=burst, clock=clock)
         try:
             while True:
                 if (folder / "drain.json").exists():
@@ -269,7 +292,8 @@ def _provider_outcome(root, eid, before):
     return {"outcome": "unknown"}
 
 
-def _continue_refill(cfg, run_id, root, folder, workers, gap, poll_seconds, runner, sleeper):
+def _continue_refill(cfg, run_id, root, folder, workers, gap, poll_seconds, runner, sleeper,
+                     *, burst=None, clock=time.time):
     """One immutable trial per admission; the outer pool bounds concurrency."""
     admissions = [read_json(p) for p in sorted((folder / "admissions").glob("*.json"))]
     receipts = [read_json(p) for p in sorted((folder / "completions").glob("*.json"))]
@@ -284,13 +308,27 @@ def _continue_refill(cfg, run_id, root, folder, workers, gap, poll_seconds, runn
         tripped |= streak >= 3
     failed, interrupted = set(), admitted - recorded
     active = {}
+    state_path = folder / "status.json"
+    previous = read_json(state_path) if state_path.exists() else {}
+    burst_expired = bool(previous.get("burst_expired", False)) if burst else False
+    deadline = datetime.fromisoformat(burst["admission_deadline_utc"]).timestamp() if burst else None
+
+    def admission_budget():
+        nonlocal burst_expired
+        if not burst:
+            return workers
+        burst_expired |= clock() >= deadline
+        return workers if burst_expired else workers + burst["extra_workers"]
 
     def checkpoint(state, **details):
+        budget = admission_budget()
         result = {"schema_version": "knowledge_continuation_status.v2", "state": state,
                   "updated_at": utc_now(), "consecutive_provider_failures": streak,
                   "total_provider_failures": total, "provider_failure_limit_reached": tripped,
                   "active_episode_ids": sorted(active.values()), "failed_episode_ids": sorted(failed),
                   "interrupted_episode_ids": sorted(interrupted), "automatic_release": False, **details}
+        if burst:
+            result.update(burst=burst, burst_expired=burst_expired, admission_worker_budget=budget)
         atomic_write_json(folder / "status.json", result)
         return result
 
@@ -338,7 +376,7 @@ def _continue_refill(cfg, run_id, root, folder, workers, gap, poll_seconds, runn
 
     try:
         next_completed = None
-        with ThreadPoolExecutor(max_workers=workers) as pool:
+        with ThreadPoolExecutor(max_workers=workers + (burst["extra_workers"] if burst else 0)) as pool:
             while True:
                 # Account for all observed completions before admitting replacements.
                 backoff = False
@@ -363,7 +401,7 @@ def _continue_refill(cfg, run_id, root, folder, workers, gap, poll_seconds, runn
                     sleeper(max(60, poll_seconds))
                     continue
                 if not (tripped or draining):
-                    while len(active) < workers and completed.empty():
+                    while len(active) < admission_budget() and completed.empty():
                         if (folder / "drain.json").exists():
                             draining = True
                             break
@@ -372,6 +410,10 @@ def _continue_refill(cfg, run_id, root, folder, workers, gap, poll_seconds, runn
                                    not child_path(root, e["episode_id"], "status.json").exists()]
                         eligible = pending[gap:]
                         if not eligible:
+                            break
+                        # Selection can take time; recheck the cutoff before committing
+                        # a new admission. Jobs already admitted are never cancelled.
+                        if len(active) >= admission_budget():
                             break
                         eid = eligible[-1]
                         trial_id = f"{run_id}_refill_{len(admissions) + 1:06d}"
@@ -405,10 +447,15 @@ def main():
     parser.add_argument("--minimum-queue-gap", type=int)
     parser.add_argument("--continue-pending", action="store_true")
     parser.add_argument("--continuous-refill", action="store_true")
+    parser.add_argument("--extra-workers", type=int, default=0)
+    parser.add_argument("--burst-until", help="Timezone-aware UTC admission deadline (ISO 8601).")
     parser.add_argument("--request-drain", action="store_true")
     args = parser.parse_args()
-    if args.request_drain and (args.episode or args.dry_run or args.continue_pending or args.continuous_refill):
+    if args.request_drain and (args.episode or args.dry_run or args.continue_pending or args.continuous_refill
+                               or args.extra_workers or args.burst_until):
         parser.error("Drain requests cannot also start work.")
+    if (args.extra_workers or args.burst_until) and not (args.continue_pending and args.continuous_refill):
+        parser.error("Burst options require --continue-pending --continuous-refill.")
     if args.continuous_refill and not args.continue_pending:
         parser.error("--continuous-refill requires --continue-pending.")
     if args.continue_pending and (args.episode or args.dry_run):
@@ -422,7 +469,8 @@ def main():
         elif args.continue_pending:
             result = continue_pending(cfg, args.run_id, workers=args.workers,
                                       minimum_queue_gap=128 if args.minimum_queue_gap is None else args.minimum_queue_gap,
-                                      continuous_refill=args.continuous_refill)
+                                      continuous_refill=args.continuous_refill,
+                                      extra_workers=args.extra_workers, burst_until=args.burst_until)
         else:
             result = execute(cfg, args.episode, args.run_id, workers=args.workers,
                              dry_run=args.dry_run, minimum_queue_gap=args.minimum_queue_gap or 0)
