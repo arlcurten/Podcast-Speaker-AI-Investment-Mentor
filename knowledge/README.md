@@ -121,6 +121,18 @@ either requires a new controller ID. These options do not hot-reload a running
 controller or schedule a future launch. Account for other model services before
 explicitly enabling a burst; the bounded standalone/chunk interfaces are unchanged.
 
+API callers may additionally provide `burst_allowed`, a fast, nonblocking callback,
+and `burst_guard_sha256`, the lowercase SHA-256 of their guard implementation/config
+manifest. Both are required together; changing the guard identity requires a new
+controller ID. The caller must verify that manifest against the actual guard code
+and settings. Only the literal result `True` permits extra admissions; any other
+result or exception limits admissions to baseline workers without cancelling jobs.
+The callback is checked before admissions and while waiting at `poll_seconds`
+intervals, so recovered resources can restore extra slots before the deadline.
+Expiry remains permanent for that controller. Status records the admission budget,
+`burst_admission_reason` and exception type when applicable. Monitor freshness,
+resource thresholds and host-specific paths belong to the caller, not this API.
+
 For **candidate construction**, set `extraction_mode: candidate`. The same
 pipeline validates the raw/draft mapping, then extracts L1-L3 without requiring
 whole-episode acceptance or repeating a preliminary model review. Each L2 case

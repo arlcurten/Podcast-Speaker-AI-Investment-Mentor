@@ -732,3 +732,122 @@ def test_maximum_burst_has_eight_distinct_active_jobs(cfg):
         result = future.result(timeout=10)
     assert result["admission_worker_budget"] == 8 and result["failed_episode_ids"] == []
     assert high_water == 8 and len(seen) == len(set(seen)) == 10
+
+
+@pytest.mark.parametrize("callback,pin", [(True, "a" * 64), (lambda: True, None),
+                                         (None, "a" * 64), (lambda: True, "bad")])
+def test_burst_guard_requires_callback_and_identity(cfg, callback, pin):
+    settings, _ = setup(cfg)
+    with pytest.raises(ValueError, match="burst guard"):
+        refill(settings, extra_workers=1, burst_until=BURST_UNTIL,
+               burst_allowed=callback, burst_guard_sha256=pin)
+
+
+@pytest.mark.parametrize("fails", [False, True])
+def test_burst_guard_holds_only_extra_and_records_reason(cfg, fails):
+    settings, root = refill_settings(cfg, 5)
+    def guard():
+        if fails:
+            raise OSError("Synthetic unavailable monitor")
+        return False
+    def runner(config, ids, run_id, **kwargs):
+        admissions = list((root / "controllers/rolling/admissions").glob("*.json"))
+        completions = list((root / "controllers/rolling/completions").glob("*.json"))
+        assert len(admissions) - len(completions) == 1
+        return synthetic_outcome(root, ids[0], "succeeded")
+    result = refill(settings, workers=1, extra_workers=4, burst_until=BURST_UNTIL,
+                    clock=lambda: BURST_EPOCH - 1, runner=runner,
+                    burst_allowed=guard, burst_guard_sha256="a" * 64)
+    assert result["failed_episode_ids"] == []
+    assert result["admission_worker_budget"] == 1 and not result["burst_expired"]
+    assert result["burst_admission_reason"] == ("callback_error" if fails else "resource_hold")
+    assert result["burst_guard_error_type"] == ("OSError" if fails else None)
+    with pytest.raises(ValueError, match="new run ID"):
+        refill(settings, workers=1, extra_workers=4, burst_until=BURST_UNTIL,
+               burst_allowed=guard, burst_guard_sha256="b" * 64)
+
+
+def test_burst_guard_recovery_can_refill_before_completion_but_not_after_deadline(cfg, monkeypatch):
+    settings, root = refill_settings(cfg, 9)
+    allowed, now = [True], [BURST_EPOCH - 1]
+    releases = {f"SYN{i}": Event() for i in range(9)}
+    accounted = {eid: Event() for eid in releases}
+    first_wave, second_wave = Event(), Event()
+    seen, lock = [], Lock()
+    original = prefetch.atomic_write_json
+    def write(path, payload, **kwargs):
+        result = original(path, payload, **kwargs)
+        if path.parent.name == "completions":
+            accounted[payload["episode_id"]].set()
+        return result
+    monkeypatch.setattr(prefetch, "atomic_write_json", write)
+    def runner(config, ids, run_id, **kwargs):
+        eid, = ids
+        with lock:
+            assert eid not in seen
+            seen.append(eid)
+            if len(seen) == 3:
+                first_wave.set()
+            if len(seen) == 5:
+                second_wave.set()
+        assert releases[eid].wait(10)
+        return synthetic_outcome(root, eid, "succeeded")
+    with ThreadPoolExecutor(max_workers=1) as pool:
+        future = pool.submit(refill, settings, workers=1, extra_workers=2,
+                             burst_until=BURST_UNTIL, clock=lambda: now[0],
+                             burst_allowed=lambda: allowed[0], burst_guard_sha256="a" * 64,
+                             poll_seconds=0.01, runner=runner)
+        try:
+            assert first_wave.wait(10)
+            allowed[0] = False
+            for eid in ("SYN8", "SYN7"):
+                releases[eid].set()
+                assert accounted[eid].wait(10)
+            assert len(seen) == 3
+            allowed[0] = True
+            # SYN6 is still blocked: polling alone must permit recovered extra slots.
+            assert second_wave.wait(10)
+            now[0] = BURST_EPOCH
+            for eid in ("SYN5", "SYN4"):
+                releases[eid].set()
+                assert accounted[eid].wait(10)
+            assert len(seen) == 5
+        finally:
+            for event in releases.values():
+                event.set()
+        result = future.result(timeout=10)
+    assert len(seen) == len(set(seen)) == 9
+    assert result["failed_episode_ids"] == []
+    assert result["burst_expired"] and result["admission_worker_budget"] == 1
+    assert result["burst_admission_reason"] == "deadline_expired"
+
+
+def test_expired_burst_never_invokes_guard(cfg):
+    settings, root = setup(cfg)
+    guard = Mock(side_effect=AssertionError("Expired burst must stay expired"))
+    result = refill(settings, workers=1, extra_workers=1, burst_until=BURST_UNTIL,
+                    clock=lambda: BURST_EPOCH,
+                    burst_allowed=guard, burst_guard_sha256="a" * 64,
+                    runner=lambda config, ids, run_id, **kwargs:
+                    synthetic_outcome(root, ids[0], "succeeded"))
+    assert result["burst_expired"]
+    guard.assert_not_called()
+
+
+def test_burst_rechecks_deadline_after_guard_returns(cfg):
+    settings, root = refill_settings(cfg, 4)
+    now = [BURST_EPOCH - 1]
+    def guard():
+        now[0] = BURST_EPOCH
+        return True
+    def runner(config, ids, run_id, **kwargs):
+        admissions = list((root / "controllers/rolling/admissions").glob("*.json"))
+        completions = list((root / "controllers/rolling/completions").glob("*.json"))
+        assert len(admissions) - len(completions) == 1
+        return synthetic_outcome(root, ids[0], "succeeded")
+    result = refill(settings, workers=1, extra_workers=3, burst_until=BURST_UNTIL,
+                    clock=lambda: now[0], burst_allowed=guard, burst_guard_sha256="a" * 64,
+                    runner=runner)
+    assert result["failed_episode_ids"] == []
+    assert result["burst_expired"] and result["admission_worker_budget"] == 1
+    assert result["burst_admission_reason"] == "deadline_expired"

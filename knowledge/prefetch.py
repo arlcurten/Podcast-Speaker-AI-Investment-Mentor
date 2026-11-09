@@ -7,7 +7,7 @@ from datetime import datetime, timedelta
 import fcntl
 import json
 from pathlib import Path
-from queue import Queue
+from queue import Empty, Queue
 from threading import Event, Lock
 import time
 
@@ -183,13 +183,20 @@ def _burst_settings(extra_workers, until, continuous_refill):
 
 def continue_pending(cfg, run_id, *, workers=4, minimum_queue_gap=128, poll_seconds=30,
                      runner=None, sleeper=time.sleep, continuous_refill=False,
-                     extra_workers=0, burst_until=None, clock=time.time):
+                     extra_workers=0, burst_until=None, clock=time.time,
+                     burst_allowed=None, burst_guard_sha256=None):
     """Drain safe tail jobs in chunks, rather than stopping at the chunk size."""
     if cfg.get("extraction_mode") != "candidate" or type(workers) is not int or not 1 <= workers <= 4:
         raise ValueError("Continuous look-ahead requires candidate mode and 1-4 workers.")
     if type(minimum_queue_gap) is not int or minimum_queue_gap < 0 or poll_seconds <= 0:
         raise ValueError("Invalid queue distance or polling interval.")
     burst = _burst_settings(extra_workers, burst_until, continuous_refill)
+    if burst_allowed is not None or burst_guard_sha256 is not None:
+        if (not burst or not callable(burst_allowed) or not isinstance(burst_guard_sha256, str)
+                or len(burst_guard_sha256) != 64
+                or any(c not in "0123456789abcdef" for c in burst_guard_sha256)):
+            raise ValueError("A burst guard requires a callback and its lowercase SHA-256 identity.")
+        burst["admission_guard_sha256"] = burst_guard_sha256
     root = child_path(private_path(cfg["output_root"]), safe_id(cfg["batch_id"]))
     if read_json(root / "batch_manifest.json") != cfg:
         raise ValueError("Existing batch manifest differs from supplied config.")
@@ -222,7 +229,8 @@ def continue_pending(cfg, run_id, *, workers=4, minimum_queue_gap=128, poll_seco
             atomic_write_json(manifest, identity, overwrite=False)
         if continuous_refill:
             return _continue_refill(cfg, run_id, root, folder, workers, minimum_queue_gap,
-                                    poll_seconds, runner, sleeper, burst=burst, clock=clock)
+                                    poll_seconds, runner, sleeper, burst=burst, clock=clock,
+                                    burst_allowed=burst_allowed)
         try:
             while True:
                 if (folder / "drain.json").exists():
@@ -293,7 +301,7 @@ def _provider_outcome(root, eid, before):
 
 
 def _continue_refill(cfg, run_id, root, folder, workers, gap, poll_seconds, runner, sleeper,
-                     *, burst=None, clock=time.time):
+                     *, burst=None, clock=time.time, burst_allowed=None):
     """One immutable trial per admission; the outer pool bounds concurrency."""
     admissions = [read_json(p) for p in sorted((folder / "admissions").glob("*.json"))]
     receipts = [read_json(p) for p in sorted((folder / "completions").glob("*.json"))]
@@ -312,13 +320,34 @@ def _continue_refill(cfg, run_id, root, folder, workers, gap, poll_seconds, runn
     previous = read_json(state_path) if state_path.exists() else {}
     burst_expired = bool(previous.get("burst_expired", False)) if burst else False
     deadline = datetime.fromisoformat(burst["admission_deadline_utc"]).timestamp() if burst else None
+    admission_reason, guard_error_type = "allowed", None
 
     def admission_budget():
-        nonlocal burst_expired
+        nonlocal burst_expired, admission_reason, guard_error_type
         if not burst:
             return workers
+        guard_error_type = None
         burst_expired |= clock() >= deadline
-        return workers if burst_expired else workers + burst["extra_workers"]
+        if burst_expired:
+            admission_reason = "deadline_expired"
+            return workers
+        if burst_allowed is not None:
+            try:
+                allowed = burst_allowed() is True
+            except Exception as exc:
+                allowed, guard_error_type = False, type(exc).__name__
+            burst_expired |= clock() >= deadline
+            if burst_expired:
+                admission_reason = "deadline_expired"
+                return workers
+            if guard_error_type:
+                admission_reason = "callback_error"
+                return workers
+            if not allowed:
+                admission_reason = "resource_hold"
+                return workers
+        admission_reason = "allowed"
+        return workers + burst["extra_workers"]
 
     def checkpoint(state, **details):
         budget = admission_budget()
@@ -328,7 +357,8 @@ def _continue_refill(cfg, run_id, root, folder, workers, gap, poll_seconds, runn
                   "active_episode_ids": sorted(active.values()), "failed_episode_ids": sorted(failed),
                   "interrupted_episode_ids": sorted(interrupted), "automatic_release": False, **details}
         if burst:
-            result.update(burst=burst, burst_expired=burst_expired, admission_worker_budget=budget)
+            result.update(burst=burst, burst_expired=burst_expired, admission_worker_budget=budget,
+                          burst_admission_reason=admission_reason, burst_guard_error_type=guard_error_type)
         atomic_write_json(folder / "status.json", result)
         return result
 
@@ -431,7 +461,10 @@ def _continue_refill(cfg, run_id, root, folder, workers, gap, poll_seconds, runn
                              else "tail_drained_main_queue_remains")
                     return checkpoint(state)
                 # The callback queue retains completion order, unlike a set of futures.
-                next_completed = completed.get()
+                try:
+                    next_completed = completed.get(timeout=poll_seconds if burst_allowed is not None else None)
+                except Empty:
+                    checkpoint("draining" if draining else "running_refill")
     except Exception as exc:
         checkpoint("needs_attention", error_type=type(exc).__name__)
         raise
