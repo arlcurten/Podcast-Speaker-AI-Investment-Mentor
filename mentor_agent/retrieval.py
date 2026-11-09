@@ -85,7 +85,7 @@ class KnowledgeIndex:
             for hit in self.search(text, analysis["target_domains"]):
                 if hit["record_id"] not in candidates or hit["score"] > candidates[hit["record_id"]]["score"]:
                     candidates[hit["record_id"]] = hit
-        selected_principles, rejected = [], []
+        selected_principles, rejected, required = [], [], set()
         for pid in analysis["principle_ids"][:self.settings["principle_limit"]]:
             p = self.principles.get(pid)
             if not p or not p["eligible_for_online_reasoning"] or p["runtime_mode_recommendation"] != "principle_assisted":
@@ -95,10 +95,16 @@ class KnowledgeIndex:
             links = [(rid, "supporting", "Principle-linked evidence") for rid in p["supporting_records"]]
             links += [(r["record_id"], "potential_conflict", r["explanation"]) for r in p["contradictions"]]
             links += [(r["record_id"], "exception", r["explanation"]) for r in p["counterexamples"]]
-            # Never retain a principle while silently dropping its contrary side.
-            if len({rid for rid, _, _ in links}) > self.settings["case_limit"]:
+            links += [(r["record_id"], "context_difference",
+                       f"Offline context exclusion for {pid}; source principle {r['source_principle_id']} "
+                       f"({r['kind']}): {r['reason']} -- query applicability still requires comparison")
+                      for r in p.get("counterevidence_dispositions", []) if r["disposition"] == "context_excluded"]
+            # Excluded sources are needed to reassess the boundary for this query.
+            linked_ids = {rid for rid, _, _ in links}
+            if len(linked_ids) > self.settings["case_limit"]:
                 rejected.append({"principle_id": pid, "reason": "Evidence bundle exceeds context limit"}); continue
             selected_principles.append(p)
+            required.update(linked_ids)
             for rid, role, reason in links:
                 hit = candidates.setdefault(rid, {"record_id": rid, "episode_id": self.cases[rid]["episode_id"],
                                                   "score": 0, "lexical_score": 0, "cosine_score": 0,
@@ -114,8 +120,6 @@ class KnowledgeIndex:
                 hit["role_reasons"].append("Case contains exception conditions; not necessarily triggered")
         ordered = sorted(candidates.values(), key=lambda h: (-int("potential_conflict" in h["roles"]), -h["score"], h["record_id"]))
         selected, episode_counts, signatures = [], Counter(), set()
-        required = {r for p in selected_principles for r in p["supporting_records"]}
-        required |= {r["record_id"] for p in selected_principles for r in p["counterexamples"] + p["contradictions"]}
         if len(required) > self.settings["case_limit"]:
             rejected.extend({"principle_id": p["principle_id"], "reason": "Combined evidence exceeds context budget"} for p in selected_principles)
             selected_principles, required = [], set()

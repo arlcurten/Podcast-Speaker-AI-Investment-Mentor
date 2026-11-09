@@ -147,6 +147,11 @@ index, but the first implementation has no unbounded autonomous tool loop.
 Only a small configured case set reaches the model. If a principle's supporting
 and opposing evidence cannot fit, reject the principle rather than drop its
 counterexamples. Duplicate controls do not conflate different contexts/episodes.
+Evidence bundles also include upstream cases excluded during offline principle
+consolidation, with their exclusion reasons. They are context-difference
+candidates, not proven conflicts; online applicability must reconsider the
+boundary for the user's scenario. These cases count toward both individual and
+combined principle context budgets.
 
 Potential-conflict/exception roles are candidate signals, not contradiction
 proof. Applicability compares actual conditions and may reject the principle.
