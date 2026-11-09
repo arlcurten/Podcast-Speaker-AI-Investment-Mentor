@@ -16,9 +16,12 @@ An available episode accepts `{kind: completed, manifest: REF, artifact: REF}`
 or `{kind: recovered|editorial|native, artifact: REF}`, where every `REF` is a
 private `{path, sha256}`. Native kind requires an adopted
 `profile_native_evidence_candidate.v1`, not a packet, submission or backend result.
-All authoritative lineage is preflighted before source replay. Native lineage
-follows the submission's packet and config, not duplicated artifact headers;
-reserved episodes in that config cannot be concealed by a different header.
+All authoritative lineage is preflighted before raw/normalized source loaders
+run. Native lineage follows the submission's packet and config, not duplicated
+artifact headers; reserved episodes in that config cannot be concealed by a
+different header. Preflight reads pinned artifacts, including frozen packets
+with embedded raw text: it does not guarantee that no reserved-source bytes
+have been read before rejection.
 
 Native entries retain `original_manifest: null`, explicit submission/packet/config
 and source-file references, unmeasured model/usage metadata and import-only call
