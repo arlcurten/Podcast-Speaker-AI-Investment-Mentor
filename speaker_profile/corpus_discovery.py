@@ -7,6 +7,8 @@ reasoning_effort, timeout_seconds, max_input_chars, max_response_chars, max_call
 (lifetime admissions), retry_count (0 or 1). Outputs remain private candidates.
 New runs use pinned compact_profile_discovery.v2 transport; max_input_chars bounds the
 actual packed request (including schema/envelope). Semantic validation expands it.
+Each complete candidate is packed once after sorting; the packed input cap does
+not bound unpacked RAM. Oversized candidates are fully constructed before rejection.
 Materialization caches one episode and one synthesis payload. Plans/history hold
 descriptors/receipt refs only. Startup inventory replay has separate memory needs;
 this is not a hard one-episode memory guarantee for inventory validation.
@@ -25,7 +27,7 @@ from knowledge.schemas import TEXT, STRINGS, array, enum, obj
 from transcription.common import child_path, private_path, safe_id, sha256_file
 from . import corpus_inventory as inventory, discovery_annotations, serialization
 
-REQUEST_VERSION = "profile_discovery_request.v3"
+REQUEST_VERSION = "profile_discovery_request.v4"
 RESULT_VERSION = "profile_discovery_result.v1"
 CONTEXT_FORMAT = "compact_profile_discovery.v2"
 PROMPT_PATH = Path(__file__).parent / "prompts" / "corpus_discovery.md"
@@ -165,17 +167,8 @@ def _context(owned, catalog, materials, inventory_ref, *, prompt, max_chars):
                   ("evidence_key", "artifact", "content_pointer", "grounding_pointer")} for rid in refs},
         "policy": copy.deepcopy(POLICY)}
 
-    def check_size():
-        packed = _pack(context)
-        if (size := _size(prompt, packed)) > max_chars:
-            raise _PacketTooLarge(f"needs at least {size} input characters for complete relationship/context closure; "
-                                  f"cap={max_chars}. Use a reviewed new limit/run; no truncation.")
-        return packed
-
-    check_size()
     for key in closure["matched_hypothesis_keys"]:
         context["hypotheses"].append(materials.hypothesis(key))
-        check_size()
     for eid in sorted({catalog["evidence"][rid]["episode_id"] for rid in refs}):
         artifact, raw = materials.episode(eid)
         context["sources"][eid] = {"source": copy.deepcopy(artifact["source"]),
@@ -191,13 +184,16 @@ def _context(owned, catalog, materials, inventory_ref, *, prompt, max_chars):
                 "episode_id": eid, "evidence_key": entry["evidence_key"], "artifact_kind": entry["artifact_kind"],
                 "authority": catalog["episodes"][eid]["authority"], "grounding": copy.deepcopy(grounding)})
             raw_ids.update(_raw_ids(grounding))
-            check_size()
         context["raw_regions"][eid] = [{k: raw[sid][k] for k in ("segment_id", "start", "end", "text")}
                                       for sid in sorted(raw_ids)]
-        check_size()
         del artifact, raw, grounding
     context["evidence"].sort(key=lambda row: row["evidence_id"])
-    return check_size()
+    # Partial packed size is not monotone: added rows can enable column sharing.
+    packed = _pack(context)
+    if (size := _size(prompt, packed)) > max_chars:
+        raise _PacketTooLarge(f"requires {size} input characters for complete relationship/context closure; "
+                              f"cap={max_chars}. Use a reviewed new limit/run; no truncation.")
+    return packed
 
 
 def _materialize(packet, catalog, pins, prompt, max_chars):
@@ -256,7 +252,7 @@ def _prepare(config_ref):
         del context
     if last is not None:
         packets.append(last)
-    manifest = {"schema_version": "profile_discovery_run.v3", "config": cfg, "config_ref": config_ref,
+    manifest = {"schema_version": "profile_discovery_run.v4", "config": cfg, "config_ref": config_ref,
                 "implementation": implementation, "policy": copy.deepcopy(POLICY), "packets": packets}
     _check_pins(pins)
     if _implementation() != implementation:

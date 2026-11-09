@@ -29,7 +29,12 @@ Source catalogs, inline extensions, issues and commentary authority are preserve
 Input limits measure the packed request, including its legend and schema;
 validators expand it before applying
 the unchanged evidence rules. Missing values remain distinct from explicit nulls.
-Request/run v3 receipts cannot resume older transport runs.
+Request/run v4 measures each complete candidate once after final sorting; the
+outer greedy planner still checks every ownership-prefix candidate. Partial
+packed sizes are not assumed monotone. Oversized candidates are fully constructed
+before the packed-cap check: `max_input_chars` is not an unpacked RAM bound.
+The one-episode materialization cache is unchanged. Changed planning pins require
+new runs; request/run v4 receipts cannot resume older runs.
 
 Rare, non-investment and ungrouped evidence remains accounted for. Hypotheses
 provide navigation, not additional evidence. Source notes retain their original

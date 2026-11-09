@@ -498,6 +498,47 @@ def test_incremental_planning_and_admission_sizes_are_actual_packed_characters(r
     assert original(prompt, request["context"]) == plan["packet_plan"][0]["input_chars"]
 
 
+def test_final_only_packing_accepts_nonmonotone_partial_size_and_exact_cap(ready, monkeypatch):
+    catalog, ref = ready["catalog"], ready["config"]["inventory"]
+    eid = next(iter(catalog["episodes"]))
+    owned = catalog["episodes"][eid]["evidence_ids"]
+    materials = discovery._Materials(catalog, {})
+    artifact, _ = materials.episode(eid)
+    # At two rows these columns are literal; the third row enables shared values.
+    for rid in owned:
+        row = discovery._pointer(artifact, catalog["evidence"][rid]["content_pointer"])
+        row.update({f"synthetic_extension_{i}": "x" * 80 for i in range(40)})
+    prompt = discovery.PROMPT_PATH.read_text()
+    def candidate(cap):
+        return discovery._context(owned, catalog, materials, ref, prompt=prompt, max_chars=cap)
+    expected = candidate(1000000)
+    plain = discovery._expand(expected)
+    assert len(plain["evidence"]) == 3
+    partial = copy.deepcopy(plain)
+    partial["evidence"] = partial["evidence"][:2]
+    partial["raw_regions"] = {}
+    cap = discovery._size(prompt, expected)
+    assert discovery._size(prompt, discovery._pack(partial)) > cap
+    pack, size = Mock(wraps=discovery._pack), Mock(wraps=discovery._size)
+    monkeypatch.setattr(discovery, "_pack", pack)
+    monkeypatch.setattr(discovery, "_size", size)
+    for limit in (cap, cap + 1, cap - 1):
+        pack.reset_mock()
+        size.reset_mock()
+        if limit < cap:
+            with pytest.raises(discovery._PacketTooLarge, match=f"requires {cap} input characters"):
+                candidate(limit)
+        else:
+            assert candidate(limit) == expected
+        pack.assert_called_once()
+        size.assert_called_once()
+        complete = pack.call_args.args[0]
+        assert complete == plain
+        assert [r["evidence_id"] for r in complete["evidence"]] == sorted(owned)
+        assert complete["known_relationship_closure"]["obligations"]
+        assert complete["raw_regions"] and complete["sources"] and complete["hypotheses"]
+
+
 @pytest.mark.parametrize("fault", ["format", "legend", "quote_index", "quote_range", "duplicate_source", "missing_table"])
 def test_noncanonical_compact_transport_is_rejected(ready, fault):
     plain = packet_context(ready)
@@ -520,12 +561,30 @@ def test_codec_and_format_pins_require_new_runs(ready, monkeypatch, pin_name):
     discovery.execute(ref, command="run", backend=SyntheticDiscovery())
     directory = root(ready["config"])
     manifest = read_json(directory / "run_manifest.json")
-    assert manifest["schema_version"] == "profile_discovery_run.v3"
+    assert manifest["schema_version"] == "profile_discovery_run.v4"
     assert manifest["implementation"]["codec_sha256"] == discovery.sha256_file(Path(discovery.serialization.__file__))
     before = {p: p.read_bytes() for p in directory.rglob("*") if p.is_file()}
     changed = copy.deepcopy(discovery._implementation())
     changed[pin_name] = "0" * 64 if pin_name.endswith("sha256") else "compact_profile.v999"
     monkeypatch.setattr(discovery, "_implementation", lambda: changed)
+    for command in ("plan", "run", "validate"):
+        with pytest.raises(ValueError, match="new run version"):
+            discovery.execute(ref, command=command)
+    assert {p: p.read_bytes() for p in directory.rglob("*") if p.is_file()} == before
+
+
+def test_old_planning_run_version_cannot_resume(ready):
+    ref = pin(ready["path"])
+    discovery.execute(ref, command="run", backend=SyntheticDiscovery())
+    directory = root(ready["config"])
+    request = read_json(directory / "packet_000001/attempt_0001.request.json")
+    assert request["schema_version"] == "profile_discovery_request.v4"
+    path = directory / "run_manifest.json"
+    manifest = read_json(path)
+    assert manifest["schema_version"] == "profile_discovery_run.v4"
+    manifest["schema_version"] = "profile_discovery_run.v3"
+    atomic_write_json(path, manifest)
+    before = {p: p.read_bytes() for p in directory.rglob("*") if p.is_file()}
     for command in ("plan", "run", "validate"):
         with pytest.raises(ValueError, match="new run version"):
             discovery.execute(ref, command=command)
