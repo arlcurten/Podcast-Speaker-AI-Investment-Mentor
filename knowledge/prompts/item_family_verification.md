@@ -19,6 +19,13 @@ and original family members must be read; no cherry-picked representative can
 replace complete membership or counter closure. Any unresolved disposition
 requires an unresolved overall relationship. A direct link retains its L2
 artifact/pointer provenance; original L3 obligations retain their real IDs.
+Support, counter, retelling and evolution require the inspected item and at
+least one actual target-family member to be retained, not context-excluded.
+Support additionally requires a retained host potential-support target member
+and a host inspected item. This is not an independent-event count or semantic
+proof. Context differences may explain source exclusions with explicit conditions.
+Pinned pair-review follow-ups remain configured obligations, not model-requested
+follow-ups or new evidence; retain the original judgments and their provenance.
 
 These are quarantined comparison judgments, not new evidence, automatic family
 membership changes, transitive merges, principles, acceptance or publication.

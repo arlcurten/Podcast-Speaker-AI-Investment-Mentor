@@ -611,22 +611,52 @@ Changed pins require new runs; no historical receipt migration is provided.
 
 For the separate exhaustive item-to-family challenge, use
 `python -m knowledge.item_family_challenge plan|run|validate --config PATH --sha256 HASH`.
-Its `knowledge_item_family_challenge_config.v1` pins the completed discovery
+Its `knowledge_item_family_challenge_config.v2` pins the completed discovery
 `parent`, the same explicit runtime limits, positive `max_items_per_page`,
 `max_families_per_page`, `max_response_entries`, and `audit_pairs` containing
-`{record_id, family_key}` objects (possibly empty). Every inventory L2 item,
+`{record_id, family_key}` objects (possibly empty), and explicit
+`pair_review_followups` (possibly empty). Each follow-up is
+`{config: REF, artifact: REF, result: REF, record_id, family_key}`. The references
+pin a completed `knowledge_reconciliation_config.v1` or `.v2` run, its canonical
+`discovery.json`, and the exact final completed result for a pair. The pair run
+must have the identical discovery parent/catalog; its actual response must
+inspect that item and name that target family. Routing-only, partial, stale or
+unbound results cannot supply follow-ups. The complete pair run is replayed
+without inference before any challenge calls, and its outputs remain protected.
+The config requests the follow-up; it does not claim the old model requested it.
+Original judgments, anchors and receipt references are retained separately from
+audit origins and from source evidence. An empty array declares no follow-ups,
+not proof that no other review has outstanding work. No free-text follow-up
+extraction or implicit discovery of other review runs is performed.
+
+Every inventory L2 item,
 including ungrouped, rare and non-host items, is inspected against every frozen
 family version. No topic or L3-eligibility filter changes that Cartesian scope.
 
 Pass the completed challenge `discovery.json` reference as `selection` to
-`knowledge_item_family_verification_config.v1`, with the same `parent`, separate
+`knowledge_item_family_verification_config.v2`, with the same `parent`, separate
 runtime limits and explicit `max_pairs`, using
 `python -m knowledge.item_family_verification plan|run|validate --config PATH --sha256 HASH`.
-This second stage reconstructs the exact positive/uncertain/known/audit union
+This second stage reconstructs the exact positive/uncertain/known/pair-follow-up/audit union
 from receipts, then reopens both the L2 item and all target family members with
 connected support/counter closure. Known obligations cannot be removed by a
-negative inspection; direct L2 links acquire no invented L3 ancestor. Source
-verification requires exact raw anchors and all case/counter dispositions.
+negative inspection, including a configured pair-review follow-up; direct L2
+links acquire no invented L3 ancestor. Source verification requires exact raw
+anchors and all case/counter/known-obligation dispositions. Support, counter,
+retelling and evolution require the inspected item and an actual target-family
+member retained. Support additionally requires the item to be host-attributed
+and a retained host member with the original `potential_support` role. Retained
+closure-only material cannot substitute for target membership. Context differences
+can explain exclusions with conditions; unresolved dispositions still require
+an unresolved relationship. These are consistency checks, not semantic approval
+or additional independent-event evidence.
+
+Both item stages now use v2 config/request/result/run contracts; their completed
+selection/verification artifacts also use v2. V1 configs are rejected with
+regeneration guidance, never silently upgraded. Preserve v1 artifacts and use
+their pinned historical implementation for replay. Prepare explicitly reviewed
+new v2 configs and output versions; do not rewrite old runs. Original discovery,
+pair-review and source contracts are unchanged.
 
 The two stages have separate lifetime budgets, not an atomic cross-run spending
 cap. Plans report measured request sizes and first-pass budget fit. Partial
@@ -639,7 +669,8 @@ publication follow. Negative recall still needs independent source review.
 Schedules and selections are streamed without a global pair matrix; results
 live in immutable receipts. Planning and replay still traverse the Cartesian
 cells, and verification replays the challenge selection. Inventory and runner
-receipt history remain memory costs. Complete connected source closure is built
+receipt history and explicit prior pair-run replay remain memory/time costs.
+Complete connected source closure is built
 before checking the actual request size: the character cap does not bound
 unpacked RAM. Oversized closure is reported with references, never trimmed;
 dependent oversized-bundle decomposition and cross-run incremental reuse are

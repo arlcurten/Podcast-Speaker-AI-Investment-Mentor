@@ -24,9 +24,10 @@ def no_provider(monkeypatch):
 
 def make_ready(cfg, tmp_path, mode=None):
     parent = setup(cfg, tmp_path, mode)
-    config = {**parent["config"], "schema_version": "knowledge_item_family_challenge_config.v1",
+    config = {**parent["config"], "schema_version": "knowledge_item_family_challenge_config.v2",
         "run_id": "challenge", "output_root": str(tmp_path / "challenge"), "max_calls": 100,
-        "max_items_per_page": 2, "max_families_per_page": 3, "max_response_entries": 3, "audit_pairs": []}
+        "max_items_per_page": 2, "max_families_per_page": 3, "max_response_entries": 3, "audit_pairs": [],
+        "pair_review_followups": []}
     config.pop("max_pairs")
     path = tmp_path / "challenge-config.json"
     atomic_write_json(path, config)
@@ -88,8 +89,8 @@ class Verify:
 
 def verification_config(ready, tmp_path):
     config = {k: v for k, v in ready["config"].items()
-              if k not in ("max_items_per_page", "max_families_per_page", "max_response_entries", "audit_pairs")}
-    config.update(schema_version="knowledge_item_family_verification_config.v1", run_id="verify",
+              if k not in ("max_items_per_page", "max_families_per_page", "max_response_entries", "audit_pairs", "pair_review_followups")}
+    config.update(schema_version="knowledge_item_family_verification_config.v2", run_id="verify",
                   output_root=str(tmp_path / "verification"), selection=pin(ready["root"] / "discovery.json"), max_pairs=100)
     path = tmp_path / "verify-config.json"
     atomic_write_json(path, config)
@@ -407,12 +408,12 @@ def test_descriptor_mutation_and_implementation_pin_are_not_reused(ready, monkey
 @pytest.mark.parametrize("field,value", [("max_response_entries", 0), ("max_items_per_page", 0),
     ("max_families_per_page", 0), ("max_calls", 0), ("max_input_chars", True)])
 def test_invalid_bounds_rejected_without_loading_sources(field, value):
-    config = {"schema_version": "knowledge_item_family_challenge_config.v1", "run_id": "synthetic",
+    config = {"schema_version": "knowledge_item_family_challenge_config.v2", "run_id": "synthetic",
         "output_root": "/synthetic", "parent": {k: {"path": "/synthetic", "sha256": "0" * 64}
         for k in ("config", "artifact")}, "model": "synthetic", "reasoning_effort": "low",
         "timeout_seconds": 1, "max_input_chars": 100, "max_response_chars": 100, "max_calls": 1,
         "retry_count": 0, "max_response_entries": 1, "max_items_per_page": 1,
-        "max_families_per_page": 1, "audit_pairs": []}
+        "max_families_per_page": 1, "audit_pairs": [], "pair_review_followups": []}
     config[field] = value
     with pytest.raises(ValueError):
         challenge.discovery._validate(config, challenge.CONFIG)

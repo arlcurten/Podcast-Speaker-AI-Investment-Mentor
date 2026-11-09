@@ -1,7 +1,7 @@
 """Source verification of the exact completed item-family challenge selection.
 
 CLI: python -m knowledge.item_family_verification plan|run|validate --config PATH --sha256 HASH
-Config replaces challenge page/audit settings with selection REF and explicit
+Config replaces challenge page/audit/follow-up settings with selection REF and explicit
 max_pairs; it retains parent refs and separate runtime/budget settings. No fake
 singleton family, L3 ancestor, membership update, transitive merge or acceptance.
 Only selected comparisons reopen BOTH original source closures. Selection replay
@@ -19,14 +19,14 @@ from . import corpus_discovery as discovery, corpus_inventory as inventory, disc
 from . import family_reconciliation as verifier, item_family_challenge as challenge, provenance
 from .schemas import TEXT, STRINGS, array, enum, obj
 
-REQUEST_VERSION = "knowledge_item_family_verification_request.v1"
-RESULT_VERSION = "knowledge_item_family_verification_result.v1"
+REQUEST_VERSION = "knowledge_item_family_verification_request.v2"
+RESULT_VERSION = "knowledge_item_family_verification_result.v2"
 PROMPT_PATH = Path(__file__).parent / "prompts" / "item_family_verification.md"
 RELATIONS = ("support", "counter", "context_difference", "retelling", "evolution", "no_link_found", "unresolved")
 CONFIG = copy.deepcopy(discovery.CONFIG)
 CONFIG["properties"].pop("inventory")
 CONFIG["required"].remove("inventory")
-CONFIG["properties"].update(schema_version=enum("knowledge_item_family_verification_config.v1"),
+CONFIG["properties"].update(schema_version=enum("knowledge_item_family_verification_config.v2"),
     parent=obj(config=inventory.REF, artifact=inventory.REF), selection=inventory.REF, max_pairs=discovery.POSITIVE)
 CONFIG["required"].extend(["parent", "selection", "max_pairs"])
 DISPOSITION = obj(disposition=enum("retained", "context_excluded", "unresolved"), reason=TEXT,
@@ -91,6 +91,8 @@ def _prepare(config_ref):
     pins = {}
     config_ref = inventory._ref(config_ref)
     cfg = inventory._read(config_ref, pins)
+    if cfg.get("schema_version") == "knowledge_item_family_verification_config.v1":
+        raise ValueError("Item verification v1 requires historical code; create a new v2 config/run and v2 challenge selection.")
     discovery._validate(cfg, CONFIG)
     implementation, prompt = _implementation(), PROMPT_PATH.read_text(encoding="utf-8")
     safe_id(cfg["run_id"])
@@ -130,7 +132,7 @@ def _prepare(config_ref):
         if _implementation() != implementation:
             raise ValueError("Verification implementation changed during planning.")
     schedule.update(ordered_context_digest=checksum.hexdigest(), max_input_chars_observed=largest)
-    manifest = {"schema_version": "knowledge_item_family_verification_run.v1", "config": cfg,
+    manifest = {"schema_version": "knowledge_item_family_verification_run.v2", "config": cfg,
         "config_ref": config_ref, "implementation": implementation, "packets": schedule, "policy": copy.deepcopy(POLICY)}
     return cfg, root, catalog, packets, manifest, pins, prompt
 
@@ -161,6 +163,16 @@ def _derive(response, context):
     if response["relationship"] == "unresolved" and not response["limitations"]:
         raise ValueError("Unresolved relationships need limitations.")
     case = next(c for c in bundle["cases"] if c["record_id"] == context["record_id"])
+    retained = {r["record_id"] for r in response["case_dispositions"] if r["disposition"] == "retained"}
+    members = context["family"]["memberships"]
+    if response["relationship"] in {"support", "counter", "retelling", "evolution"}:
+        if context["record_id"] not in retained or not retained.intersection(members):
+            raise ValueError("Linked relationships require the inspected item and an actual target member retained.")
+    if response["relationship"] == "support":
+        hosts = {c["record_id"] for c in bundle["cases"] if c["speaker_attribution"] == "host"}
+        supports = {rid for rid, membership in members.items() if membership["role"] == "potential_support"}
+        if not retained.intersection(hosts, supports):
+            raise ValueError("Support requires a retained host potential-support member of the real target family.")
     if response["relationship"] == "support" and case["speaker_attribution"] != "host":
         raise ValueError("Non-host evidence cannot become host support.")
     return copy.deepcopy(response)
@@ -173,7 +185,7 @@ def _aggregate(catalog, packets, histories, manifest):
         response = runner._result(last)["response"]
         counts[response["relationship"]] += 1
         checksum.update((provenance.digest({"packet": packet, "result_sha256": last["result_sha256"]}) + "\n").encode())
-    return {"schema_version": "knowledge_item_family_verification.v1",
+    return {"schema_version": "knowledge_item_family_verification.v2",
         "status": "no_targets" if not catalog["families"] else
             "selected_verification_unresolved" if counts["unresolved"] else "declared_inspection_and_verification_complete",
         "run_sha256": provenance.digest(manifest), "selection": catalog["selection_ref"],
