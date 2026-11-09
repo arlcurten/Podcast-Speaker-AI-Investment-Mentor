@@ -6,11 +6,12 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 import fcntl
 import json
 from pathlib import Path
+from queue import Queue
 from threading import Event, Lock
 import time
 
 from . import batch, pipeline
-from transcription.common import atomic_write_json, child_path, private_path, read_json, safe_id, utc_now
+from transcription.common import atomic_write_json, child_path, private_path, read_json, safe_id, sha256_file, utc_now
 
 
 def execute(cfg, episode_ids, run_id, *, workers=1, dry_run=False, backend_factory=None,
@@ -162,7 +163,7 @@ def _historical_provider_failures(root, run_id):
 
 
 def continue_pending(cfg, run_id, *, workers=4, minimum_queue_gap=128, poll_seconds=30,
-                     runner=None, sleeper=time.sleep):
+                     runner=None, sleeper=time.sleep, continuous_refill=False):
     """Drain safe tail jobs in chunks, rather than stopping at the chunk size."""
     if cfg.get("extraction_mode") != "candidate" or type(workers) is not int or not 1 <= workers <= 4:
         raise ValueError("Continuous look-ahead requires candidate mode and 1-4 workers.")
@@ -175,6 +176,8 @@ def continue_pending(cfg, run_id, *, workers=4, minimum_queue_gap=128, poll_seco
     folder.mkdir(parents=True, exist_ok=True)
     identity = {"schema_version": "knowledge_continuation.v1", "batch_config": cfg,
                 "workers": workers, "minimum_queue_gap": minimum_queue_gap}
+    if continuous_refill:
+        identity.update(schema_version="knowledge_continuation.v2", scheduling="continuous_refill")
     manifest = folder / "manifest.json"
     if manifest.exists() and read_json(manifest) != identity:
         raise ValueError("Controller config changed; use a new run ID.")
@@ -182,7 +185,7 @@ def continue_pending(cfg, run_id, *, workers=4, minimum_queue_gap=128, poll_seco
     state_path = folder / "status.json"
     previous = read_json(state_path) if state_path.exists() else {}
     provider_failures = previous.get("provider_failure_count", 0)
-    if provider_failures >= 3:
+    if not continuous_refill and provider_failures >= 3:
         raise ValueError("Repeated provider failures require inspection before resuming.")
     def checkpoint(state, **details):
         result = {"schema_version": "knowledge_continuation_status.v1", "state": state,
@@ -194,8 +197,13 @@ def continue_pending(cfg, run_id, *, workers=4, minimum_queue_gap=128, poll_seco
         fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
         if not manifest.exists():
             atomic_write_json(manifest, identity, overwrite=False)
+        if continuous_refill:
+            return _continue_refill(cfg, run_id, root, folder, workers, minimum_queue_gap,
+                                    poll_seconds, runner, sleeper)
         try:
             while True:
+                if (folder / "drain.json").exists():
+                    return checkpoint("drained")
                 provider_failures = max(provider_failures, _historical_provider_failures(root, run_id))
                 if provider_failures >= 3:
                     return checkpoint("needs_attention_provider_failures")
@@ -232,6 +240,161 @@ def continue_pending(cfg, run_id, *, workers=4, minimum_queue_gap=128, poll_seco
             raise
 
 
+def request_drain(cfg, run_id):
+    """Request admission shutdown; never signal a process or cancel a call."""
+    root = child_path(private_path(cfg["output_root"]), safe_id(cfg["batch_id"]))
+    folder = child_path(root, "controllers", safe_id(run_id))
+    if read_json(root / "batch_manifest.json") != cfg or not (folder / "manifest.json").is_file():
+        raise ValueError("Drain requires an existing matching controller.")
+    marker = folder / "drain.json"
+    if not marker.exists():
+        atomic_write_json(marker, {"requested_at": utc_now(), "run_id": run_id}, overwrite=False)
+    return {"state": "drain_requested", "run_id": run_id}
+
+
+def _provider_outcome(root, eid, before):
+    """Freeze the latest new call outcome, not later retries or cached stages."""
+    calls = [p for p in child_path(root, "stages", eid, "calls").glob("*.json")
+             if p.name not in before]
+    for path in sorted(calls, key=lambda p: int(p.stem.rsplit("_", 1)[1]), reverse=True):
+        call = read_json(path)
+        if call.get("status") == "revalidated" or (call.get("usage") or {}).get("model_call_performed") is False:
+            continue
+        outcome = "unknown"
+        if call.get("status") == "completed" or call.get("response") is not None:
+            outcome = "succeeded"
+        elif call.get("status") == "failed" and call.get("error_type") in {"ModelCallError", "RuntimeError"}:
+            outcome = "failed"
+        return {"outcome": outcome, "call_path": str(path.relative_to(root)), "sha256": sha256_file(path)}
+    return {"outcome": "unknown"}
+
+
+def _continue_refill(cfg, run_id, root, folder, workers, gap, poll_seconds, runner, sleeper):
+    """One immutable trial per admission; the outer pool bounds concurrency."""
+    admissions = [read_json(p) for p in sorted((folder / "admissions").glob("*.json"))]
+    receipts = [read_json(p) for p in sorted((folder / "completions").glob("*.json"))]
+    admitted = {row["episode_id"] for row in admissions}
+    recorded = {row["episode_id"] for row in receipts}
+    streak = total = 0
+    tripped = False
+    for row in receipts:
+        outcome = row["provider"]["outcome"]
+        total += outcome == "failed"
+        streak = streak + 1 if outcome == "failed" else 0 if outcome == "succeeded" else streak
+        tripped |= streak >= 3
+    failed, interrupted = set(), admitted - recorded
+    active = {}
+
+    def checkpoint(state, **details):
+        result = {"schema_version": "knowledge_continuation_status.v2", "state": state,
+                  "updated_at": utc_now(), "consecutive_provider_failures": streak,
+                  "total_provider_failures": total, "provider_failure_limit_reached": tripped,
+                  "active_episode_ids": sorted(active.values()), "failed_episode_ids": sorted(failed),
+                  "interrupted_episode_ids": sorted(interrupted), "automatic_release": False, **details}
+        atomic_write_json(folder / "status.json", result)
+        return result
+
+    while True:
+        busy, excluded, failed, prior_interrupted = _trial_inventory(root)
+        interrupted.update(prior_interrupted)
+        if not busy:
+            break
+        if (folder / "drain.json").exists():
+            return checkpoint("drained")
+        checkpoint("waiting_for_existing_trial")
+        sleeper(poll_seconds)
+    # A crash before a completion receipt leaves an unknown provider outcome.
+    # Preserve that admission and require inspection instead of resetting risk.
+    if admitted - recorded:
+        return checkpoint("needs_attention_interrupted_admissions")
+    if tripped:
+        return checkpoint("needs_attention_provider_failures")
+    failed.update(row["episode_id"] for row in receipts if row["status"] == "failed")
+    excluded.update(admitted)
+    completed = Queue()
+
+    def job(eid, trial_id):
+        before = {p.name for p in child_path(root, "stages", eid, "calls").glob("*.json")}
+        try:
+            remaining = {e["episode_id"] for e in cfg["episodes"]
+                         if e["episode_id"] not in excluded and
+                         not child_path(root, e["episode_id"], "status.json").exists()}
+            preceding = [e["episode_id"] for e in cfg["episodes"]]
+            if child_path(root, eid, "status.json").exists():
+                row = {"episode_id": eid, "status": "skipped_main_queue"}
+            elif sum(other in remaining for other in preceding[:preceding.index(eid)]) < gap:
+                row = {"episode_id": eid, "status": "deferred_queue_near"}
+            else:
+                result = runner(cfg, [eid], trial_id, workers=1, minimum_queue_gap=gap, controller_owned=True)
+                row, = result["episodes"]
+                if row["episode_id"] != eid:
+                    raise ValueError("Trial returned another episode.")
+        except Exception as exc:
+            row = {"episode_id": eid, "status": "failed", "error_type": type(exc).__name__}
+        return {"trial_id": trial_id, "episode_id": eid, "status": row["status"],
+                **({"error_type": row["error_type"]} if "error_type" in row else {}),
+                "provider": (_provider_outcome(root, eid, before)
+                             if row["status"] in {"completed_candidate", "failed"} else {"outcome": "unknown"})}
+
+    try:
+        next_completed = None
+        with ThreadPoolExecutor(max_workers=workers) as pool:
+            while True:
+                # Account for all observed completions before admitting replacements.
+                backoff = False
+                while next_completed is not None or not completed.empty():
+                    future = next_completed if next_completed is not None else completed.get_nowait()
+                    next_completed = None
+                    row = future.result()
+                    atomic_write_json(folder / "completions" / f"{len(receipts) + 1:06d}.json",
+                                      row, overwrite=False)
+                    receipts.append(row)
+                    del active[future]
+                    if row["status"] == "failed":
+                        failed.add(row["episode_id"])
+                    outcome = row["provider"]["outcome"]
+                    total += outcome == "failed"
+                    streak = streak + 1 if outcome == "failed" else 0 if outcome == "succeeded" else streak
+                    tripped |= streak >= 3
+                    backoff |= outcome == "failed"
+                    checkpoint("draining_provider_failures" if tripped else "episode_completed")
+                draining = (folder / "drain.json").exists()
+                if backoff and not (tripped or draining):
+                    sleeper(max(60, poll_seconds))
+                    continue
+                if not (tripped or draining):
+                    while len(active) < workers and completed.empty():
+                        if (folder / "drain.json").exists():
+                            draining = True
+                            break
+                        pending = [e["episode_id"] for e in cfg["episodes"]
+                                   if e["episode_id"] not in excluded and
+                                   not child_path(root, e["episode_id"], "status.json").exists()]
+                        eligible = pending[gap:]
+                        if not eligible:
+                            break
+                        eid = eligible[-1]
+                        trial_id = f"{run_id}_refill_{len(admissions) + 1:06d}"
+                        admission = {"episode_id": eid, "trial_id": trial_id, "created_at": utc_now()}
+                        atomic_write_json(folder / "admissions" / f"{len(admissions) + 1:06d}.json",
+                                          admission, overwrite=False)
+                        admissions.append(admission)
+                        excluded.add(eid)
+                        future = pool.submit(job, eid, trial_id)
+                        active[future] = eid
+                        future.add_done_callback(completed.put)
+                        checkpoint("running_refill")
+                if not active:
+                    state = ("needs_attention_provider_failures" if tripped else "drained" if draining
+                             else "tail_drained_main_queue_remains")
+                    return checkpoint(state)
+                # The callback queue retains completion order, unlike a set of futures.
+                next_completed = completed.get()
+    except Exception as exc:
+        checkpoint("needs_attention", error_type=type(exc).__name__)
+        raise
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--config", required=True, type=Path)
@@ -241,16 +404,25 @@ def main():
     parser.add_argument("--dry-run", action="store_true")
     parser.add_argument("--minimum-queue-gap", type=int)
     parser.add_argument("--continue-pending", action="store_true")
+    parser.add_argument("--continuous-refill", action="store_true")
+    parser.add_argument("--request-drain", action="store_true")
     args = parser.parse_args()
+    if args.request_drain and (args.episode or args.dry_run or args.continue_pending or args.continuous_refill):
+        parser.error("Drain requests cannot also start work.")
+    if args.continuous_refill and not args.continue_pending:
+        parser.error("--continuous-refill requires --continue-pending.")
     if args.continue_pending and (args.episode or args.dry_run):
         parser.error("Continuous mode discovers pending jobs; omit --episode and --dry-run.")
-    if not args.continue_pending and not args.episode:
+    if not args.continue_pending and not args.episode and not args.request_drain:
         parser.error("Use explicit --episode or --continue-pending.")
     try:
         cfg = batch.load_batch(args.config)
-        if args.continue_pending:
+        if args.request_drain:
+            result = request_drain(cfg, args.run_id)
+        elif args.continue_pending:
             result = continue_pending(cfg, args.run_id, workers=args.workers,
-                                      minimum_queue_gap=128 if args.minimum_queue_gap is None else args.minimum_queue_gap)
+                                      minimum_queue_gap=128 if args.minimum_queue_gap is None else args.minimum_queue_gap,
+                                      continuous_refill=args.continuous_refill)
         else:
             result = execute(cfg, args.episode, args.run_id, workers=args.workers,
                              dry_run=args.dry_run, minimum_queue_gap=args.minimum_queue_gap or 0)

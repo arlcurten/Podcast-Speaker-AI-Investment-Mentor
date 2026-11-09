@@ -85,6 +85,29 @@ the main queue, semantic review, or serving release is finished. State is under
 `controllers/<run-id>/status.json` in the private batch directory. Resume with the
 same controller command/config; this does not restart it after machine shutdown.
 
+Add `--continuous-refill` with a **new controller ID** to refill each free worker
+slot without waiting for a whole chunk. It keeps the same stage store, episode
+locks, candidate holds and 1-4-worker limit. Immutable per-episode admissions and
+ordered completion receipts live under the controller directory. A restart
+never automatically retries admitted work; an admission without a completion
+receipt requires inspection. The main-queue gap excludes previously reserved
+tail work. Three consecutive provider-failed episode outcomes stop admission;
+a new successful provider response (including a content-validation rejection)
+resets the streak, but cached reuse, revalidation and skipped jobs do not. The
+lifetime total is reported separately and does not trip this guard. Once tripped,
+the guard remains latched while active calls finish, including across restart.
+The older chunk mode retains its cumulative provider-failure guard.
+
+For a controller started with drain-aware code, `python3 -m knowledge.prefetch
+--config "$BATCH_CONFIG" --run-id "$CONTROLLER_ID" --request-drain` creates a
+durable admission-stop marker. Active work finishes normally; chunk mode checks
+the marker between chunks. Wait for state `drained` and release of the controller
+lock before starting a new controller ID. The marker is sticky, not a process
+signal. An already-running older controller cannot hot-reload drain support:
+wait for its natural exit or a separately authorized cooperative handoff; do not
+assume editing source or writing the marker drains that process. No controller
+completion grants semantic acceptance or serving readiness.
+
 For **candidate construction**, set `extraction_mode: candidate`. The same
 pipeline validates the raw/draft mapping, then extracts L1-L3 without requiring
 whole-episode acceptance or repeating a preliminary model review. Each L2 case
