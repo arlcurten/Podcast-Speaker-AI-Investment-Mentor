@@ -539,3 +539,23 @@ limit does not guarantee provider capacity. `max_calls: 1, retry_count: 0` allow
 one seeded repair call; `max_calls: 2, retry_count: 1` permits one further attempt
 using that call's failure. Budgets persist across resumes; input overflow is
 terminal for that run. Plan/validate and provenance checks never invoke a model.
+
+## Parallel Semantic Discovery
+
+For large, explicitly selected inventories, `speaker_profile.episode_discovery`
+uses whole-episode transport batches and splits oversized batches without
+discarding evidence or relationship context. This is not semantic segmentation.
+Use a new `profile_episode_discovery_config.v1` with
+`packet_strategy: whole_episode_adjacent_midpoint_split.v1`; other fields match
+the existing discovery config. Old runs are not silently migrated.
+
+```bash
+python -m speaker_profile.episode_discovery run --config "$PROFILE_DISCOVERY_CONFIG" --sha256 "$PROFILE_DISCOVERY_SHA256" --workers 4 --progress
+python -m speaker_profile.episode_discovery validate --config "$PROFILE_DISCOVERY_CONFIG" --sha256 "$PROFILE_DISCOVERY_SHA256" --workers 4
+```
+
+Completed packets are reused; failed packets require `--retry-failed` within
+the configured retry budget. Provider failures stop new admissions and drain
+in-flight calls. Interrupted requests require inspection. Incomplete runs exit
+nonzero. Concurrency speeds provider calls, not source replay; outputs remain
+private candidates requiring cross-packet reconciliation and semantic review.
