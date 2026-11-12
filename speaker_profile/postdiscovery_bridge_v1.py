@@ -57,10 +57,24 @@ def project(parent):
     for row in value['hypothesis_accounting'].values():
         if any(prefix + fid not in families for fid in row['family_ids']):
             raise ValueError('Unknown hypothesis navigation family.')
+    # One inventory-wide incident pass, not a family-by-hypothesis Cartesian scan.
+    contexts = native._incident_context(catalog, {'navigation': set(catalog['evidence'])})
+    obligations = {}
+    for context in contexts:
+        hid = context['prior_hypothesis_key']
+        oid = 'prior_hypothesis:' + hid
+        required = context['required_evidence_ids']
+        obligations[oid] = {'hypothesis_key': hid, 'required_evidence_ids': required,
+                            'prior_hypothesis': copy.deepcopy(catalog['hypotheses'][hid]),
+                            'state': 'pending_explicit_disposition'}
+        targets = {key for rid in required for key in evidence[rid]['family_keys']}
+        targets.update(prefix + fid for fid in value['hypothesis_accounting'][hid]['family_ids'])
+        for key in sorted(targets):
+            families[key]['known_obligation_ids'].append(oid)
     parent.check()
     return {'schema_version': VERSION, 'parent': copy.deepcopy(parent.spec),
             'inventory': copy.deepcopy(value['inventory']), 'families': families, 'evidence': evidence,
-            'known_counter_obligations': {},
+            'known_counter_obligations': obligations,
             'evidence_accounting': copy.deepcopy(value['evidence_accounting']),
             'hypothesis_accounting': copy.deepcopy(value['hypothesis_accounting']),
             # Shared shortlist uses this field only to retain navigation-only pending IDs.
@@ -96,6 +110,11 @@ def expand(parent, projected, selection, group_key, *, plan, responses, max_byte
               'evidence_ledger': copy.deepcopy(selection['case_ledger']),
               'hypothesis_ledger': copy.deepcopy(selection['principle_ledger']),
               'incident_obligations': obligations,
+              'known_hypothesis_context': {
+                  'prior_hypothesis:' + row['prior_hypothesis_key']:
+                  copy.deepcopy(projected['known_counter_obligations']['prior_hypothesis:' + row['prior_hypothesis_key']])
+                  for row in obligations},
+              'counter_ledger': copy.deepcopy(selection['counter_ledger']),
               'closure_ledger': {rid: 'pending_source_review' for rid in required},
               'counts': {'unique_selected_evidence': len(selected), 'unique_closure_evidence': len(required),
                          'role_occurrences': sum(len(rows) for family in roles.values() for rows in family.values())},
@@ -112,8 +131,11 @@ def expand(parent, projected, selection, group_key, *, plan, responses, max_byte
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('command', choices=['plan', 'shortlist', 'expand'])
-    for key in ['parent', 'sha256', 'bridge-sha256', 'output']:
+    for key in ['bridge-sha256', 'output']:
         parser.add_argument('--' + key, required=True)
+    for key in ['parent', 'sha256', 'config', 'config-sha256', 'adapter', 'adapter-sha256',
+                'run-version', 'request-version']:
+        parser.add_argument('--' + key)
     parser.add_argument('--max-families', type=int, default=32)
     parser.add_argument('--max-input-chars', type=int, default=100000)
     parser.add_argument('--max-group-families', type=int, default=16)
@@ -131,9 +153,20 @@ def main(argv=None):
     if sha256_file(bridge_file) != args.bridge_sha256:
         raise ValueError('Shared bridge implementation pin mismatch.')
     pins = {}
-    spec = bridge.inventory._read({'path': args.parent, 'sha256': args.sha256}, pins)
-    parent = bridge.replay_completed(spec)
-    parent.pins.update(pins)
+    completion = (args.config, args.config_sha256, args.adapter, args.adapter_sha256,
+                  args.run_version, args.request_version)
+    if args.parent:
+        if not args.sha256 or any(completion):
+            parser.error('Use parent/hash OR explicit completion-hook config and adapter pins.')
+        spec = bridge.inventory._read({'path': args.parent, 'sha256': args.sha256}, pins)
+        parent = bridge.replay_completed(spec)
+        parent.pins.update(pins)
+    else:
+        if args.sha256 or not all(completion):
+            parser.error('Completion hook requires config/hash, adapter/hash and exact run/request versions.')
+        parent = bridge.capture_parent({'path': args.config, 'sha256': args.config_sha256},
+                                      adapter=args.adapter, adapter_sha256=args.adapter_sha256,
+                                      run_version=args.run_version, request_version=args.request_version)
     projected = project(parent)
     plan = bridge.plan_pages(projected, max_families=args.max_families, max_input_chars=args.max_input_chars)
     responses = {}

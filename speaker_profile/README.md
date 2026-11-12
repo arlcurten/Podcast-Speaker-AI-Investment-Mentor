@@ -566,3 +566,52 @@ For new runs, use `speaker_profile.role_aware_episode_discovery` with
 are unchanged. One observation may support and limit the same family; retain
 both roles and reasons without counting the observation twice. Identical
 family/role duplicates remain invalid. Old receipts are not silently adopted.
+
+## Importing Sealed Responses
+
+Saved first-attempt responses require the separately versioned
+`speaker_profile.import_aware_episode_discovery` adapter. Do not use the ordinary
+role-aware adapter or the original `sealed_response_import` for production
+recovery: they do not require recovery provenance on subsequent replay.
+
+First declare the immutable source receipts without making model calls:
+
+```bash
+python -m speaker_profile.sealed_response_import_v2 declare \
+  --source-config "$SOURCE_CONFIG" --source-sha256 "$SOURCE_CONFIG_SHA256" \
+  --source-manifest-sha256 "$SOURCE_MANIFEST_SHA256" \
+  --expected-responses "$EXPECTED_RESPONSES" --output "$ORIGIN_JSON"
+```
+
+Create a new private config and run ID with
+`schema_version: profile_import_aware_episode_discovery_config.v1`, retaining
+the episode packet strategy and role-aware membership policy. Its required
+`import_origin: {path, sha256}` points to the declaration returned above.
+Generation inputs must match the original run. Do not edit old configs or receipts.
+
+```bash
+python -m speaker_profile.sealed_response_import_v2 import \
+  --config "$IMPORT_CONFIG" --sha256 "$IMPORT_CONFIG_SHA256" --progress
+```
+
+Only after successful import, resume using the import-aware adapter:
+
+```bash
+python -m speaker_profile.import_aware_episode_discovery run \
+  --config "$IMPORT_CONFIG" --sha256 "$IMPORT_CONFIG_SHA256" --workers 4 --progress
+python -m speaker_profile.import_aware_episode_discovery validate \
+  --config "$IMPORT_CONFIG" --sha256 "$IMPORT_CONFIG_SHA256" --workers 4
+```
+
+The destination must not exist before import. Responses and original usage are
+preserved exactly, with zero new provider calls during import. Interrupted or
+unsealed source attempts and provider/source-validation failures are rejected.
+Missing or inconsistent origin declarations, recovery receipts/seals, source
+hashes, or imported target mappings block subsequent preparation and replay.
+
+Imported requests count toward the target lifetime admission cap. Their copied
+usage is historical, not new spending. `model_calls_this_execution` reports only
+calls made during that execution; never subtract imported counts from that field.
+Downstream parent specifications must name the import-aware adapter and its exact
+versions. `project_completed(spec)` includes explicit origin hashes in its
+projection. Recovery grants no source approval, semantic review, or publication.

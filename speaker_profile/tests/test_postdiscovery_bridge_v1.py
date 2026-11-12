@@ -48,6 +48,55 @@ def routing(projected):
 
 
 class Tests(unittest.TestCase):
+    def test_known_comparison_basis_and_counter_navigation(self):
+        parent = fixture()
+        h = parent.catalog['hypotheses']['H1']
+        h['statement_action_relationships'] = [{'statement_id': 'EP1:E1', 'action_id': 'EP1:E2'}]
+        h['recovered_comparisons'] = [{'evidence_ids': ['EP1:E2'], 'pointer': '/comparisons/0'}]
+        parent.catalog['evidence']['EP1:E2']['basis_evidence_ids'] = ['EP1:E3']
+        projected = adapter.project(parent)
+        context = projected['known_counter_obligations']['prior_hypothesis:H1']
+        self.assertEqual(context['required_evidence_ids'], ['EP1:E1', 'EP1:E2', 'EP1:E3'])
+        self.assertEqual(context['prior_hypothesis']['recovered_comparisons'], h['recovered_comparisons'])
+        for family in projected['families'].values():
+            self.assertEqual(family['known_obligation_ids'], ['prior_hypothesis:H1'])
+        plan, responses, selected, group = routing(projected)
+        self.assertEqual(selected['counter_ledger'], {'prior_hypothesis:H1': 'pending_explicit_disposition'})
+        with patch.object(adapter.source, '_materialize', return_value=({}, {}, {})) as load:
+            work = adapter.expand(parent, projected, selected, group, plan=plan, responses=responses, max_bytes=100000)
+        load.assert_called_once_with(parent.catalog, ['EP1:E1', 'EP1:E2', 'EP1:E3'], parent.pins)
+        self.assertIn('prior_hypothesis:H1', work['known_hypothesis_context'])
+
+    def test_completion_hook_missing_parent_writes_nothing(self):
+        with tempfile.TemporaryDirectory() as directory:
+            output = Path(directory) / 'plan.json'
+            args = ['plan', '--config', '/synthetic/config', '--config-sha256', 'a'*64,
+                    '--adapter', 'speaker_profile.synthetic', '--adapter-sha256', 'b'*64,
+                    '--run-version', 'synthetic_run.v1', '--request-version', 'synthetic_request.v1',
+                    '--bridge-sha256', adapter.sha256_file(Path(adapter.bridge.__file__)), '--output', str(output)]
+            with patch.object(adapter.bridge, 'capture_parent', side_effect=FileNotFoundError('pending')) as capture:
+                with self.assertRaises(FileNotFoundError):
+                    adapter.main(args)
+                capture.assert_called_once()
+            self.assertFalse(output.exists())
+
+    def test_completion_hook_projects_only_replayed_parent(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            parent = fixture()
+            parent.root = root / 'discovery'
+            parent.catalog['protected_output_roots'] = []
+            args = ['plan', '--config', '/synthetic/config', '--config-sha256', 'a'*64,
+                    '--adapter', 'speaker_profile.synthetic', '--adapter-sha256', 'b'*64,
+                    '--run-version', 'synthetic_run.v1', '--request-version', 'synthetic_request.v1',
+                    '--bridge-sha256', adapter.sha256_file(Path(adapter.bridge.__file__)), '--output', str(root / 'plan.json')]
+            with patch.object(adapter.bridge, 'capture_parent', return_value=parent) as capture:
+                with contextlib.redirect_stdout(io.StringIO()):
+                    self.assertEqual(adapter.main(args), 0)
+                capture.assert_called_once_with({'path': '/synthetic/config', 'sha256': 'a'*64},
+                                               adapter='speaker_profile.synthetic', adapter_sha256='b'*64,
+                                               run_version='synthetic_run.v1', request_version='synthetic_request.v1')
+
     def test_cli_plan_private_new_only(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
