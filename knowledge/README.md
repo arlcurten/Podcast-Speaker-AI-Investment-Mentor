@@ -748,3 +748,11 @@ budget. Provider failures stop admissions and drain in-flight work. Interrupted
 requests require inspection. Packet families are navigation candidates, not
 final L4 principles: cross-packet reconciliation and source-grounded review
 remain necessary. All complete outputs stay in configured private storage.
+
+For new runs, use `knowledge.role_aware_episode_discovery` with
+`schema_version: knowledge_role_aware_episode_discovery_config.v1` and
+`membership_policy: unique_family_role.v1`. Its CLI flags and packet strategy
+are unchanged. A case may both support and qualify one family; distinct roles
+and their reasons are preserved, while identical family/role duplicates are
+rejected. Multiple roles never make one case multiple independent observations.
+Old results require explicit provenance-bound recovery, not implicit migration.

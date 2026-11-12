@@ -559,3 +559,10 @@ the configured retry budget. Provider failures stop new admissions and drain
 in-flight calls. Interrupted requests require inspection. Incomplete runs exit
 nonzero. Concurrency speeds provider calls, not source replay; outputs remain
 private candidates requiring cross-packet reconciliation and semantic review.
+
+For new runs, use `speaker_profile.role_aware_episode_discovery` with
+`schema_version: profile_role_aware_episode_discovery_config.v1` and
+`membership_policy: unique_family_role.v1`. Its CLI flags and packet strategy
+are unchanged. One observation may support and limit the same family; retain
+both roles and reasons without counting the observation twice. Identical
+family/role duplicates remain invalid. Old receipts are not silently adopted.
