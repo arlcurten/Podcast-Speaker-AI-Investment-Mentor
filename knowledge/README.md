@@ -729,3 +729,22 @@ automatic semantic approval are implemented. Updates are explicit batches, not
 an autonomous scheduler. L4 still receives the selected case corpus under the
 configured context cap; it fails on overflow rather than truncating. Large-corpus
 partitioned consolidation requires a separate measured design and validation.
+
+## Parallel Family Discovery
+
+`knowledge.episode_discovery` batches a complete, explicitly selected inventory
+by episode for transport, retaining source context and known counterevidence.
+Use a new `knowledge_episode_discovery_config.v1` with
+`packet_strategy: whole_episode_adjacent_midpoint_split.v1`; remaining fields
+match the existing discovery config. Old runs are never silently migrated.
+
+```bash
+python -m knowledge.episode_discovery run --config "$DISCOVERY_CONFIG" --sha256 "$DISCOVERY_SHA256" --workers 4 --progress
+python -m knowledge.episode_discovery validate --config "$DISCOVERY_CONFIG" --sha256 "$DISCOVERY_SHA256" --workers 4
+```
+
+Completed packets are reused; `--retry-failed` respects the configured retry
+budget. Provider failures stop admissions and drain in-flight work. Interrupted
+requests require inspection. Packet families are navigation candidates, not
+final L4 principles: cross-packet reconciliation and source-grounded review
+remain necessary. All complete outputs stay in configured private storage.
